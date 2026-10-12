@@ -1,41 +1,32 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import heroImg from '../assets/hero.png'
 import '../styles/auth.css'
 
-const navItems = [
-  { to: '/', label: 'Beranda', end: true },
-  { to: '/login', label: 'Login' },
-  { to: '/registrasi/bem', label: 'Registrasi BEM' },
-  { to: '/registrasi/hmj-ukm', label: 'Registrasi HMJ/UKM' },
-  { to: '/registrasi/anggota', label: 'Registrasi Anggota' },
-]
-
 function AuthLayout() {
+  const { pathname } = useLocation()
+
+  if (
+    pathname === '/login' ||
+    pathname === '/registrasi/bem' ||
+    pathname === '/registrasi/hmj-ukm' ||
+    pathname === '/registrasi/anggota'
+  ) {
+    return <Outlet />
+  }
+
   return (
     <div className="auth-shell">
-      <header className="auth-header">
-        <div className="auth-header__inner">
-          <NavLink to="/" className="auth-brand" end>
-            ORMAVERS
-          </NavLink>
-          <nav className="auth-nav" aria-label="Navigasi utama">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  isActive ? 'auth-nav__link active' : 'auth-nav__link'
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+      <div className="auth-hero">
+        <img src={heroImg} alt="" className="auth-hero__img" />
+      </div>
+      <div className="auth-panel">
+        <div className="auth-panel__inner">
+          <p className="auth-brand">ORMAVERS</p>
+          <div className="auth-card">
+            <Outlet />
+          </div>
         </div>
-      </header>
-      <main className="auth-main">
-        <Outlet />
-      </main>
+      </div>
     </div>
   )
 }
