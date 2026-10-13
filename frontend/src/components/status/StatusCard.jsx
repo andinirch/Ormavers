@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import StatusPill from './StatusPill.jsx'
 import RejectionReason from './RejectionReason.jsx'
 import SkResubmitForm from './SkResubmitForm.jsx'
@@ -48,14 +47,9 @@ function StatusCard({ data, onResubmit, submitting, submitResult }) {
       )}
 
       {status === 'disetujui' && (
-        <>
-          <p className="status-body__text">
-            Akun kamu sudah aktif. Masuk dengan username dan password kamu.
-          </p>
-          <Link to="/login" className="status-btn-primary">
-            Masuk &rarr;
-          </Link>
-        </>
+        <p className="status-body__text">
+          Akun kamu sudah aktif.
+        </p>
       )}
 
       {isDitolak && (

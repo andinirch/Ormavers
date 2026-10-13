@@ -1,12 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import '../styles/status.css'
 
-const navItems = [
-  { label: 'Pendaftaran' },
-  { label: 'Katalog Ormawa' },
-  { label: 'Pusat Bantuan' },
-]
-
 function AppShell() {
   return (
     <div className="app-shell">
@@ -16,16 +10,14 @@ function AppShell() {
             <span className="app-brand__icon" aria-hidden="true">O</span>
             <span className="app-brand__text">Ormavers</span>
           </Link>
-          <nav className="app-nav" aria-label="Navigasi utama">
-            {navItems.map((item) => (
-              <span key={item.label} className="app-nav__link app-nav__link--disabled" aria-disabled="true">
-                {item.label}
-              </span>
-            ))}
-          </nav>
           <div className="app-header__actions">
-            <Link to="/login" className="app-btn-outline">Masuk</Link>
-            <span className="app-avatar" aria-hidden="true" />
+            <button type="button" className="app-btn-outline">Masuk</button>
+            <span className="app-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" aria-label="Profil pengguna">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5.5 20c.7-3.5 3.1-5.5 6.5-5.5s5.8 2 6.5 5.5" />
+              </svg>
+            </span>
           </div>
         </div>
       </header>
