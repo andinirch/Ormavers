@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -30,5 +31,10 @@ class Pengguna extends Authenticatable
     public function getAuthPassword()
     {
         return $this->kata_sandi;
+    }
+
+    public function pendaftaranOrganisasi(): HasMany
+    {
+        return $this->hasMany(PendaftaranOrganisasi::class, 'id_pengguna_pendaftar', 'id_pengguna');
     }
 }
