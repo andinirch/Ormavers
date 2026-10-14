@@ -10,6 +10,7 @@
 .ranggota-login-note { color: #64748b; font-size: 10px; line-height: 1; white-space: nowrap; }
 .ranggota-login { min-width: 70px; padding: 9px 18px; color: #2563eb; border: 1px solid #2563eb; border-radius: 9px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; }
 .ranggota-profile { display: grid; place-items: center; width: 35px; height: 35px; color: #fff; background: #0f55cf; border-radius: 50%; font-size: 14px; }
+.ranggota-profile svg { width: 18px; height: 18px; display: block; }
 .ranggota-main { padding: 48px 20px 30px; }
 .ranggota-card { width: min(100%, 700px); min-width: 0; box-sizing: border-box; margin: 0 auto; padding: 38px clamp(22px, 5vw, 46px) 42px; background: #fff; border-radius: 20px; box-shadow: 0 16px 42px rgba(50, 61, 130, .1); }
 .ranggota-eyebrow { display: flex; align-items: center; gap: 8px; color: #2563eb; font-size: 12px; letter-spacing: .2px; }

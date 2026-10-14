@@ -55,7 +55,7 @@ function Header() {
     <header className="ranggota-header">
       <Link className="ranggota-brand" to="/"><span className="ranggota-brand__mark">O</span><span>Ormavers</span></Link>
       <nav className="ranggota-nav" aria-label="Navigasi utama"><span className="ranggota-nav__active">Pendaftaran</span></nav>
-      <div className="ranggota-header__actions"><div className="ranggota-login-group"><Link className="ranggota-login" to="/login">Masuk</Link><span className="ranggota-login-note">Sudah punya akun?</span></div><span className="ranggota-profile" aria-hidden="true">●</span></div>
+      <div className="ranggota-header__actions"><div className="ranggota-login-group"><Link className="ranggota-login" to="/login">Masuk</Link><span className="ranggota-login-note">Sudah punya akun?</span></div><span className="ranggota-profile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.8-3.1 3.2-5 6.5-5s5.7 1.9 6.5 5" /></svg></span></div>
     </header>
   )
 }
@@ -84,12 +84,13 @@ function RegisterAnggotaPage() {
     const bemId = values.bem
     if (!bemId) return undefined
     let active = true
-    getVerifiedHmjUkm(bemId).then((result) => {
+    const selectedBem = bemOptions.find((option) => option.value === bemId)
+    getVerifiedHmjUkm(bemId, selectedBem).then((result) => {
       if (!active) return
       setHmjResult({ forBem: bemId, options: result.data, unavailable: result.unavailable })
     })
     return () => { active = false }
-  }, [values.bem])
+  }, [values.bem, bemOptions])
 
   const hmjReady = values.bem !== '' && hmjResult.forBem === values.bem
   const hmjOptions = hmjReady ? hmjResult.options : []
@@ -132,7 +133,7 @@ function RegisterAnggotaPage() {
   }
 
   const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM'
-  const hmjPlaceholder = hmjLoading ? 'Memuat daftar HMJ/UKM…' : 'Pilih HMJ atau UKM'
+  const hmjPlaceholder = hmjLoading ? 'Memuat daftar HMJ/UKM/BEM…' : 'Pilih sebagai anggota HMJ/UKM/BEM'
 
   return (
     <div className="ranggota-page">
@@ -157,8 +158,8 @@ function RegisterAnggotaPage() {
               <div className="ranggota-section-heading"><h2>Pilih organisasi</h2><span>Afiliasi Kampus</span></div>
               <SelectInput id="bem" name="bem" label="BEM" value={values.bem} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required disabled={bemLoading || bemOptions.length === 0} error={errors.bem} />
               {hmjUnavailable && <FormMessage variant="info">Pilihan HMJ/UKM di bawah BEM yang dipilih belum tersedia.</FormMessage>}
-              <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjPlaceholder} required disabled={!values.bem || hmjLoading || hmjOptions.length === 0} error={errors.hmjUkm} />
-              <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih BEM dulu, lalu HMJ/UKM di bawah BEM tersebut. Hanya organisasi terverifikasi yang muncul.</p></div>
+              <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjPlaceholder} required disabled={!values.bem || hmjLoading || hmjOptions.length === 0} error={errors.hmjUkm} />
+              <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih BEM, lalu pilih sebagai anggota HMJ/UKM/BEM di bawah BEM tersebut. Hanya organisasi terverifikasi yang muncul.</p></div>
             </section>
             {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
             <hr />
