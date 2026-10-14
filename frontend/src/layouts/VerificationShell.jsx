@@ -1,11 +1,19 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { verificationContexts } from '../services/verification/verificationApi.js'
 import '../styles/verification.css'
 
-const navigation = [
-  { to: '/verifikasi/bem', label: 'Daftar Registrasi BEM', icon: 'bem' },
-  { to: '/verifikasi/hmj-ukm', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj' },
-  { to: '/verifikasi/anggota', label: 'Daftar Permintaan Anggota', icon: 'member' },
-]
+const navigationByRole = {
+  Administrator: [
+    { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
+  ],
+  'Akun Organisasi BEM': [
+    { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj' },
+    { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member' },
+  ],
+  'Akun Organisasi HMJ/UKM': [
+    { to: '/verifikasi/hmj-ukm', label: 'Daftar Permintaan Anggota', icon: 'member' },
+  ],
+}
 
 function Icon({ name, size = 20 }) {
   const paths = {
@@ -20,6 +28,17 @@ function Icon({ name, size = 20 }) {
 }
 
 function VerificationShell() {
+  const { pathname, search } = useLocation()
+  const organizationKey = new URLSearchParams(search).get('organisasi')
+  const activeContext = pathname === '/verifikasi/administrator'
+    ? verificationContexts.administrator
+    : pathname === '/verifikasi/bem'
+      ? verificationContexts.bemUmg
+      : pathname === '/verifikasi/hmj-ukm'
+        ? verificationContexts[organizationKey === 'ukm-robotika' ? 'ukmRobotika' : 'hmif']
+        : verificationContexts[organizationKey === 'hmif' ? 'hmif' : organizationKey === 'ukm-robotika' ? 'ukmRobotika' : 'bemUmg']
+  const navigation = navigationByRole[activeContext.role] ?? []
+
   return <div className="verification-shell">
     <header className="verification-header">
       <NavLink to="/verifikasi/bem" className="verification-brand">
@@ -28,12 +47,17 @@ function VerificationShell() {
       </NavLink>
       <div className="verification-account">
         <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
-        <span><strong>Akun Pengguna</strong><small>Peran Aktif</small></span>
+        <span><strong>{activeContext.organizationName}</strong><small>{activeContext.role}</small></span>
       </div>
     </header>
     <aside className="verification-sidebar">
       <nav aria-label="Navigasi verifikasi">
-        {navigation.map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `verification-nav__item${isActive ? ' is-active' : ''}`}>
+        {navigation.map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => {
+          const itemQuery = new URL(item.to, window.location.origin).search
+          const currentQuery = new URLSearchParams(search).toString()
+          const queryMatches = itemQuery === `?${currentQuery}`
+          return `verification-nav__item${isActive && (itemQuery ? queryMatches : true) ? ' is-active' : ''}`
+        }}>
           <Icon name={item.icon} /> <span>{item.label}</span>
         </NavLink>)}
         <span className="verification-nav__item is-disabled" aria-disabled="true"><Icon name="profile" /><span>Profil Saya</span></span>

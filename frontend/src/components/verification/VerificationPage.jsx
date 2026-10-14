@@ -24,7 +24,7 @@ function DetailInfo({ item, member }) {
   return <div className="verification-info-grid">{fields.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
 }
 
-function VerificationPage({ type, member = false, title, subtitle, eyebrow, listTitle, note, selectedBadge, renderRow, renderDocs, roleNote }) {
+function VerificationPage({ type, context, member = false, title, subtitle, eyebrow, listTitle, note, selectedBadge, renderRow, renderDocs, roleNote, hidePageHeading = false }) {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [reason, setReason] = useState('')
@@ -32,14 +32,23 @@ function VerificationPage({ type, member = false, title, subtitle, eyebrow, list
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState('')
   const [preview, setPreview] = useState(null)
-  useEffect(() => { getVerificationList(type).then((data) => { setItems(data); setSelectedId(data[0]?.id ?? null) }) }, [type])
+  const [relationshipNeedsMapping, setRelationshipNeedsMapping] = useState(false)
+  useEffect(() => {
+    getVerificationList(type, context).then((result) => {
+      const data = result.data
+      setItems(data)
+      setSelectedId(data[0]?.id ?? null)
+      setRelationshipNeedsMapping(Boolean(result.relationshipNeedsMapping))
+      if (!result.ok) setToast(result.error)
+    })
+  }, [type, context])
   const selected = items.find((item) => item.id === selectedId)
   const choose = (id) => { setSelectedId(id); setReason(''); setReasonError(''); setToast('') }
   const decide = async (status) => {
     if (!selected || selected.status !== 'menunggu' || busy) return
     if (status === 'ditolak' && !reason.trim()) { setReasonError('Alasan penolakan wajib diisi.'); return }
     setBusy(true); setReasonError('')
-    const result = await decideVerification(type, selected.id, status, reason.trim())
+    const result = await decideVerification(type, selected.id, status, reason.trim(), context)
     setBusy(false)
     if (!result.ok) { setToast(result.error); return }
     setItems((current) => current.map((item) => item.id === selected.id ? result.data : item))
@@ -47,7 +56,7 @@ function VerificationPage({ type, member = false, title, subtitle, eyebrow, list
   }
   const openPreview = (doc) => setPreview(doc)
   return <div className="verification-page">
-    <div className="verification-page__heading"><div className="verification-eyebrow"><Icon name="shield" size={17} />{eyebrow}</div><h1>{title}</h1><p>{subtitle}</p></div>
+    {!hidePageHeading && <div className="verification-page__heading"><div className="verification-eyebrow"><Icon name="shield" size={17} />{eyebrow}</div><h1>{title}</h1><p>{subtitle}</p></div>}
     <div className="verification-layout">
       <section className="verification-list-card">
         <div className="verification-card-heading"><div><h2><span className="verification-accent" />{listTitle}</h2></div><span className="verification-count">{formatCount(items)} {member ? 'Permintaan Baru' : type === 'bem' ? 'Pengajuan Masuk' : 'Menunggu Tindakan'}</span></div>
@@ -55,6 +64,7 @@ function VerificationPage({ type, member = false, title, subtitle, eyebrow, list
           <div className="verification-list__header">{member ? <><span>Nama</span><span>NIM</span><span>Tanggal</span><span>Status</span></> : type === 'bem' ? <><span>Nama BEM</span><span>Kampus</span><span>Tanggal</span><span>Status</span></> : <><span>Nama Organisasi</span><span>Jenis</span><span>Tanggal</span></>}</div>
           {items.map((item) => <button type="button" key={item.id} className={`verification-row${item.id === selectedId ? ' is-selected' : ''}`} onClick={() => choose(item.id)}>{renderRow(item)}<StatusBadge status={item.status} /></button>)}
         </div>
+        {relationshipNeedsMapping && <div className="verification-empty verification-empty--mapping">Data relasi organisasi demo belum dipetakan. Pengajuan akan tampil setelah hubungan organisasi dikonfirmasi.</div>}
         {note && <div className="verification-info-note"><Icon name="shield" size={18} /><span>{note}</span></div>}
       </section>
       <section className="verification-detail-card">
