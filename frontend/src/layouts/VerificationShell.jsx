@@ -42,7 +42,7 @@ function VerificationShell() {
   return <div className="verification-shell">
     <header className="verification-header">
       <NavLink to="/verifikasi/bem" className="verification-brand">
-        <span className="verification-brand__mark"><span /><span /><span /></span>
+        <img src="/images/OrmaversLogo.png" alt="" className="verification-brand__logo" />
         <span>Ormavers</span>
       </NavLink>
       <div className="verification-account">
