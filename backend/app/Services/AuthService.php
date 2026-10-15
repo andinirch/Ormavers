@@ -26,8 +26,10 @@ class AuthService
         $token = $pengguna->createToken('auth_token')->plainTextToken;
 
         return [
-            'token' => $token,
-            'pengguna' => $this->dataPengguna($pengguna),
+            'token'       => $token,
+            'pengguna'    => $this->dataPengguna($pengguna),
+            'roles'       => $this->dataSpatie($pengguna)['roles'],
+            'permissions' => $this->dataSpatie($pengguna)['permissions'],
         ];
     }
 
@@ -72,6 +74,17 @@ class AuthService
             'peran'       => $pengguna->peran,
             'status_akun' => $pengguna->status_akun,
             'foto_profil' => $pengguna->foto_profil,
+        ];
+    }
+
+    /**
+     * Data role dan permission Spatie untuk response.
+     */
+    public function dataSpatie(Pengguna $pengguna): array
+    {
+        return [
+            'roles'       => $pengguna->getRoleNames(),
+            'permissions' => $pengguna->getAllPermissions()->pluck('name')->values(),
         ];
     }
 }
