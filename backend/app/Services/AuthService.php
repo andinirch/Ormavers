@@ -45,6 +45,7 @@ class AuthService
         $pesan = match ($pengguna->status_akun) {
             'menunggu' => 'Akun belum disetujui',
             'nonaktif' => 'Akun dinonaktifkan',
+            'ditolak'  => 'Registrasi ditolak',
             default    => 'Akun tidak dapat digunakan',
         };
 

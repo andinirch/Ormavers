@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PendaftaranOrganisasi extends Model
 {
@@ -27,6 +28,8 @@ class PendaftaranOrganisasi extends Model
         'dokumen_sk_organisasi',
         'dokumen_sk_kepengurusan',
         'status_pendaftaran',
+        'alasan_penolakan',
+        'tanggal_verifikasi',
         'tanggal_pendaftaran',
     ];
 
@@ -34,6 +37,7 @@ class PendaftaranOrganisasi extends Model
     {
         return [
             'tanggal_pendaftaran' => 'datetime',
+            'tanggal_verifikasi'  => 'datetime',
         ];
     }
 
@@ -45,5 +49,10 @@ class PendaftaranOrganisasi extends Model
     public function organisasi(): BelongsTo
     {
         return $this->belongsTo(Organisasi::class, 'id_organisasi', 'id_organisasi');
+    }
+
+    public function riwayatVerifikasi(): HasMany
+    {
+        return $this->hasMany(RiwayatVerifikasi::class, 'id_pendaftaran_organisasi', 'id_pendaftaran_organisasi');
     }
 }

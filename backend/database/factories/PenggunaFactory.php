@@ -48,4 +48,9 @@ class PenggunaFactory extends Factory
     {
         return $this->state(['status_akun' => 'nonaktif']);
     }
+
+    public function ditolak(): static
+    {
+        return $this->state(['status_akun' => 'ditolak']);
+    }
 }
