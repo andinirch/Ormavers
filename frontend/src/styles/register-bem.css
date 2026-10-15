@@ -26,6 +26,7 @@
 .rbem-login-note { color: #64748b; font-size: 10px; line-height: 1; white-space: nowrap; }
 .rbem-login { padding: 9px 18px; color: #2563eb; border: 1px solid #2563eb; border-radius: 9px; font-size: 14px; font-weight: 700; text-decoration: none; }
 .rbem-profile { display: grid; place-items: center; width: 35px; height: 35px; color: #fff; background: #60a5fa; border-radius: 50%; font-size: 14px; }
+.rbem-profile svg { width: 18px; height: 18px; display: block; }
 .rbem-main { padding: 48px 20px 30px; }
 .rbem-card { width: min(100%, 700px); box-sizing: border-box; margin: 0 auto; padding: 38px clamp(22px, 5vw, 46px) 42px; background: #fff; border-top: 5px solid #2563eb; border-radius: 16px; box-shadow: 0 15px 45px rgba(37, 99, 235, .08); }
 .rbem-card h1 { margin: 20px 0 8px; color: #0f172a; font-size: clamp(28px, 4vw, 34px); line-height: 1.15; letter-spacing: -.7px; }
