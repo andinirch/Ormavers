@@ -36,17 +36,11 @@
   font-size: 1.125rem;
 }
 
-.app-brand__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.app-brand__logo {
+  display: block;
   width: 2rem;
   height: 2rem;
-  border-radius: 0.5rem;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.875rem;
+  object-fit: contain;
 }
 
 .app-brand__text {

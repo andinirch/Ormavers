@@ -7,7 +7,7 @@ function AppShell() {
       <header className="app-header">
         <div className="app-header__inner">
           <Link to="/" className="app-brand">
-            <span className="app-brand__icon" aria-hidden="true">O</span>
+            <img src="/images/OrmaversLogo.png" alt="" className="app-brand__logo" />
             <span className="app-brand__text">Ormavers</span>
           </Link>
           <div className="app-header__actions">
