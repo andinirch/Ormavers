@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrasiBemController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\VerifikasiBemController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,27 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:administrator'])
         Route::post('/registrations/bem/{id}/approve', [VerifikasiBemController::class, 'approve'])
             ->whereNumber('id');
         Route::post('/registrations/bem/{id}/reject', [VerifikasiBemController::class, 'reject'])
+            ->whereNumber('id');
+    });
+
+// Admin Panel — Manajemen Role & Permission
+Route::middleware(['auth:sanctum', 'akun.aktif'])
+    ->prefix('admin-panel')
+    ->group(function () {
+        Route::get('/permissions', [RoleController::class, 'permissions'])
+            ->middleware('permission:view roles');
+        Route::get('/roles', [RoleController::class, 'index'])
+            ->middleware('permission:view roles');
+        Route::get('/roles/{id}', [RoleController::class, 'show'])
+            ->middleware('permission:view roles')
+            ->whereNumber('id');
+        Route::post('/roles', [RoleController::class, 'store'])
+            ->middleware('permission:create roles');
+        Route::put('/roles/{id}', [RoleController::class, 'update'])
+            ->middleware('permission:edit roles')
+            ->whereNumber('id');
+        Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
+            ->middleware('permission:delete roles')
             ->whereNumber('id');
     });
 
