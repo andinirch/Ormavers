@@ -24,25 +24,15 @@
 .login-header__brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   color: var(--login-navy);
-  font-size: 16px;
-  font-weight: 650;
   line-height: 1;
 }
 
-.login-logo__mark {
-  width: 32px;
-  height: 32px;
-  color: var(--login-electric);
-  flex: 0 0 auto;
-}
-
-.login-header__title {
-  color: #003bc4;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
+.login-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: block;
+  object-fit: contain;
 }
 
 .login-main {

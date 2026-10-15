@@ -4,18 +4,9 @@ import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
+import BrandLogo from '../components/BrandLogo.jsx'
 import { isNonEmpty, requiredError } from '../validation/rules.js'
 import '../styles/login.css'
-
-function BrandMark() {
-  return (
-    <svg className="login-logo__mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="9" fill="currentColor" />
-      <path d="m16 7 2.1 5.2L23 14l-4.9 2.1L16 21l-2.1-4.9L9 14l4.9-1.8L16 7Z" fill="white" />
-      <circle cx="16" cy="14" r="2.2" fill="currentColor" />
-    </svg>
-  )
-}
 
 function VerifiedMark() {
   return (
@@ -58,10 +49,8 @@ function LoginPage() {
     <div className="login-page">
       <header className="login-header">
         <div className="login-header__brand">
-          <BrandMark />
-          <span>Ormavers</span>
+          <BrandLogo className="login-logo" />
         </div>
-        <span className="login-header__title">Ormavers</span>
       </header>
 
       <main className="login-main">

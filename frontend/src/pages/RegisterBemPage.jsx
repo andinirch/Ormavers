@@ -4,6 +4,7 @@ import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
+import BrandLogo from '../components/BrandLogo.jsx'
 import {
   validateDocumentFile,
   validatePhotoFile,
@@ -99,7 +100,7 @@ function RegisterBemPage() {
     <div className="rbem-page">
       <header className="rbem-header">
         <Link className="rbem-brand" to="/">
-          <span className="rbem-brand__mark">O</span><span>Ormavers</span>
+          <BrandLogo className="rbem-logo" />
         </Link>
         <nav className="rbem-nav" aria-label="Navigasi utama">
           <span className="rbem-nav__active">Pendaftaran</span>
