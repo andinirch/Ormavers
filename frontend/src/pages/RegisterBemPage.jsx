@@ -109,12 +109,7 @@ function RegisterBemPage() {
             <Link className="rbem-login" to="/login">Masuk</Link>
             <span className="rbem-login-note">Sudah punya akun?</span>
           </div>
-          <span className="rbem-profile" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="3" />
-              <path d="M5.5 19c.8-3.1 3.2-5 6.5-5s5.7 1.9 6.5 5" />
-            </svg>
-          </span>
+          <span className="rbem-profile" aria-hidden="true">●</span>
         </div>
       </header>
 
