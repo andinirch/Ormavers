@@ -5,7 +5,6 @@ import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
 import { getVerifiedBem, getVerifiedHmjUkm } from '../services/orgApi.js'
 import {
   requiredError,
@@ -54,7 +53,7 @@ function UploadKtm({ fileName, error, onChange }) {
 function Header() {
   return (
     <header className="ranggota-header">
-      <Link className="ranggota-brand" to="/"><BrandLogo className="ranggota-logo" /></Link>
+      <Link className="ranggota-brand" to="/"><span className="ranggota-brand__mark">O</span><span>Ormavers</span></Link>
       <nav className="ranggota-nav" aria-label="Navigasi utama"><span className="ranggota-nav__active">Pendaftaran</span></nav>
       <div className="ranggota-header__actions"><div className="ranggota-login-group"><Link className="ranggota-login" to="/login">Masuk</Link><span className="ranggota-login-note">Sudah punya akun?</span></div><span className="ranggota-profile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.8-3.1 3.2-5 6.5-5s5.7 1.9 6.5 5" /></svg></span></div>
     </header>

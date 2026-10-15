@@ -6,7 +6,6 @@ import SelectInput from '../components/form/SelectInput.jsx'
 import RadioGroup from '../components/form/RadioGroup.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
 import { getVerifiedBem } from '../services/orgApi.js'
 import {
   isNonEmpty,
@@ -78,7 +77,8 @@ function Header() {
   return (
     <header className="rhmj-header">
       <Link className="rhmj-brand" to="/">
-        <BrandLogo className="rhmj-logo" />
+        <span className="rhmj-brand__mark">O</span>
+        <span>Ormavers</span>
       </Link>
       <nav className="rhmj-nav" aria-label="Navigasi utama">
         <span className="rhmj-nav__active">Pendaftaran</span>

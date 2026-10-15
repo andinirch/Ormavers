@@ -6,16 +6,16 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.rhmj-header { position: relative; min-height: 72px; display: flex; align-items: center; gap: 32px; padding: 0 clamp(20px, 5vw, 76px); background: #fff; border-bottom: 1px solid #e8eafa; }
-.rhmj-brand { display: inline-flex; align-items: center; color: #0f172a; text-decoration: none; }
-.rhmj-logo { width: 2.5rem; height: 2.5rem; display: block; object-fit: contain; }
-.rhmj-nav { position: absolute; left: 50%; display: flex; align-items: center; gap: 8px; margin: 0; color: #0f172a; font-size: 14px; transform: translateX(-50%); }
+.rhmj-header { min-height: 72px; display: flex; align-items: center; gap: 32px; padding: 0 clamp(20px, 5vw, 76px); background: #fff; border-bottom: 1px solid #e8eafa; }
+.rhmj-brand { display: inline-flex; align-items: center; gap: 10px; color: #0f172a; font-size: 20px; font-weight: 700; text-decoration: none; }
+.rhmj-brand__mark { display: grid; place-items: center; width: 34px; height: 34px; color: #fff; background: #2563eb; border-radius: 10px; font-size: 22px; font-weight: 800; }
+.rhmj-nav { display: flex; align-items: center; gap: 8px; margin: 0 auto; color: #0f172a; font-size: 14px; }
 .rhmj-nav span { padding: 10px 15px; white-space: nowrap; }
 .rhmj-nav__active { color: #fff !important; background: #2563eb; border-radius: 999px; }
-.rhmj-header__actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.rhmj-header__actions { display: flex; align-items: center; gap: 14px; }
 .rhmj-login-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .rhmj-login-note { color: #64748b; font-size: 10px; line-height: 1; white-space: nowrap; }
-.rhmj-login { min-width: 70px; height: 35px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 7px 14px; color: #2563eb; border: 1px solid #2563eb; border-radius: 9px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; }
+.rhmj-login { min-width: 70px; box-sizing: border-box; padding: 9px 18px; color: #2563eb; border: 1px solid #2563eb; border-radius: 9px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; }
 .rhmj-profile { display: grid; place-items: center; width: 35px; height: 35px; color: #fff; background: #0649c7; border-radius: 50%; font-size: 14px; }
 .rhmj-profile svg { width: 18px; height: 18px; display: block; }
 .rhmj-main { padding: 48px 20px 30px; }
@@ -72,7 +72,7 @@
 
 @media (max-width: 760px) {
   .rhmj-header { flex-wrap: wrap; gap: 12px 20px; padding-top: 12px; padding-bottom: 12px; }
-  .rhmj-nav { position: static; order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; margin: 0; transform: none; }
+  .rhmj-nav { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; margin: 0; }
   .rhmj-nav span { padding: 7px 10px; }
   .rhmj-main { padding-top: 24px; }
 }
@@ -81,7 +81,7 @@
   .rhmj-header { padding-left: 16px; padding-right: 16px; }
   .rhmj-header__actions { margin-left: auto; }
   .rhmj-profile { display: none; }
-  .rhmj-login { min-width: auto; height: 35px; padding: 7px 12px; }
+  .rhmj-login { min-width: auto; padding: 8px 13px; }
   .rhmj-card { padding: 28px 18px 32px; border-radius: 12px; }
   .rhmj-card h1 { font-size: 28px; }
   .rhmj-main { padding: 24px 14px 35px; }
