@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
-import FileInput from '../components/form/FileInput.jsx'
 import RadioGroup from '../components/form/RadioGroup.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
@@ -15,6 +14,7 @@ import {
   validatePhotoFile,
   validateRequiredFields,
 } from '../validation/rules.js'
+import '../styles/register-hmj-ukm.css'
 
 const initialValues = {
   bemInduk: '',
@@ -42,9 +42,57 @@ const textFields = [
 ]
 
 const jenisOptions = [
-  { value: 'hmj', label: 'HMJ' },
-  { value: 'ukm', label: 'UKM' },
+  { value: 'hmj', label: 'HMJ (Himpunan Mahasiswa Jurusan)' },
+  { value: 'ukm', label: 'UKM (Unit Kegiatan Mahasiswa)' },
 ]
+
+function UploadField({ id, name, accept, onChange, fileName, error, kind, children }) {
+  return (
+    <div className={`rhmj-upload-field ${error ? 'has-error' : ''}`}>
+      <label className={`rhmj-upload rhmj-upload--${kind}`} htmlFor={id}>
+        <input
+          id={id}
+          name={name}
+          type="file"
+          accept={accept}
+          onChange={onChange}
+          required
+          className="rhmj-upload__input"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+        />
+        {children}
+        {fileName && <span className="rhmj-upload__filename">{fileName}</span>}
+      </label>
+      {error && (
+        <p className="form-field__error" id={`${id}-error`} role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function Header() {
+  return (
+    <header className="rhmj-header">
+      <Link className="rhmj-brand" to="/">
+        <span className="rhmj-brand__mark">O</span>
+        <span>Ormavers</span>
+      </Link>
+      <nav className="rhmj-nav" aria-label="Navigasi utama">
+        <span className="rhmj-nav__active">Pendaftaran</span>
+      </nav>
+      <div className="rhmj-header__actions">
+        <div className="rhmj-login-group">
+          <Link className="rhmj-login" to="/login">Masuk</Link>
+          <span className="rhmj-login-note">Sudah punya akun?</span>
+        </div>
+        <span className="rhmj-profile" aria-hidden="true">●</span>
+      </div>
+    </header>
+  )
+}
 
 function RegisterHmjUkmPage() {
   const [values, setValues] = useState(initialValues)
@@ -97,23 +145,11 @@ function RegisterHmjUkmPage() {
       nextErrors.jenisOrganisasi = requiredError('Jenis organisasi')
     }
     const fotoError = validatePhotoFile(values.foto)
-    if (fotoError) {
-      nextErrors.foto = fotoError
-    }
-    const skOrganisasiError = validateDocumentFile(
-      values.skOrganisasi,
-      'SK Organisasi',
-    )
-    if (skOrganisasiError) {
-      nextErrors.skOrganisasi = skOrganisasiError
-    }
-    const skKepengurusanError = validateDocumentFile(
-      values.skKepengurusan,
-      'SK Kepengurusan',
-    )
-    if (skKepengurusanError) {
-      nextErrors.skKepengurusan = skKepengurusanError
-    }
+    if (fotoError) nextErrors.foto = fotoError
+    const skOrganisasiError = validateDocumentFile(values.skOrganisasi, 'SK Organisasi')
+    if (skOrganisasiError) nextErrors.skOrganisasi = skOrganisasiError
+    const skKepengurusanError = validateDocumentFile(values.skKepengurusan, 'SK Kepengurusan')
+    if (skKepengurusanError) nextErrors.skKepengurusan = skKepengurusanError
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       setStatus('idle')
@@ -122,180 +158,83 @@ function RegisterHmjUkmPage() {
     setStatus('unavailable')
   }
 
-  const bemPlaceholder = bemLoading
-    ? 'Memuat daftar BEM…'
-    : 'Pilih BEM induk'
+  const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM terverifikasi'
 
   return (
-    <>
-      <h1>Registrasi HMJ/UKM</h1>
-      <p className="auth-lead">
-        Pendaftaran HMJ atau UKM dengan memilih BEM induk yang sudah
-        terverifikasi.
-      </p>
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
-        {bemUnavailable && (
-          <FormMessage variant="info">
-            Pendaftaran HMJ/UKM belum dapat dilakukan karena daftar BEM yang
-            sudah terverifikasi belum tersedia. Informasi ini akan diperbarui
-            setelah integrasi backend.
-          </FormMessage>
-        )}
-        <section className="auth-form__section">
-          <h2 className="auth-form__section-title">A. BEM induk</h2>
-          <SelectInput
-            id="bemInduk"
-            name="bemInduk"
-            label="BEM induk"
-            value={values.bemInduk}
-            onChange={handleChange}
-            options={bemOptions}
-            placeholder={bemPlaceholder}
-            required
-            disabled={bemLoading || bemOptions.length === 0}
-            error={errors.bemInduk}
-          />
-        </section>
-        <section className="auth-form__section">
-          <h2 className="auth-form__section-title">B. Data organisasi</h2>
-          <RadioGroup
-            name="jenisOrganisasi"
-            legend="Jenis organisasi"
-            value={values.jenisOrganisasi}
-            onChange={handleChange}
-            options={jenisOptions}
-            required
-            error={errors.jenisOrganisasi}
-          />
-          <TextInput
-            id="namaOrganisasi"
-            name="namaOrganisasi"
-            label="Nama organisasi"
-            placeholder="Masukkan nama organisasi"
-            value={values.namaOrganisasi}
-            onChange={handleChange}
-            required
-            error={errors.namaOrganisasi}
-          />
-          <TextInput
-            id="teleponOrganisasi"
-            name="teleponOrganisasi"
-            label="Nomor telepon organisasi"
-            type="tel"
-            placeholder="08xxxxxxxxxx"
-            value={values.teleponOrganisasi}
-            onChange={handleChange}
-            required
-            error={errors.teleponOrganisasi}
-          />
-        </section>
-        <section className="auth-form__section">
-          <h2 className="auth-form__section-title">C. Data penanggung jawab</h2>
-          <TextInput
-            id="namaPj"
-            name="namaPj"
-            label="Nama"
-            placeholder="Masukkan nama lengkap"
-            value={values.namaPj}
-            onChange={handleChange}
-            required
-            error={errors.namaPj}
-          />
-          <TextInput
-            id="nim"
-            name="nim"
-            label="NIM"
-            placeholder="Masukkan NIM"
-            value={values.nim}
-            onChange={handleChange}
-            required
-            error={errors.nim}
-          />
-          <FileInput
-            id="foto"
-            name="foto"
-            label="Foto Selfie dengan KTM"
-            accept="image/jpeg,image/png"
-            onChange={handleFileChange('foto')}
-            required
-            hint="Upload foto selfie dengan KTM (JPG/PNG). Wajah dan KTM harus terlihat jelas, dan informasi pada KTM dapat dibaca."
-            error={errors.foto}
-            fileName={values.foto?.name}
-          />
-          <TextInput
-            id="whatsapp"
-            name="whatsapp"
-            label="Nomor WhatsApp"
-            type="tel"
-            placeholder="08xxxxxxxxxx"
-            value={values.whatsapp}
-            onChange={handleChange}
-            required
-            error={errors.whatsapp}
-          />
-          <TextInput
-            id="username"
-            name="username"
-            label="Username"
-            placeholder="Buat username"
-            value={values.username}
-            onChange={handleChange}
-            required
-            autoComplete="username"
-            error={errors.username}
-          />
-          <PasswordInput
-            id="password"
-            name="password"
-            label="Password"
-            placeholder="Masukkan password"
-            value={values.password}
-            onChange={handleChange}
-            required
-            autoComplete="new-password"
-            error={errors.password}
-          />
-        </section>
-        <section className="auth-form__section">
-          <h2 className="auth-form__section-title">D. Dokumen</h2>
-          <FileInput
-            id="skOrganisasi"
-            name="skOrganisasi"
-            label="SK Organisasi"
-            onChange={handleFileChange('skOrganisasi')}
-            required
-            hint="Format PDF, maksimal 5 MB."
-            error={errors.skOrganisasi}
-            fileName={values.skOrganisasi?.name}
-          />
-          <FileInput
-            id="skKepengurusan"
-            name="skKepengurusan"
-            label="SK Kepengurusan saat ini"
-            onChange={handleFileChange('skKepengurusan')}
-            required
-            hint="Format PDF, maksimal 5 MB."
-            error={errors.skKepengurusan}
-            fileName={values.skKepengurusan?.name}
-          />
-        </section>
-        {status === 'unavailable' && (
-          <FormMessage variant="info">
-            Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif
-            setelah integrasi backend tersedia.
-          </FormMessage>
-        )}
-        <div className="form-actions">
-          <SubmitButton>Kirim Registrasi</SubmitButton>
-        </div>
-      </form>
-      <div className="auth-register">
-        <p className="auth-register__title">Sudah memiliki akun?</p>
-        <div className="auth-actions">
-          <Link to="/login">Login</Link>
-        </div>
-      </div>
-    </>
+    <div className="rhmj-page">
+      <Header />
+      <main className="rhmj-main">
+        <div className="rhmj-integration-badge"><span aria-hidden="true">◉</span>PENDAFTARAN TERINTEGRASI ORMAWA JATIM</div>
+        <article className="rhmj-card">
+          <div className="rhmj-eyebrow"><span aria-hidden="true" />FORMULIR RESMI</div>
+          <h1>Formulir registrasi HMJ/UKM</h1>
+          <p className="rhmj-subtitle">Dilakukan oleh penanggung jawab HMJ/UKM</p>
+          <form className="auth-form rhmj-form" onSubmit={handleSubmit} noValidate>
+            {bemUnavailable && (
+              <FormMessage variant="info">
+                Pendaftaran HMJ/UKM belum dapat dilakukan karena daftar BEM yang sudah terverifikasi belum tersedia. Informasi ini akan diperbarui setelah integrasi backend.
+              </FormMessage>
+            )}
+            <section className="rhmj-section">
+              <h2>Pilih BEM induk</h2>
+              <SelectInput id="bemInduk" name="bemInduk" label="BEM induk" value={values.bemInduk} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required hint="Hanya BEM yang telah terverifikasi yang tersedia" disabled={bemLoading || bemOptions.length === 0} error={errors.bemInduk} />
+            </section>
+            <hr />
+            <section className="rhmj-section">
+              <h2>Data organisasi</h2>
+              <RadioGroup name="jenisOrganisasi" legend="Jenis" value={values.jenisOrganisasi} onChange={handleChange} options={jenisOptions} required error={errors.jenisOrganisasi} />
+              <TextInput id="namaOrganisasi" name="namaOrganisasi" label="Nama organisasi" placeholder="Contoh: HMJ Teknik Informatika atau UKM Tapak Suci" value={values.namaOrganisasi} onChange={handleChange} required error={errors.namaOrganisasi} />
+              <TextInput id="teleponOrganisasi" name="teleponOrganisasi" label="Nomor telepon organisasi" type="tel" placeholder="Contoh: 081234567890" value={values.teleponOrganisasi} onChange={handleChange} required error={errors.teleponOrganisasi} />
+            </section>
+            <hr />
+            <section className="rhmj-section">
+              <h2>Data penanggung jawab</h2>
+              <TextInput id="namaPj" name="namaPj" label="Nama penanggung jawab" placeholder="Nama lengkap" value={values.namaPj} onChange={handleChange} required error={errors.namaPj} />
+              <TextInput id="nim" name="nim" label="NIM" placeholder="Nomor Induk Mahasiswa" value={values.nim} onChange={handleChange} required error={errors.nim} />
+              <UploadField id="foto" name="foto" accept="image/jpeg,image/png" onChange={handleFileChange('foto')} required error={errors.foto} fileName={values.foto?.name} kind="photo">
+                <span className="rhmj-upload__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7.5 18.5h8.75a4.25 4.25 0 0 0 .54-8.47A5.5 5.5 0 0 0 6.1 8.9 3.75 3.75 0 0 0 7.5 18.5Z" />
+                    <path d="M12 16V10.5m0 0-2.25 2.25M12 10.5l2.25 2.25" />
+                  </svg>
+                </span>
+                <strong>Unggah foto selfie memegang KTM</strong>
+                <small>Format file: JPG atau PNG</small>
+              </UploadField>
+              <TextInput id="whatsapp" name="whatsapp" label="Nomor WhatsApp" type="tel" placeholder="Contoh: 0812xxxxxxxx" value={values.whatsapp} onChange={handleChange} required error={errors.whatsapp} />
+              <TextInput id="username" name="username" label="Username" placeholder="Buat username akun" value={values.username} onChange={handleChange} required autoComplete="username" error={errors.username} />
+              <PasswordInput id="password" name="password" label="Password" placeholder="Buat kata sandi aman" value={values.password} onChange={handleChange} required autoComplete="new-password" error={errors.password} />
+            </section>
+            <hr />
+            <section className="rhmj-section">
+              <h2>Unggah SK</h2>
+              <div className="rhmj-doc-grid">
+                <UploadField id="skOrganisasi" name="skOrganisasi" accept="application/pdf" onChange={handleFileChange('skOrganisasi')} required error={errors.skOrganisasi} fileName={values.skOrganisasi?.name} kind="document">
+                  <span className="rhmj-upload__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6.5 3.75h7l4 4v12.5H6.5z" />
+                      <path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" />
+                    </svg>
+                  </span><strong>SK Organisasi</strong><small>PDF, maksimal 2 MB</small>
+                </UploadField>
+                <UploadField id="skKepengurusan" name="skKepengurusan" accept="application/pdf" onChange={handleFileChange('skKepengurusan')} required error={errors.skKepengurusan} fileName={values.skKepengurusan?.name} kind="document">
+                  <span className="rhmj-upload__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6.5 3.75h7l4 4v12.5H6.5z" />
+                      <path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" />
+                    </svg>
+                  </span><strong>SK Kepengurusan saat ini</strong><small>PDF, maksimal 2 MB</small>
+                </UploadField>
+              </div>
+            </section>
+            {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
+            <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>
+            <p className="rhmj-note">Data kamu akan diperiksa oleh BEM induk.</p>
+          </form>
+        </article>
+      </main>
+      <footer className="rhmj-footer"><span>© 2025 Ormavers — Ekosistem Kolaborasi Ormawa Muhammadiyah Jawa Timur.</span><span><span>Panduan Layanan</span><span>Kontak Bantuan</span></span></footer>
+    </div>
   )
 }
 

@@ -1,6 +1,5 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthLayout from './components/AuthLayout.jsx'
-import HomePage from './pages/HomePage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterBemPage from './pages/RegisterBemPage.jsx'
 import RegisterHmjUkmPage from './pages/RegisterHmjUkmPage.jsx'
@@ -11,7 +10,7 @@ function App() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registrasi/bem" element={<RegisterBemPage />} />
         <Route path="/registrasi/hmj-ukm" element={<RegisterHmjUkmPage />} />
