@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RegistrasiBemController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
+
+Route::post('/register/bem', [RegistrasiBemController::class, 'register'])
+    ->middleware('throttle:registrasi-bem');
 
 // Butuh token
 Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {

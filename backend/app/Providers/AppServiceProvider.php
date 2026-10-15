@@ -27,5 +27,9 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($username.'|'.$request->ip());
         });
+
+        RateLimiter::for('registrasi-bem', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
     }
 }
