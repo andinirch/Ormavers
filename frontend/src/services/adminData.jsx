@@ -1,42 +1,58 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdminDataContext } from './AdminDataContext.jsx'
+import { getPermissions, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
+import { listUsers, storeAdministrator, deactivateAdministrator } from '../api/superadmin.js'
 
-const initialRoles = [
-  { id: 'role-anggota', name: 'anggota', permissions: 'view profile, view registration status', createdAt: '2026-10-10', isProtected: false },
-  { id: 'role-hmj', name: 'hmj/ukm', permissions: 'view members, verify members, view profile', createdAt: '2026-10-09', isProtected: false },
-  { id: 'role-bem', name: 'bem', permissions: 'view users, verify hmj/ukm, verify members, view profile', createdAt: '2026-10-08', isProtected: false },
-  { id: 'role-administrator', name: 'administrator', permissions: 'view users, create users, edit users, delete users, view roles, verify bem, verify hmj/ukm, verify members', createdAt: '2026-10-07', isProtected: false },
-  { id: 'role-super-admin', name: 'super admin', permissions: '( akses penuh, tanpa daftar permission )', createdAt: '2026-10-06', isProtected: true },
-]
+const normalizeRole = (role) => ({
+  ...role,
+  permissions: Array.isArray(role.permissions) ? role.permissions.join(', ') : (role.permissions || ''),
+  isProtected: ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota'].includes(role.name),
+})
 
-const initialOrganizations = [
-  { id: 'org-bem', name: 'Nama BEM' },
-  { id: 'org-hmj', name: 'Nama HMJ/UKM' },
-]
-
-const initialUsers = [
-  { id: 'user-001', name: 'Nama pengguna', roleId: 'role-anggota', organizationId: 'org-hmj', createdAt: '2026-10-10' },
-  { id: 'user-002', name: 'Nama pengguna', roleId: 'role-hmj', organizationId: 'org-hmj', createdAt: '2026-10-09' },
-  { id: 'user-003', name: 'Nama pengguna', roleId: 'role-bem', organizationId: 'org-bem', createdAt: '2026-10-08' },
-]
+const normalizeAdministrator = (item) => {
+  const name = item.name ?? item.nama ?? 'Pengguna'
+  return {
+    ...item,
+    id: item.id ?? item.id_pengguna,
+    name,
+    email: item.email ?? item.username,
+    role: item.role ?? item.peran,
+    roleId: item.roleId ?? item.peran,
+    status: item.status ?? item.status_akun ?? 'aktif',
+    initials: name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+    lastLoginAt: item.lastLoginAt ?? item.login_terakhir,
+  }
+}
 
 export function AdminDataProvider({ children }) {
-  const [users, setUsers] = useState(initialUsers)
-  const [roles, setRoles] = useState(initialRoles)
-  const [organizations] = useState(initialOrganizations)
+  const [roles, setRoles] = useState([])
+  const [users, setUsers] = useState([])
+  const [permissions, setPermissions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const refresh = async () => {
+    const [roleResult, userResult, permissionResult] = await Promise.allSettled([getRoles(), listUsers(), getPermissions()])
+    if (roleResult.status === 'fulfilled') setRoles((roleResult.value.data?.roles ?? []).map(normalizeRole))
+    if (userResult.status === 'fulfilled') setUsers((userResult.value.data?.users ?? []).map(normalizeAdministrator))
+    if (permissionResult.status === 'fulfilled') setPermissions(permissionResult.value.data?.permissions ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { queueMicrotask(refresh) }, [])
 
   const value = {
     users,
     roles,
-    organizations,
-    createUser: (input) => setUsers((items) => [...items, { ...input, id: `user-${Date.now()}`, createdAt: new Date().toISOString().slice(0, 10) }]),
-    updateUser: (id, input) => setUsers((items) => items.map((item) => item.id === id ? { ...item, ...input } : item)),
-    deleteUser: (id) => setUsers((items) => items.filter((item) => item.id !== id)),
-    createRole: (input) => setRoles((items) => [...items, { ...input, id: `role-${Date.now()}`, createdAt: new Date().toISOString().slice(0, 10), isProtected: false }]),
-    updateRole: (id, input) => setRoles((items) => items.map((item) => item.id === id ? { ...item, ...input } : item)),
-    deleteRole: (id) => setRoles((items) => items.filter((item) => item.id !== id)),
+    permissions,
+    organizations: [],
+    loading,
+    createRole: async (input) => { await createRoleRequest({ ...input, permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean) }); await refresh() },
+    updateRole: async (id, input) => { await updateRoleRequest(id, { ...input, permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean) }); await refresh() },
+    deleteRole: async (id) => { await deleteRoleRequest(id); await refresh() },
+    createUser: async (input) => { await storeAdministrator({ nama: input.name, username: input.username, password: input.password }); await refresh() },
+    updateUser: async () => {},
+    deleteUser: async (id) => { await deactivateAdministrator(id); await refresh() },
   }
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>
 }
-

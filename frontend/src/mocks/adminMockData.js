@@ -1,4 +1,4 @@
-export const ADMIN_USE_MOCKS = true
+export const ADMIN_USE_MOCKS = false
 
 export const mockDashboard = {
   totalUsers: 1248,

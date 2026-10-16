@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
 import { isNonEmpty, requiredError } from '../validation/rules.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/login.css'
 
 function VerifiedMark() {
@@ -21,6 +22,9 @@ function LoginPage() {
   const [values, setValues] = useState({ username: '', password: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
+  const [message, setMessage] = useState('')
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -28,8 +32,9 @@ function LoginPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setMessage('')
     const nextErrors = {}
     if (!isNonEmpty(values.username)) {
       nextErrors.username = requiredError('Username')
@@ -42,7 +47,22 @@ function LoginPage() {
       setStatus('idle')
       return
     }
-    setStatus('unavailable')
+    try {
+      await login(values)
+      navigate('/admin', { replace: true })
+    } catch (error) {
+      setStatus('error')
+      const statusCode = error.response?.status
+      const serverMessage = error.response?.data?.message
+      const nextMessage = statusCode === 401
+        ? (serverMessage ?? 'Username atau password salah.')
+        : statusCode === 403
+          ? (serverMessage ?? 'Akun tidak diizinkan untuk login.')
+          : statusCode === 429
+            ? 'Terlalu banyak percobaan login. Tunggu satu menit lalu coba lagi.'
+            : serverMessage ?? 'Server tidak dapat dihubungi. Pastikan backend sedang berjalan di port 8000.'
+      setMessage(nextMessage)
+    }
   }
 
   return (
@@ -111,12 +131,7 @@ function LoginPage() {
                 autoComplete="current-password"
                 error={errors.password}
               />
-              {status === 'unavailable' && (
-                <FormMessage variant="info">
-                  Data login Anda sudah lengkap. Fitur login akan aktif setelah
-                  integrasi backend tersedia.
-                </FormMessage>
-              )}
+              {status === 'error' && <FormMessage variant="error">{message}</FormMessage>}
               <div className="form-actions">
                 <SubmitButton>Masuk</SubmitButton>
               </div>

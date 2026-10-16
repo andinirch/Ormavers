@@ -1,6 +1,8 @@
 export const PDF_MIME = 'application/pdf'
 export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024
 export const MAX_DOCUMENT_LABEL = '5 MB'
+export const MAX_PHOTO_BYTES = 2 * 1024 * 1024
+export const MAX_PHOTO_LABEL = '2 MB'
 
 export function isNonEmpty(value) {
   if (typeof value === 'string') {
@@ -48,6 +50,9 @@ export function validatePhotoFile(file, label = 'Foto Selfie dengan KTM') {
   }
   if (!isJpgOrPngFile(file)) {
     return `${label} harus berformat JPG/JPEG atau PNG.`
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    return `${label} maksimal ${MAX_PHOTO_LABEL}.`
   }
   return null
 }

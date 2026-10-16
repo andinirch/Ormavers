@@ -10,6 +10,7 @@ import {
   validatePhotoFile,
   validateRequiredFields,
 } from '../validation/rules.js'
+import { registerBem } from '../api/register.js'
 import '../styles/register-bem.css'
 
 const initialValues = {
@@ -71,7 +72,7 @@ function RegisterBemPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const nextErrors = {
       ...validateRequiredFields(
@@ -93,7 +94,34 @@ function RegisterBemPage() {
       setStatus('idle')
       return
     }
-    setStatus('unavailable')
+    const formData = new FormData()
+    const fields = {
+      nama_instansi: values.namaInstansi,
+      nama_organisasi: values.namaOrganisasi,
+      nomor_telepon_organisasi: values.teleponOrganisasi,
+      nama: values.namaPj,
+      nim: values.nim,
+      nomor_whatsapp: values.whatsapp,
+      username: values.username,
+      password: values.password,
+      foto_ktm: values.foto,
+      sk_organisasi: values.skOrganisasi,
+      sk_kepengurusan: values.skKepengurusan,
+    }
+    Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
+    try {
+      await registerBem(formData)
+      setStatus('success')
+      setValues(initialValues)
+    } catch (error) {
+      const apiErrors = error.response?.data?.errors ?? {}
+      const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
+        { nama_instansi: 'namaInstansi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
+        messages[0],
+      ]))
+      setErrors(mappedErrors)
+      setStatus('error')
+    }
   }
 
   return (
@@ -160,11 +188,12 @@ function RegisterBemPage() {
             <section className="rbem-section">
               <SectionTitle>Unggah SK</SectionTitle>
               <div className="rbem-grid">
-                <UploadField id="skOrganisasi" name="skOrganisasi" label="SK Organisasi" accept="application/pdf" onChange={handleFileChange('skOrganisasi')} error={errors.skOrganisasi} fileName={values.skOrganisasi?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Organisasi</strong><small>PDF, maksimal 2 MB</small></UploadField>
-                <UploadField id="skKepengurusan" name="skKepengurusan" label="SK Kepengurusan saat ini" accept="application/pdf" onChange={handleFileChange('skKepengurusan')} error={errors.skKepengurusan} fileName={values.skKepengurusan?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Kepengurusan saat ini</strong><small>PDF, maksimal 2 MB</small></UploadField>
+                <UploadField id="skOrganisasi" name="skOrganisasi" label="SK Organisasi" accept="application/pdf" onChange={handleFileChange('skOrganisasi')} error={errors.skOrganisasi} fileName={values.skOrganisasi?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Organisasi</strong><small>PDF, maksimal 5 MB</small></UploadField>
+                <UploadField id="skKepengurusan" name="skKepengurusan" label="SK Kepengurusan saat ini" accept="application/pdf" onChange={handleFileChange('skKepengurusan')} error={errors.skKepengurusan} fileName={values.skKepengurusan?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Kepengurusan saat ini</strong><small>PDF, maksimal 5 MB</small></UploadField>
               </div>
             </section>
-            {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
+             {status === 'success' && <FormMessage variant="info">Registrasi berhasil dikirim dan menunggu verifikasi Administrator.</FormMessage>}
+             {status === 'error' && <FormMessage variant="error">Registrasi gagal. Periksa kembali data yang dimasukkan.</FormMessage>}
             <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>
             <p className="rbem-note">Data kamu akan diperiksa oleh Administrator.</p>
           </form>

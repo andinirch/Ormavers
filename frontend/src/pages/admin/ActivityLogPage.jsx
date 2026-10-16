@@ -1,6 +1,60 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PageIntro } from './DashboardPage.jsx'
-import { mockActivities, ADMIN_USE_MOCKS } from '../../mocks/adminMockData.js'
+import { getActivities } from '../../api/adminPanel.js'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
-function ActivityLogPage() { const [query, setQuery] = useState(''); const [type, setType] = useState(''); const [fromDate, setFromDate] = useState('2026-10-01'); const [toDate, setToDate] = useState('2026-10-14'); const [applied, setApplied] = useState({}); const fromDateRef = useRef(null); const toDateRef = useRef(null); const formatDate = (value) => value.split('-').reverse().join('/'); const openDatePicker = (ref) => { if (ref.current?.showPicker) ref.current.showPicker(); else ref.current?.click() }; const activities = useMemo(() => { const source = ADMIN_USE_MOCKS ? mockActivities : []; return source.filter((item) => (!applied.query || `${item.user} ${item.text}`.toLowerCase().includes(applied.query.toLowerCase())) && (!applied.type || item.type === applied.type)) }, [applied]); return <main className="admin-page"><PageIntro eyebrow="AUDIT TRAIL & KEAMANAN • SUPER ADMIN" title="Log Aktivitas" description="Riwayat seluruh aktivitas: login, verifikasi, moderasi, dan perubahan akun, role, serta permission secara real-time." /><section className="admin-filter-card admin-activity-filter"><label className="admin-activity-field"><span>Pengguna</span><span className="admin-activity-control"><AdminIcon name="users" /><select value={query} onChange={(event) => setQuery(event.target.value)}><option value="">Semua pengguna</option></select><span className="admin-select-chevron">⌄</span></span></label><label className="admin-activity-field"><span>Jenis aktivitas</span><span className="admin-activity-control"><AdminIcon name="filter" /><select value={type} onChange={(event) => setType(event.target.value)}><option value="">Semua jenis</option>{['Role', 'Akun', 'Verifikasi', 'Login'].map((item) => <option key={item}>{item}</option>)}</select><span className="admin-select-chevron">⌄</span></span></label><label className="admin-activity-field"><span>Dari tanggal</span><span className="admin-activity-control"><AdminIcon name="calendar" /><input className="admin-date-display" value={formatDate(fromDate)} readOnly onClick={() => openDatePicker(fromDateRef)} /><input ref={fromDateRef} className="admin-date-picker" type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></span></label><label className="admin-activity-field"><span>Sampai tanggal</span><span className="admin-activity-control"><AdminIcon name="calendar" /><input className="admin-date-display" value={formatDate(toDate)} readOnly onClick={() => openDatePicker(toDateRef)} /><input ref={toDateRef} className="admin-date-picker" type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></span></label><div className="admin-filter-actions"><button className="admin-button" onClick={() => setApplied({ query, type, fromDate, toDate })}>✓ Terapkan</button><button className="admin-button admin-button--muted" onClick={() => { setQuery(''); setType(''); setFromDate('2026-10-01'); setToDate('2026-10-14'); setApplied({}) }}>Reset</button></div></section><section className="admin-panel admin-activity-panel"><div className="admin-panel-heading"><div><h2>Catatan Log Sistem</h2><p>Real-time trail audit aktivitas ekosistem Ormavers</p></div></div><div className="admin-table-wrap"><table><thead><tr><th>WAKTU</th><th>PENGGUNA</th><th>JENIS</th><th>AKTIVITAS</th></tr></thead><tbody>{activities.map((item) => <tr key={item.id}><td><strong>{item.date}</strong><code>{item.time}</code></td><td><div className="admin-user-cell"><span className="admin-avatar admin-avatar--soft">{item.initials}</span><span><strong>{item.user}</strong><small>{item.role}</small></span></div></td><td><span className="admin-chip">● {item.type}</span></td><td>{item.text} {item.code && <code className="admin-code">{item.code}</code>}</td></tr>)}</tbody></table></div><div className="admin-pagination"><span>Menampilkan <b>1-{activities.length}</b> dari <b>1.842</b> aktivitas</span><div><button className="is-current">1</button><button>2</button><button>3</button><span>•••</span><button>231</button>›</div></div><footer className="admin-policy-footer"><span>♙ Log aktivitas disimpan secara terenkripsi dan tidak dapat diubah oleh pengguna.</span></footer></section></main> }
+
+function ActivityLogPage() {
+  const [items, setItems] = useState([])
+  const [query, setQuery] = useState('')
+  const [type, setType] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [applied, setApplied] = useState({})
+  const [error, setError] = useState('')
+  const fromDateRef = useRef(null)
+  const toDateRef = useRef(null)
+
+  useEffect(() => {
+    queueMicrotask(async () => {
+      try {
+        const result = await getActivities()
+        setItems(result.data?.activities ?? [])
+      } catch (requestError) {
+        setError(requestError.response?.data?.message ?? 'Log aktivitas tidak dapat dimuat.')
+      }
+    })
+  }, [])
+
+  const users = [...new Set(items.map((item) => item.pengguna).filter(Boolean))]
+  const types = [...new Set(items.map((item) => item.tipe).filter(Boolean))]
+  const activities = useMemo(() => items.filter((item) => {
+    const date = item.waktu?.slice(0, 10)
+    return (!applied.query || item.pengguna === applied.query)
+      && (!applied.type || item.tipe === applied.type)
+      && (!applied.fromDate || date >= applied.fromDate)
+      && (!applied.toDate || date <= applied.toDate)
+  }), [items, applied])
+  const formatDate = (value) => value ? value.split('-').reverse().join('/') : 'Pilih tanggal'
+  const formatTime = (value) => value ? new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+  const openDatePicker = (ref) => {
+    if (ref.current?.showPicker) ref.current.showPicker()
+    else ref.current?.click()
+  }
+  const apply = () => setApplied({ query, type, fromDate, toDate })
+  const reset = () => { setQuery(''); setType(''); setFromDate(''); setToDate(''); setApplied({}) }
+
+  return <main className="admin-page">
+    <PageIntro eyebrow="AUDIT TRAIL & KEAMANAN • SUPER ADMIN" title="Log Aktivitas" description="Riwayat aktivitas yang dirangkum dari pendaftaran, verifikasi, akun, dan sesi login." />
+    {error && <p className="admin-form-error">{error}</p>}
+    <section className="admin-filter-card admin-activity-filter">
+      <label className="admin-activity-field"><span>Pengguna</span><span className="admin-activity-control"><AdminIcon name="users" /><select value={query} onChange={(event) => setQuery(event.target.value)}><option value="">Semua pengguna</option>{users.map((user) => <option key={user} value={user}>{user}</option>)}</select><span className="admin-select-chevron">⌄</span></span></label>
+      <label className="admin-activity-field"><span>Jenis aktivitas</span><span className="admin-activity-control"><AdminIcon name="filter" /><select value={type} onChange={(event) => setType(event.target.value)}><option value="">Semua jenis</option>{types.map((item) => <option key={item} value={item}>{item}</option>)}</select><span className="admin-select-chevron">⌄</span></span></label>
+      <label className="admin-activity-field"><span>Dari tanggal</span><span className="admin-activity-control"><AdminIcon name="calendar" /><input type="date" ref={fromDateRef} value={fromDate} onChange={(event) => setFromDate(event.target.value)} /><button type="button" className="admin-date-display" onClick={() => openDatePicker(fromDateRef)}>{formatDate(fromDate)}</button></span></label>
+      <label className="admin-activity-field"><span>Sampai tanggal</span><span className="admin-activity-control"><AdminIcon name="calendar" /><input type="date" ref={toDateRef} value={toDate} onChange={(event) => setToDate(event.target.value)} /><button type="button" className="admin-date-display" onClick={() => openDatePicker(toDateRef)}>{formatDate(toDate)}</button></span></label>
+      <div className="admin-filter-actions"><button className="admin-button admin-button--muted" onClick={reset}>↻ Reset</button><button className="admin-button admin-users-apply" onClick={apply}><AdminIcon name="filter" size={16} />Terapkan</button></div>
+    </section>
+    <section className="admin-panel"><div className="admin-panel-heading"><div><h2>Aktivitas Terbaru</h2><p>{activities.length} aktivitas ditemukan</p></div></div>{activities.length === 0 ? <div className="admin-empty"><strong>Belum ada aktivitas tercatat</strong><span>Aktivitas akan muncul setelah ada pendaftaran, verifikasi, akun, atau login.</span></div> : <div className="admin-activity-preview">{activities.map((item) => <div className="admin-activity-row" key={item.id}><span className="admin-avatar admin-avatar--soft">{item.pengguna?.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</span><span><strong>{item.tipe}</strong> {item.teks}</span><span className="admin-activity-time">{formatTime(item.waktu)}</span></div>)}</div>}</section>
+  </main>
+}
+
 export default ActivityLogPage
