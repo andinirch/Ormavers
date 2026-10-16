@@ -7,7 +7,7 @@ import AdminIcon from '../components/admin/AdminIcon.jsx'
 import '../styles/admin.css'
 
 const groups = [
-  { label: 'MENU UTAMA', items: [['/admin', 'Dashboard', 'grid', true], ['/admin/pengguna', 'Manajemen User', 'users'], ['/admin/verifikasi-bem', 'Verifikasi BEM', 'check'], ['/admin/aktivitas', 'Log Aktivitas', 'activity']] },
+{ label: 'MENU UTAMA', items: [['/admin','Dashboard', 'grid', true], ['/admin/pengguna', 'Manajemen User', 'users'], ['/admin/aktivitas', 'Log Aktivitas', 'activity']] },
   { label: 'AKSES & KEAMANAN', items: [['/admin/roles', 'Role', 'shield'], ['/admin/permission', 'Permission', 'sliders']] },
   { label: 'AKUN', items: [['/admin/profil', 'Profil Saya', 'profile']] },
 ]
