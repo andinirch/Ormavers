@@ -1,0 +1,323 @@
+.admin-roles-page .admin-role-summary {
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-roles-page .admin-role-stat-card {
+  min-height: 7rem;
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-roles-page .admin-role-stat-card > div > span {
+  display: block;
+  color: #72798c;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.admin-roles-page .admin-role-stat-card > div > strong {
+  display: block;
+  margin: .45rem 0 0;
+  color: var(--admin-text);
+  font-size: 1.9rem;
+}
+
+.admin-roles-page .admin-role-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: .75rem;
+  background: #e8eeff;
+  color: var(--admin-primary);
+}
+
+.admin-roles-page .admin-role-panel .admin-panel-heading {
+  padding: 1.5rem 1.75rem;
+}
+
+.admin-roles-page .admin-role-tools {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.admin-roles-page .admin-role-search {
+  width: min(20rem, 100%);
+  min-width: 15rem;
+  height: 2.75rem;
+  border-radius: .6rem;
+}
+
+.admin-roles-page .admin-role-search input {
+  min-width: 0;
+}
+
+.admin-roles-page .admin-role-filter-button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border: 0;
+  border-radius: .6rem;
+  background: #eef0fb;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+}
+
+.admin-roles-page .admin-role-filter-button:hover {
+  background: #e2e5f4;
+  color: var(--admin-text);
+}
+
+.admin-roles-page .admin-role-table {
+  table-layout: fixed;
+}
+
+.admin-roles-page .admin-role-table th:nth-child(1),
+.admin-roles-page .admin-role-table td:nth-child(1) {
+  width: 4.5rem;
+}
+
+.admin-roles-page .admin-role-table th:nth-child(2),
+.admin-roles-page .admin-role-table td:nth-child(2) {
+  width: 13rem;
+}
+
+.admin-roles-page .admin-role-table th:nth-child(4),
+.admin-roles-page .admin-role-table td:nth-child(4) {
+  width: 9rem;
+}
+
+.admin-roles-page .admin-role-table th:nth-child(5),
+.admin-roles-page .admin-role-table td:nth-child(5) {
+  width: 7rem;
+}
+
+.admin-roles-page .admin-role-table th,
+.admin-roles-page .admin-role-table td {
+  padding-block: 1.05rem;
+  vertical-align: middle;
+}
+
+.admin-roles-page .admin-role-cell {
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.admin-roles-page .admin-role-badge {
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.admin-roles-page .admin-system-badge {
+  margin: 0;
+  border-radius: 999px;
+}
+
+.admin-roles-page .admin-chip-list {
+  gap: .45rem;
+}
+
+.admin-roles-page .admin-chip-list--bem .admin-code {
+  background: #d8faf5;
+  color: #0f8f83;
+}
+
+.admin-roles-page .admin-code--more {
+  background: #dce5ff;
+  color: #164fb7;
+  font-weight: 700;
+}
+
+.admin-roles-page .admin-role-date {
+  color: var(--admin-text);
+  font-family: inherit;
+  font-size: .82rem;
+}
+
+.admin-roles-page .admin-protected-description {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.admin-roles-page .admin-protected-description .admin-icon {
+  flex: none;
+}
+
+.admin-roles-page .admin-role-locked-badge {
+  justify-content: center;
+}
+
+.admin-roles-page .admin-policy-footer {
+  justify-content: flex-start;
+  gap: .6rem;
+  border-top: 1px solid var(--admin-divider);
+  padding: .9rem 1.5rem;
+}
+
+.admin-roles-page .admin-policy-footer .admin-icon {
+  flex: none;
+}
+
+@media (max-width: 64rem) {
+  .admin-roles-page .admin-role-panel .admin-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .admin-roles-page .admin-role-tools {
+    width: 100%;
+  }
+
+  .admin-roles-page .admin-role-search {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (max-width: 48rem) {
+  .admin-roles-page .admin-role-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-roles-page .admin-role-panel .admin-panel-heading {
+    padding-inline: 1.25rem;
+  }
+}
+
+.admin-roles-page .admin-role-tools {
+  flex: none;
+}
+
+.admin-roles-page .admin-role-search {
+  flex: none;
+  width: 15.5rem;
+}
+
+.admin-roles-page .admin-role-table .admin-icon-actions button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .45rem;
+}
+
+.admin-roles-page .admin-role-table .admin-icon-actions button:hover {
+  background: #eef0fb;
+  color: var(--admin-primary);
+}
+
+.admin-roles-page .admin-role-dialog {
+  width: min(42rem, 100%);
+  padding: 0;
+}
+
+.admin-roles-page .admin-role-dialog .admin-dialog-heading {
+  border-bottom: 0;
+  padding: 1.5rem 1.75rem 1rem;
+}
+
+.admin-roles-page .admin-role-dialog-title {
+  display: flex;
+  align-items: flex-start;
+  gap: .8rem;
+}
+
+.admin-roles-page .admin-role-dialog-title h2 {
+  margin: .1rem 0 .35rem;
+}
+
+.admin-roles-page .admin-role-dialog-title p {
+  max-width: 29rem;
+}
+
+.admin-roles-page .admin-role-dialog > label {
+  margin-top: .75rem;
+}
+
+.admin-roles-page .admin-role-dialog > label > input:not([type="checkbox"]) {
+  border: 0;
+  background: #f0f2ff;
+}
+
+.admin-roles-page .admin-role-dialog > label > input:disabled {
+  color: var(--admin-text-muted);
+  cursor: not-allowed;
+  opacity: .8;
+}
+
+.admin-roles-page .admin-role-dialog > label > small {
+  display: flex;
+  align-items: flex-start;
+  gap: .35rem;
+  line-height: 1.45;
+}
+
+.admin-roles-page .admin-role-dialog > label > small .admin-icon {
+  flex: none;
+  margin-top: .05rem;
+}
+
+.admin-roles-page .admin-role-dialog .admin-permission-editor-heading {
+  align-items: center;
+  padding-top: .75rem;
+}
+
+.admin-roles-page .admin-role-dialog .admin-permission-editor-heading strong,
+.admin-roles-page .admin-role-dialog .admin-permission-groups section header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.admin-roles-page .admin-role-dialog .admin-permission-groups {
+  padding-inline: 1.75rem;
+}
+
+.admin-roles-page .admin-role-dialog .admin-permission-groups section {
+  background: #f5f6fb;
+  border-radius: .75rem;
+  padding: .85rem;
+}
+
+.admin-roles-page .admin-role-dialog .admin-permission-groups label.is-selected {
+  background: #e8eeff;
+}
+
+.admin-roles-page .admin-role-dialog .admin-dialog-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.75rem;
+  border-top: 1px solid var(--admin-divider);
+}
+
+.admin-roles-page .admin-role-dialog .admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
+
+@media (max-width: 64rem) {
+  .admin-roles-page .admin-role-tools {
+    width: 100%;
+  }
+
+  .admin-roles-page .admin-role-search {
+    flex: 1;
+    width: auto;
+  }
+}

@@ -3,10 +3,13 @@ import { AdminDataContext } from './AdminDataContext.jsx'
 import { getPermissions, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
 import { listUsers, storeAdministrator, deactivateAdministrator } from '../api/superadmin.js'
 
+const ROLE_BAWAAN = ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota']
+
 const normalizeRole = (role) => ({
   ...role,
   permissions: Array.isArray(role.permissions) ? role.permissions.join(', ') : (role.permissions || ''),
-  isProtected: ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota'].includes(role.name),
+  isProtected: role.name === 'super_admin',
+  isBawaan: ROLE_BAWAAN.includes(role.name),
 })
 
 const normalizeAdministrator = (item) => {
@@ -46,12 +49,42 @@ export function AdminDataProvider({ children }) {
     permissions,
     organizations: [],
     loading,
-    createRole: async (input) => { await createRoleRequest({ ...input, permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean) }); await refresh() },
-    updateRole: async (id, input) => { await updateRoleRequest(id, { ...input, permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean) }); await refresh() },
-    deleteRole: async (id) => { await deleteRoleRequest(id); await refresh() },
-    createUser: async (input) => { await storeAdministrator({ nama: input.name, username: input.username, password: input.password }); await refresh() },
+    createRole: async (input) => {
+      const result = await createRoleRequest({
+        ...input,
+        permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean),
+      })
+      await refresh()
+      return result
+    },
+    updateRole: async (id, input) => {
+      const result = await updateRoleRequest(id, {
+        ...input,
+        permissions: input.permissions.split(',').map((item) => item.trim()).filter(Boolean),
+      })
+      await refresh()
+      return result
+    },
+    deleteRole: async (id) => {
+      const result = await deleteRoleRequest(id)
+      await refresh()
+      return result
+    },
+    createUser: async (input) => {
+      const result = await storeAdministrator({
+        nama: input.name,
+        username: input.username,
+        password: input.password,
+      })
+      await refresh()
+      return result
+    },
     updateUser: async () => {},
-    deleteUser: async (id) => { await deactivateAdministrator(id); await refresh() },
+    deleteUser: async (id) => {
+      const result = await deactivateAdministrator(id)
+      await refresh()
+      return result
+    },
   }
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>

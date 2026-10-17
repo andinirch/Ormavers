@@ -6,21 +6,48 @@ import Logo from '../components/admin/Logo.jsx'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import '../styles/admin.css'
 
-const groups = [
-{ label: 'MENU UTAMA', items: [['/admin','Dashboard', 'grid', true], ['/admin/pengguna', 'Manajemen User', 'users'], ['/admin/aktivitas', 'Log Aktivitas', 'activity']] },
-  { label: 'AKSES & KEAMANAN', items: [['/admin/roles', 'Role', 'shield'], ['/admin/permission', 'Permission', 'sliders']] },
-  { label: 'AKUN', items: [['/admin/profil', 'Profil Saya', 'profile']] },
-]
 function AdminShell() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
-  const { user, roles, logout } = useAuth()
+  const { user, roles, permissions, logout } = useAuth()
   const handleLogout = async () => {
     setOpen(false)
     await logout()
     navigate('/login', { replace: true })
   }
-  const roleLabel = roles[0]?.name ?? roles[0] ?? 'Pengguna'
+  const roleLabel = roles[0]?.name ?? roles[0] ?? user?.peran ?? 'Pengguna'
+  const isSuperAdmin = user?.peran === 'super_admin'
+  const isAdministrator = user?.peran === 'administrator'
+  const canViewRoles = permissions?.includes('view roles') || isSuperAdmin
+
+  const groups = [
+    {
+      label: 'MENU UTAMA',
+      items: [
+        ['/admin', 'Dashboard', 'grid', true],
+        ...(isSuperAdmin ? [
+          ['/admin/pengguna', 'Manajemen User', 'users'],
+          ['/admin/aktivitas', 'Log Aktivitas', 'activity'],
+        ] : []),
+        ...(isAdministrator ? [
+          ['/admin/verifikasi-bem', 'Verifikasi BEM', 'check'],
+        ] : []),
+      ],
+    },
+    ...(canViewRoles ? [{
+      label: 'AKSES & KEAMANAN',
+      items: [
+        ['/admin/roles', 'Role', 'shield'],
+        ['/admin/permission', 'Permission', 'sliders'],
+      ],
+    }] : []),
+    {
+      label: 'AKUN',
+      items: [
+        ['/admin/profil', 'Profil Saya', 'profile'],
+      ],
+    },
+  ].filter((group) => group.items.length > 0)
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => {
