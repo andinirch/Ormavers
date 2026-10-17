@@ -12,6 +12,10 @@ class RoleService
         'super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota',
     ];
 
+    public function __construct(
+        protected LogAktivitasService $logAktivitasService,
+    ) {}
+
     public function daftarPermission(): array
     {
         return Permission::all(['id', 'name'])->toArray();
@@ -37,7 +41,7 @@ class RoleService
         return $this->formatRole($role);
     }
 
-    public function buatRole(array $data): array
+    public function buatRole(array $data, int $idPelaku): array
     {
         $role = Role::create([
             'name'       => $data['name'],
@@ -47,10 +51,16 @@ class RoleService
         $role->syncPermissions($data['permissions']);
         $role->load('permissions');
 
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'role',
+            "Membuat role {$role->name}"
+        );
+
         return $this->formatRole($role);
     }
 
-    public function ubahRole(int $id, array $data): array
+    public function ubahRole(int $id, array $data, int $idPelaku): array
     {
         $role = Role::with('permissions')->find($id);
 
@@ -74,10 +84,16 @@ class RoleService
         $role->syncPermissions($data['permissions']);
         $role->load('permissions');
 
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'role',
+            "Mengubah permission role {$role->name}"
+        );
+
         return $this->formatRole($role);
     }
 
-    public function hapusRole(int $id): array
+    public function hapusRole(int $id, int $idPelaku): array
     {
         $role = Role::find($id);
 
@@ -100,7 +116,14 @@ class RoleService
             ];
         }
 
+        $namaRole = $role->name;
         $role->delete();
+
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'role',
+            "Menghapus role {$namaRole}"
+        );
 
         return ['message' => 'Role berhasil dihapus'];
     }

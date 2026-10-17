@@ -8,12 +8,16 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class AuthService
 {
+    public function __construct(
+        protected LogAktivitasService $logAktivitasService,
+    ) {}
+
     /**
      * Proses login: cari pengguna, verifikasi password, cek boleh login.
      *
      * @return array{token: string, pengguna: array}
      */
-    public function login(string $username, string $password): array
+    public function login(string $username, string $password, ?string $ip = null): array
     {
         $pengguna = Pengguna::where('username', $username)->first();
 
@@ -24,6 +28,12 @@ class AuthService
         $this->bolehLogin($pengguna);
 
         $token = $pengguna->createToken('auth_token')->plainTextToken;
+
+        $this->logAktivitasService->catat(
+            $pengguna->id_pengguna,
+            'login',
+            "Berhasil masuk ke sistem dari IP {$ip}"
+        );
 
         return [
             'token'       => $token,
@@ -45,10 +55,11 @@ class AuthService
         }
 
         $pesan = match ($pengguna->status_akun) {
-            'menunggu' => 'Akun belum disetujui',
-            'nonaktif' => 'Akun dinonaktifkan',
-            'ditolak'  => 'Registrasi ditolak',
-            default    => 'Akun tidak dapat digunakan',
+            'menunggu'     => 'Akun belum disetujui',
+            'nonaktif'     => 'Akun dinonaktifkan',
+            'ditolak'      => 'Registrasi ditolak',
+            'ditangguhkan' => 'Akun ditangguhkan',
+            default        => 'Akun tidak dapat digunakan',
         };
 
         throw new AccessDeniedHttpException($pesan);
@@ -60,6 +71,12 @@ class AuthService
     public function logout(Pengguna $pengguna): void
     {
         $pengguna->currentAccessToken()->delete();
+
+        $this->logAktivitasService->catat(
+            $pengguna->id_pengguna,
+            'logout',
+            'Keluar dari sistem'
+        );
     }
 
     /**

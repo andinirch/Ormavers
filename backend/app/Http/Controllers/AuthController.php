@@ -18,6 +18,7 @@ class AuthController extends Controller
         $result = $this->authService->login(
             $request->input('username'),
             $request->input('password'),
+            $request->ip(),
         );
 
         if (isset($result['error'])) {

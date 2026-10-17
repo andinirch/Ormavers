@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SimpanRoleRequest;
 use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
@@ -56,7 +57,10 @@ class RoleController extends Controller
 
     public function store(SimpanRoleRequest $request): JsonResponse
     {
-        $result = $this->roleService->buatRole($request->validated());
+        $result = $this->roleService->buatRole(
+            $request->validated(),
+            $request->user()->id_pengguna,
+        );
 
         return response()->json([
             'success' => true,
@@ -69,7 +73,11 @@ class RoleController extends Controller
 
     public function update(SimpanRoleRequest $request, int $id): JsonResponse
     {
-        $result = $this->roleService->ubahRole($id, $request->validated());
+        $result = $this->roleService->ubahRole(
+            $id,
+            $request->validated(),
+            $request->user()->id_pengguna,
+        );
 
         if (isset($result['error'])) {
             return response()->json([
@@ -87,9 +95,12 @@ class RoleController extends Controller
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $result = $this->roleService->hapusRole($id);
+        $result = $this->roleService->hapusRole(
+            $id,
+            $request->user()->id_pengguna,
+        );
 
         if (isset($result['error'])) {
             return response()->json([

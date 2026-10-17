@@ -25,8 +25,8 @@ class RegistrasiBemRequest extends FormRequest
             'username'                 => ['required', 'string', 'max:100', 'unique:pengguna,username'],
             'password'                 => ['required', 'string', 'min:8', 'regex:/[a-zA-Z]/', 'regex:/[0-9]/'],
             'foto_ktm'                 => ['required', 'file', 'mimes:jpg,jpeg', 'max:1024'],
-            'sk_organisasi'            => ['required', 'file', 'mimes:pdf', 'max:5120'],
-            'sk_kepengurusan'          => ['required', 'file', 'mimes:pdf', 'max:5120'],
+            'sk_organisasi'            => ['required', 'file', 'mimes:pdf', 'max:2048'],
+            'sk_kepengurusan'          => ['required', 'file', 'mimes:pdf', 'max:2048'],
         ];
     }
 
@@ -67,11 +67,11 @@ class RegistrasiBemRequest extends FormRequest
             'sk_organisasi.required'            => 'SK Organisasi wajib diunggah',
             'sk_organisasi.file'                => 'SK Organisasi harus berupa file',
             'sk_organisasi.mimes'               => 'SK Organisasi harus berformat PDF',
-            'sk_organisasi.max'                 => 'SK Organisasi maksimal 5 MB',
+            'sk_organisasi.max'                 => 'SK Organisasi maksimal 2 MB',
             'sk_kepengurusan.required'          => 'SK Kepengurusan wajib diunggah',
             'sk_kepengurusan.file'              => 'SK Kepengurusan harus berupa file',
             'sk_kepengurusan.mimes'             => 'SK Kepengurusan harus berformat PDF',
-            'sk_kepengurusan.max'               => 'SK Kepengurusan maksimal 5 MB',
+            'sk_kepengurusan.max'               => 'SK Kepengurusan maksimal 2 MB',
         ];
     }
 

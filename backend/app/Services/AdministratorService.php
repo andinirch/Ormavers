@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 class AdministratorService
 {
+    public function __construct(
+        protected LogAktivitasService $logAktivitasService,
+    ) {}
+
     /**
      * Mengambil daftar seluruh administrator, diurutkan dari yang terbaru.
      *
@@ -27,9 +31,10 @@ class AdministratorService
      * Menambahkan akun administrator baru.
      *
      * @param array{nama: string, username: string, password: string} $data
+     * @param int $idPelaku
      * @return array
      */
-    public function tambahAdministrator(array $data): array
+    public function tambahAdministrator(array $data, int $idPelaku): array
     {
         $pengguna = Pengguna::create([
             'nama'        => $data['nama'],
@@ -39,6 +44,12 @@ class AdministratorService
             'status_akun' => 'aktif',
         ]);
 
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'kelola_akun',
+            "Membuat akun Administrator baru: {$pengguna->nama} ({$pengguna->username})"
+        );
+
         return $this->formatPengguna($pengguna);
     }
 
@@ -46,9 +57,10 @@ class AdministratorService
      * Menonaktifkan akun administrator dan mencabut semua tokennya dalam satu transaksi.
      *
      * @param int $id
+     * @param int $idPelaku
      * @return array{error?: string, status?: int, administrator?: array}
      */
-    public function nonaktifkanAdministrator(int $id): array
+    public function nonaktifkanAdministrator(int $id, int $idPelaku): array
     {
         $pengguna = Pengguna::where('id_pengguna', $id)->first();
 
@@ -66,9 +78,15 @@ class AdministratorService
             ];
         }
 
-        DB::transaction(function () use ($pengguna) {
+        DB::transaction(function () use ($pengguna, $idPelaku) {
             $pengguna->update(['status_akun' => 'nonaktif']);
             $pengguna->tokens()->delete();
+
+            $this->logAktivitasService->catat(
+                $idPelaku,
+                'kelola_akun',
+                "Menonaktifkan akun Administrator: {$pengguna->nama}"
+            );
         });
 
         return [
