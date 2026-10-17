@@ -1,0 +1,212 @@
+.admin-users-page {
+  padding-bottom: 1.5rem;
+}
+
+.admin-users-page .admin-page-intro .admin-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.admin-users-page .admin-page-intro {
+  padding-top: .75rem;
+  padding-bottom: 1rem;
+}
+
+.admin-users-page .admin-summary-grid {
+  margin-bottom: .9rem;
+}
+
+.admin-users-page .admin-filter-card.admin-users-filter {
+  display: grid;
+  grid-template-columns: minmax(18rem, 30rem) minmax(10rem, 12rem) auto;
+  grid-template-areas: "search role actions" "status . .";
+  align-items: center;
+  gap: .75rem;
+  padding: 1.4rem;
+  margin-bottom: .9rem;
+}
+
+.admin-filter-card.admin-users-filter .admin-input-wrap {
+  grid-area: search;
+  min-width: 0;
+  min-height: 2.75rem;
+  border-radius: .6rem;
+  background: #f0f2ff;
+}
+
+.admin-filter-card.admin-users-filter > .admin-users-select:nth-child(2) {
+  grid-area: role;
+}
+
+.admin-filter-card.admin-users-filter > .admin-users-select:nth-child(3) {
+  grid-area: status;
+  justify-self: start;
+  width: min(100%, 12rem);
+}
+
+.admin-filter-card.admin-users-filter .admin-users-select {
+  height: 2.75rem;
+  min-width: 0;
+  border-radius: .6rem;
+  background: #f0f2ff;
+}
+
+.admin-filter-card.admin-users-filter .admin-users-select__control {
+  height: 2.75rem;
+  border-radius: .6rem;
+  background: transparent;
+  padding-right: 2.5rem;
+}
+
+.admin-filter-card.admin-users-filter .admin-select-chevron {
+  right: .85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+}
+
+.admin-filter-card.admin-users-filter .admin-filter-actions {
+  grid-area: actions;
+  align-self: center;
+  justify-content: flex-end;
+  margin-left: 0;
+  width: auto;
+}
+
+.admin-filter-card.admin-users-filter .admin-button {
+  min-height: 2.75rem;
+}
+
+.admin-filter-card.admin-users-filter .admin-button--muted {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+}
+
+.admin-filter-card.admin-users-filter .admin-button--muted:hover {
+  background: #f7f8fc;
+}
+
+.admin-filter-card.admin-users-filter .admin-users-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.admin-users-page .admin-user-role-control {
+  position: relative;
+  display: block;
+}
+
+.admin-users-page .admin-user-role-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.75rem;
+}
+
+.admin-users-page .admin-user-role-control > .admin-icon {
+  position: absolute;
+  top: 50%;
+  right: .85rem;
+  color: var(--admin-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.admin-user-panel .admin-table-wrap th,
+.admin-user-panel .admin-table-wrap td {
+  padding-block: 1.05rem;
+}
+
+.admin-user-table .admin-user-cell {
+  gap: .85rem;
+}
+
+.admin-user-table .admin-user-cell strong {
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.admin-user-table .admin-user-cell code {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--admin-text-muted);
+  font-family: inherit;
+  font-size: .75rem;
+  padding: 0;
+}
+
+.admin-user-table .admin-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: .9rem;
+}
+
+.admin-user-table .admin-avatar--tone-1 { background: #dbe3ff; color: #2563eb; }
+.admin-user-table .admin-avatar--tone-2 { background: #d8faf5; color: #0f8f83; }
+.admin-user-table .admin-avatar--tone-3 { background: #e4e3ff; color: #4f46e5; }
+.admin-user-table .admin-avatar--tone-4 { background: #ffe0e0; color: #c81e2b; }
+.admin-user-table .admin-avatar--tone-5 { background: #f3e8ff; color: #7c3aed; }
+
+.admin-user-table .admin-role-badge,
+.admin-user-table .admin-badge {
+  border-radius: 999px;
+}
+
+.admin-user-table .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.admin-user-table .admin-badge--ditolak {
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
+}
+
+.admin-user-table .admin-user-last-login {
+  font-family: inherit;
+  font-size: .75rem;
+}
+
+.admin-user-panel .admin-pagination {
+  border-top: 1px solid var(--admin-divider);
+}
+
+.admin-user-panel .admin-pagination button {
+  border-radius: .55rem;
+  padding: .6rem .8rem;
+}
+
+@media (max-width: 64rem) {
+  .admin-filter-card.admin-users-filter {
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, 12rem);
+    grid-template-areas: "search role" "status ." "actions actions";
+  }
+
+  .admin-filter-card.admin-users-filter .admin-filter-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+}
+
+@media (max-width: 48rem) {
+  .admin-filter-card.admin-users-filter {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "search" "role" "status" "actions";
+  }
+
+  .admin-filter-card.admin-users-filter > .admin-users-select:nth-child(3) {
+    width: 100%;
+  }
+
+  .admin-filter-card.admin-users-filter .admin-filter-actions {
+    display: flex;
+    width: 100%;
+  }
+
+  .admin-filter-card.admin-users-filter .admin-filter-actions .admin-button {
+    flex: 1;
+  }
+}

@@ -12,6 +12,7 @@ import RolesPage from './pages/admin/RolesPage.jsx'
 import ActivityLogPage from './pages/admin/ActivityLogPage.jsx'
 import PermissionsPage from './pages/admin/PermissionsPage.jsx'
 import ProfilePage from './pages/admin/ProfilePage.jsx'
+import VerifikasiBemPage from './pages/admin/VerifikasiBemPage.jsx'
 import RequireAuth from './context/RequireAuth.jsx'
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
       <Route path="/admin/pengguna" element={<UsersPage />} />
       <Route path="/admin/aktivitas" element={<ActivityLogPage />} />
       <Route path="/admin/permission" element={<PermissionsPage />} />
+      <Route path="/admin/verifikasi-bem" element={<VerifikasiBemPage />} />
       <Route path="/admin/profil" element={<ProfilePage />} />
         </Route>
       </Route>
