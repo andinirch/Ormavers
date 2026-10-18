@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LogAktivitas;
 use App\Models\Pengguna;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,7 +78,6 @@ class AdminPanelRoleTest extends TestCase
 
     public function test_seeder_idempoten_tanpa_duplikat(): void
     {
-        // Seeder sudah dijalankan di setUp(), jalankan sekali lagi
         $this->seed(RolePermissionSeeder::class);
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -92,11 +92,9 @@ class AdminPanelRoleTest extends TestCase
         $org  = Pengguna::factory()->akunOrganisasi()->create();
         $angg = Pengguna::factory()->create(['peran' => 'anggota', 'status_akun' => 'aktif']);
 
-        // Re-run seeder agar sinkronisasi pengguna yang baru dibuat berjalan
         $this->seed(RolePermissionSeeder::class);
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Pengguna baru sudah mendapat role via model event `saved`
         $this->assertTrue($sa->fresh()->hasRole('super_admin'));
         $this->assertTrue($adm->fresh()->hasRole('administrator'));
         $this->assertTrue($org->fresh()->hasRole('akun_bem'));
@@ -108,7 +106,7 @@ class AdminPanelRoleTest extends TestCase
     public function test_login_memuat_roles_dan_permissions(): void
     {
         Pengguna::factory()->superAdmin()->create([
-            'username' => 'sa_login_test',
+            'username'   => 'sa_login_test',
             'kata_sandi' => 'password',
         ]);
 
@@ -157,7 +155,7 @@ class AdminPanelRoleTest extends TestCase
     public function test_response_login_dan_me_tidak_memuat_kata_sandi(): void
     {
         Pengguna::factory()->superAdmin()->create([
-            'username' => 'sa_pass_test',
+            'username'   => 'sa_pass_test',
             'kata_sandi' => 'password',
         ]);
 
@@ -178,7 +176,7 @@ class AdminPanelRoleTest extends TestCase
 
     // ──── Permission Endpoint ───────────────────────────────────────
 
-    public function test_super_admin_melihat_daftar_permission(): void
+    public function test_super_admin_melihat_daftar_permission_dengan_modul_dan_roles(): void
     {
         $token = $this->tokenSuperAdmin();
 
@@ -188,12 +186,31 @@ class AdminPanelRoleTest extends TestCase
 
         $response->assertOk()
             ->assertJson(['success' => true])
-            ->assertJsonCount(14, 'data.permissions');
+            ->assertJsonCount(14, 'data.permissions')
+            ->assertJsonStructure([
+                'data' => [
+                    'permissions' => [
+                        '*' => ['id', 'name', 'modul', 'roles'],
+                    ],
+                ],
+            ]);
+
+        $perms = collect($response->json('data.permissions'));
+        $viewRoles = $perms->firstWhere('name', 'view roles');
+        $this->assertSame('Pengguna & Role', $viewRoles['modul']);
+        $this->assertContains('super_admin', $viewRoles['roles']);
+
+        $verifyBem = $perms->firstWhere('name', 'verify bem');
+        $this->assertSame('Verifikasi', $verifyBem['modul']);
+        $this->assertContains('administrator', $verifyBem['roles']);
+
+        $viewProfile = $perms->firstWhere('name', 'view profile');
+        $this->assertSame('Profil & Keanggotaan', $viewProfile['modul']);
     }
 
-    // ──── Role CRUD — Happy Path ────────────────────────────────────
+    // ──── Role Flags & CRUD — Happy Path ────────────────────────────
 
-    public function test_super_admin_melihat_daftar_role(): void
+    public function test_flags_role_benar_untuk_semua_role(): void
     {
         $token = $this->tokenSuperAdmin();
 
@@ -206,12 +223,37 @@ class AdminPanelRoleTest extends TestCase
             ->assertJsonCount(5, 'data.roles');
 
         $roles = collect($response->json('data.roles'));
-        $saRole = $roles->firstWhere('name', 'super_admin');
 
-        $this->assertArrayHasKey('jumlah_pengguna', $saRole);
-        $this->assertArrayHasKey('dibuat_pada', $saRole);
-        $this->assertArrayHasKey('permissions', $saRole);
-        $this->assertGreaterThanOrEqual(1, $saRole['jumlah_pengguna']);
+        foreach ($roles as $r) {
+            $this->assertArrayHasKey('id', $r);
+            $this->assertArrayHasKey('name', $r);
+            $this->assertArrayHasKey('permissions', $r);
+            $this->assertArrayHasKey('jumlah_pengguna', $r);
+            $this->assertArrayHasKey('bawaan', $r);
+            $this->assertArrayHasKey('terkunci', $r);
+            $this->assertArrayHasKey('akses_penuh', $r);
+            $this->assertArrayHasKey('dibuat_pada', $r);
+
+            // akses_penuh = false untuk SEMUA role
+            $this->assertFalse($r['akses_penuh']);
+
+            // bawaan = true untuk 5 role bawaan
+            $this->assertTrue($r['bawaan']);
+
+            // terkunci = true HANYA untuk super_admin
+            if ($r['name'] === 'super_admin') {
+                $this->assertTrue($r['terkunci']);
+            } else {
+                $this->assertFalse($r['terkunci']);
+            }
+        }
+
+        // permissions terisi untuk super_admin dan non-super_admin
+        $saRole = $roles->firstWhere('name', 'super_admin');
+        $this->assertNotEmpty($saRole['permissions']);
+
+        $adminRole = $roles->firstWhere('name', 'administrator');
+        $this->assertNotEmpty($adminRole['permissions']);
     }
 
     public function test_super_admin_melihat_detail_role(): void
@@ -228,21 +270,24 @@ class AdminPanelRoleTest extends TestCase
                 'success' => true,
                 'data' => [
                     'role' => [
-                        'id'   => $role->id,
-                        'name' => 'administrator',
+                        'id'          => $role->id,
+                        'name'        => 'administrator',
+                        'bawaan'      => true,
+                        'terkunci'    => false,
+                        'akses_penuh' => false,
                     ],
                 ],
             ]);
     }
 
-    public function test_super_admin_membuat_role_baru(): void
+    public function test_super_admin_membuat_role_baru_dengan_karakter_garis_miring(): void
     {
         $token = $this->tokenSuperAdmin();
 
         auth()->forgetGuards();
 
         $response = $this->postJson('/api/admin-panel/roles', [
-            'name'        => 'editor_konten',
+            'name'        => 'auditor/keuangan_1',
             'permissions' => ['view roles', 'view users'],
         ], $this->header($token));
 
@@ -251,25 +296,29 @@ class AdminPanelRoleTest extends TestCase
                 'success' => true,
                 'data' => [
                     'role' => [
-                        'name'        => 'editor_konten',
+                        'name'        => 'auditor/keuangan_1',
                         'permissions' => ['view roles', 'view users'],
+                        'bawaan'      => false,
+                        'terkunci'    => false,
+                        'akses_penuh' => false,
                     ],
                 ],
             ]);
 
-        $this->assertDatabaseHas('roles', ['name' => 'editor_konten']);
+        $this->assertDatabaseHas('roles', ['name' => 'auditor/keuangan_1']);
     }
 
-    public function test_super_admin_mengubah_permission_role_bawaan_non_super_admin(): void
+    public function test_super_admin_mengubah_nama_dan_permission_role_bawaan_non_super_admin(): void
     {
         $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('administrator', 'web');
+        $role  = Role::findByName('akun_hmj_ukm', 'web');
 
         auth()->forgetGuards();
 
+        // Mengubah nama dan permission role bawaan non-super_admin diperbolehkan
         $response = $this->putJson("/api/admin-panel/roles/{$role->id}", [
-            'name'        => 'administrator',
-            'permissions' => ['view roles'],
+            'name'        => 'akun_organisasi_kampus',
+            'permissions' => ['view profile'],
         ], $this->header($token));
 
         $response->assertOk()
@@ -277,22 +326,56 @@ class AdminPanelRoleTest extends TestCase
                 'success' => true,
                 'data' => [
                     'role' => [
-                        'name'        => 'administrator',
-                        'permissions' => ['view roles'],
+                        'name'        => 'akun_organisasi_kampus',
+                        'permissions' => ['view profile'],
                     ],
                 ],
             ]);
 
-        // Permission lama sudah terganti
         $role->refresh();
+        $this->assertSame('akun_organisasi_kampus', $role->name);
         $this->assertCount(1, $role->permissions);
+    }
+
+    public function test_super_admin_menghapus_role_bawaan_non_super_admin_jika_tidak_dipakai(): void
+    {
+        $token = $this->tokenSuperAdmin();
+        // akun_hmj_ukm belum dipakai pengguna mana pun di DB
+        $role = Role::findByName('akun_hmj_ukm', 'web');
+
+        auth()->forgetGuards();
+
+        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
+
+        $response->assertOk()
+            ->assertJson(['success' => true, 'message' => 'Role berhasil dihapus']);
+
+        $this->assertDatabaseMissing('roles', ['name' => 'akun_hmj_ukm']);
+    }
+
+    public function test_super_admin_menghapus_role_bawaan_yang_dipakai_gagal_409(): void
+    {
+        $token = $this->tokenSuperAdmin();
+        $role = Role::findByName('administrator', 'web');
+
+        // Buat administrator yang memakai role ini
+        Pengguna::factory()->administrator()->create();
+
+        auth()->forgetGuards();
+
+        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
+
+        $response->assertStatus(409)
+            ->assertJson(['success' => false]);
+
+        $this->assertStringContainsString('1 pengguna', $response->json('message'));
+        $this->assertDatabaseHas('roles', ['name' => 'administrator']);
     }
 
     public function test_super_admin_mengubah_permission_ke_daftar_kosong(): void
     {
         $token = $this->tokenSuperAdmin();
 
-        // Buat role custom dulu
         $role = Role::create(['name' => 'test_kosong', 'guard_name' => 'web']);
         $role->syncPermissions(['view roles']);
 
@@ -330,32 +413,6 @@ class AdminPanelRoleTest extends TestCase
         $this->assertDatabaseMissing('roles', ['name' => 'hapus_saya']);
     }
 
-    public function test_super_admin_mengubah_nama_dan_permission_role_custom(): void
-    {
-        $token = $this->tokenSuperAdmin();
-
-        $role = Role::create(['name' => 'role_lama', 'guard_name' => 'web']);
-        $role->syncPermissions(['view roles']);
-
-        auth()->forgetGuards();
-
-        $response = $this->putJson("/api/admin-panel/roles/{$role->id}", [
-            'name'        => 'role_baru',
-            'permissions' => ['view users', 'create users'],
-        ], $this->header($token));
-
-        $response->assertOk()
-            ->assertJson([
-                'success' => true,
-                'data' => [
-                    'role' => [
-                        'name'        => 'role_baru',
-                        'permissions' => ['view users', 'create users'],
-                    ],
-                ],
-            ]);
-    }
-
     // ──── Access Control — Gagal ────────────────────────────────────
 
     public function test_tanpa_token_401_di_semua_endpoint(): void
@@ -367,6 +424,7 @@ class AdminPanelRoleTest extends TestCase
             ['POST', '/api/admin-panel/roles'],
             ['PUT', '/api/admin-panel/roles/1'],
             ['DELETE', '/api/admin-panel/roles/1'],
+            ['GET', '/api/admin-panel/ringkasan'],
         ];
 
         foreach ($endpoints as [$method, $url]) {
@@ -386,6 +444,7 @@ class AdminPanelRoleTest extends TestCase
             ['POST', '/api/admin-panel/roles'],
             ['PUT', '/api/admin-panel/roles/1'],
             ['DELETE', '/api/admin-panel/roles/1'],
+            ['GET', '/api/admin-panel/ringkasan'],
         ];
 
         foreach ($endpoints as [$method, $url]) {
@@ -400,7 +459,7 @@ class AdminPanelRoleTest extends TestCase
         }
     }
 
-    public function test_administrator_403_di_endpoint_create_edit_delete_roles(): void
+    public function test_administrator_403_di_endpoint_create_edit_delete_roles_dan_ringkasan(): void
     {
         $token = $this->tokenPengguna('administrator');
 
@@ -408,6 +467,7 @@ class AdminPanelRoleTest extends TestCase
             ['POST', '/api/admin-panel/roles'],
             ['PUT', '/api/admin-panel/roles/1'],
             ['DELETE', '/api/admin-panel/roles/1'],
+            ['GET', '/api/admin-panel/ringkasan'],
         ];
 
         foreach ($endpoints as [$method, $url]) {
@@ -542,25 +602,9 @@ class AdminPanelRoleTest extends TestCase
             ]);
     }
 
-    // ──── Business Rules — Gagal ────────────────────────────────────
+    // ──── Business Rules — Super Admin Terkunci ────────────────────
 
-    public function test_ubah_nama_role_bawaan_403(): void
-    {
-        $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('administrator', 'web');
-
-        auth()->forgetGuards();
-
-        $response = $this->putJson("/api/admin-panel/roles/{$role->id}", [
-            'name'        => 'admin_baru',
-            'permissions' => ['view users'],
-        ], $this->header($token));
-
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
-    }
-
-    public function test_ubah_permission_super_admin_403(): void
+    public function test_ubah_role_super_admin_403(): void
     {
         $token = $this->tokenSuperAdmin();
         $role  = Role::findByName('super_admin', 'web');
@@ -568,7 +612,7 @@ class AdminPanelRoleTest extends TestCase
         auth()->forgetGuards();
 
         $response = $this->putJson("/api/admin-panel/roles/{$role->id}", [
-            'name'        => 'super_admin',
+            'name'        => 'super_admin_baru',
             'permissions' => ['view roles'],
         ], $this->header($token));
 
@@ -587,76 +631,6 @@ class AdminPanelRoleTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJson(['success' => false]);
-    }
-
-    public function test_hapus_role_administrator_403(): void
-    {
-        $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('administrator', 'web');
-
-        auth()->forgetGuards();
-
-        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
-
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
-    }
-
-    public function test_hapus_role_akun_bem_403(): void
-    {
-        $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('akun_bem', 'web');
-
-        auth()->forgetGuards();
-
-        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
-
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
-    }
-
-    public function test_hapus_role_akun_hmj_ukm_403(): void
-    {
-        $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('akun_hmj_ukm', 'web');
-
-        auth()->forgetGuards();
-
-        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
-
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
-    }
-
-    public function test_hapus_role_anggota_403(): void
-    {
-        $token = $this->tokenSuperAdmin();
-        $role  = Role::findByName('anggota', 'web');
-
-        auth()->forgetGuards();
-
-        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
-
-        $response->assertStatus(403)
-            ->assertJson(['success' => false]);
-    }
-
-    public function test_hapus_role_custom_yang_masih_dipakai_409(): void
-    {
-        $token = $this->tokenSuperAdmin();
-
-        $role = Role::create(['name' => 'role_dipakai', 'guard_name' => 'web']);
-        $pengguna = Pengguna::factory()->create(['peran' => 'anggota', 'status_akun' => 'aktif']);
-        $pengguna->assignRole($role);
-
-        auth()->forgetGuards();
-
-        $response = $this->deleteJson("/api/admin-panel/roles/{$role->id}", [], $this->header($token));
-
-        $response->assertStatus(409)
-            ->assertJson(['success' => false]);
-
-        $this->assertStringContainsString('1', $response->json('message'));
     }
 
     public function test_id_tidak_ada_404(): void
@@ -680,5 +654,61 @@ class AdminPanelRoleTest extends TestCase
         $response = $this->getJson('/api/admin-panel/roles/abc', $this->header($token));
 
         $response->assertStatus(404);
+    }
+
+    // ──── Ringkasan Dashboard Tests (A4) ────────────────────────────
+
+    public function test_super_admin_melihat_ringkasan_dashboard(): void
+    {
+        $token = $this->tokenSuperAdmin();
+
+        // Buat beberapa log aktivitas
+        $sa = Pengguna::where('peran', 'super_admin')->first();
+        LogAktivitas::create([
+            'id_pengguna'     => $sa->id_pengguna,
+            'jenis_aktivitas' => 'login',
+            'keterangan'      => 'Login sistem',
+            'waktu_aktivitas' => now()->subMinutes(10),
+        ]);
+        LogAktivitas::create([
+            'id_pengguna'     => $sa->id_pengguna,
+            'jenis_aktivitas' => 'role',
+            'keterangan'      => 'Membuat role test',
+            'waktu_aktivitas' => now()->subMinutes(5),
+        ]);
+
+        auth()->forgetGuards();
+
+        $response = $this->getJson('/api/admin-panel/ringkasan', $this->header($token));
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Ringkasan dashboard berhasil diambil',
+            ])
+            ->assertJsonStructure([
+                'data' => [
+                    'total_pengguna',
+                    'administrator_aktif',
+                    'role_terdefinisi',
+                    'permission',
+                    'aktivitas_terbaru' => [
+                        '*' => [
+                            'nama_pengguna',
+                            'jenis_aktivitas',
+                            'keterangan',
+                            'waktu_aktivitas',
+                        ],
+                    ],
+                ],
+            ]);
+
+        $data = $response->json('data');
+        $this->assertSame(Pengguna::count(), $data['total_pengguna']);
+        $this->assertSame(Role::count(), $data['role_terdefinisi']);
+        $this->assertSame(Permission::count(), $data['permission']);
+        $this->assertCount(2, $data['aktivitas_terbaru']);
+        // Terurut terbaru dulu
+        $this->assertSame('role', $data['aktivitas_terbaru'][0]['jenis_aktivitas']);
     }
 }

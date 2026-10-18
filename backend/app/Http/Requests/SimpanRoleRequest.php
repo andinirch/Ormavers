@@ -21,7 +21,7 @@ class SimpanRoleRequest extends FormRequest
         return [
             'name' => [
                 'required', 'string', 'min:3', 'max:50',
-                'regex:/^[a-z0-9_]+$/',
+                'regex:/^[a-z0-9_\/]+$/',
                 Rule::unique('roles', 'name')->ignore($roleId),
             ],
             'permissions'   => ['present', 'array'],
@@ -36,7 +36,7 @@ class SimpanRoleRequest extends FormRequest
             'name.string'       => 'Nama role harus berupa teks',
             'name.min'          => 'Nama role minimal 3 karakter',
             'name.max'          => 'Nama role maksimal 50 karakter',
-            'name.regex'        => 'Nama role hanya boleh huruf kecil, angka, dan garis bawah',
+            'name.regex'        => 'Nama role hanya boleh huruf kecil, angka, garis bawah, dan garis miring',
             'name.unique'       => 'Nama role sudah digunakan',
             'permissions.present' => 'Field permissions wajib ada',
             'permissions.array'   => 'Permissions harus berupa array',

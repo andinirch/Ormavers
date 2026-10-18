@@ -114,4 +114,13 @@ class RoleController extends Controller
             'message' => $result['message'],
         ]);
     }
+
+    public function ringkasan(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Ringkasan dashboard berhasil diambil',
+            'data'    => $this->roleService->ringkasan(),
+        ]);
+    }
 }
