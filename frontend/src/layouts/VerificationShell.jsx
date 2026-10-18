@@ -11,7 +11,7 @@ const navigationByRole = {
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member' },
   ],
   'Akun Organisasi HMJ/UKM': [
-    { to: '/verifikasi/hmj-ukm', label: 'Daftar Permintaan Anggota', icon: 'member' },
+    { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member' },
   ],
 }
 
@@ -29,14 +29,13 @@ function Icon({ name, size = 20 }) {
 
 function VerificationShell() {
   const { pathname, search } = useLocation()
-  const organizationKey = new URLSearchParams(search).get('organisasi')
-  const activeContext = pathname === '/verifikasi/administrator'
+  const activeContext = pathname.startsWith('/verifikasi/administrator')
     ? verificationContexts.administrator
-    : pathname === '/verifikasi/bem'
-      ? verificationContexts.bemUmg
-      : pathname === '/verifikasi/hmj-ukm'
-        ? verificationContexts[organizationKey === 'ukm-robotika' ? 'ukmRobotika' : 'hmif']
-        : verificationContexts[organizationKey === 'hmif' ? 'hmif' : organizationKey === 'ukm-robotika' ? 'ukmRobotika' : 'bemUmg']
+    : pathname.startsWith('/verifikasi/bem')
+      ? verificationContexts.bem
+      : pathname.startsWith('/verifikasi/hmj')
+        ? verificationContexts.hmj
+        : verificationContexts.administrator
   const navigation = navigationByRole[activeContext.role] ?? []
 
   return <div className="verification-shell">
@@ -64,7 +63,14 @@ function VerificationShell() {
       </nav>
       <span className="verification-logout is-disabled" aria-disabled="true"><Icon name="logout" /><span>Keluar</span></span>
     </aside>
-    <main className="verification-main"><Outlet /></main>
+    <main className="verification-main">
+      <div className="verification-content">
+        <Outlet />
+      </div>
+      <footer className="verification-footer">
+        © 2026 Ormavers — Platform Kolaborasi Ormawa Muhammadiyah Jawa Timur.
+      </footer>
+    </main>
   </div>
 }
 

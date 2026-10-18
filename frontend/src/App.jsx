@@ -13,6 +13,10 @@ import ActivityLogPage from './pages/admin/ActivityLogPage.jsx'
 import PermissionsPage from './pages/admin/PermissionsPage.jsx'
 import ProfilePage from './pages/admin/ProfilePage.jsx'
 import VerifikasiBemPage from './pages/admin/VerifikasiBemPage.jsx'
+import VerificationShell from './layouts/VerificationShell.jsx'
+import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
+import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
+import VerifikasiHmjPage from './pages/verifikasi/VerifikasiHmjPage.jsx'
 import RequireAuth from './context/RequireAuth.jsx'
 
 function App() {
@@ -28,13 +32,19 @@ function App() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
-      <Route path="/admin" element={<DashboardPage />} />
-      <Route path="/admin/roles" element={<RolesPage />} />
-      <Route path="/admin/pengguna" element={<UsersPage />} />
-      <Route path="/admin/aktivitas" element={<ActivityLogPage />} />
-      <Route path="/admin/permission" element={<PermissionsPage />} />
-      <Route path="/admin/verifikasi-bem" element={<VerifikasiBemPage />} />
-      <Route path="/admin/profil" element={<ProfilePage />} />
+          <Route path="/admin" element={<DashboardPage />} />
+          <Route path="/admin/roles" element={<RolesPage />} />
+          <Route path="/admin/pengguna" element={<UsersPage />} />
+          <Route path="/admin/aktivitas" element={<ActivityLogPage />} />
+          <Route path="/admin/permission" element={<PermissionsPage />} />
+          <Route path="/admin/verifikasi-bem" element={<VerifikasiBemPage />} />
+          <Route path="/admin/profil" element={<ProfilePage />} />
+        </Route>
+        <Route path="/verifikasi" element={<VerificationShell />}>
+          <Route index element={<Navigate to="administrator" replace />} />
+          <Route path="administrator" element={<VerifikasiAdministratorPage />} />
+          <Route path="bem" element={<VerifikasiBemPageNew />} />
+          <Route path="hmj" element={<VerifikasiHmjPage />} />
         </Route>
       </Route>
     </Routes>
