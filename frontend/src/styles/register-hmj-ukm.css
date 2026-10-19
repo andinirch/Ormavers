@@ -1,9 +1,11 @@
 .rhmj-page {
   min-height: 100svh;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden;
   color: #0f172a;
-  background: #f2f3ff;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f0f7ff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .rhmj-header { position: relative; min-height: 72px; display: flex; align-items: center; gap: 32px; padding: 0 clamp(20px, 5vw, 76px); background: #fff; border-bottom: 1px solid #e8eafa; }
@@ -67,9 +69,6 @@
 .rhmj-page .form-submit { width: 100%; min-height: 50px; color: #fff; background: #2563eb; border: 0; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
 .rhmj-page .form-submit:hover { background: #1d4ed8; }
 .rhmj-note { margin: 16px 0 0; color: #334155; font-size: 12px; text-align: center; }
-.rhmj-footer { display: flex; justify-content: space-between; gap: 20px; padding: 0 24px 36px; color: #334155; font-size: 11px; line-height: 1.5; }
-.rhmj-footer > span:last-child { display: flex; gap: 19px; white-space: nowrap; }
-
 @media (max-width: 760px) {
   .rhmj-header { flex-wrap: wrap; gap: 12px 20px; padding-top: 12px; padding-bottom: 12px; }
   .rhmj-nav { position: static; order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; margin: 0; transform: none; }
@@ -86,6 +85,4 @@
   .rhmj-card h1 { font-size: 28px; }
   .rhmj-main { padding: 24px 14px 35px; }
   .rhmj-form .form-radio-group, .rhmj-doc-grid { grid-template-columns: 1fr; }
-  .rhmj-footer { flex-direction: column; padding-left: 20px; padding-right: 20px; }
-  .rhmj-footer > span:last-child { white-space: normal; }
 }

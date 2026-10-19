@@ -126,7 +126,7 @@ html:has(.admin-shell) {
 }
 
 .activity-log-page .admin-activity-table {
-  min-width: 58rem;
+  min-width: 0;
   table-layout: fixed;
 }
 

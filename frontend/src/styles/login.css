@@ -192,8 +192,7 @@
 
 .login-card {
   width: calc(100% - clamp(40px, 5vw, 80px));
-  max-width: 598px;
-  min-height: min(692px, calc(100dvh - clamp(40px, 8vh, 100px)));
+  max-width: 520px;
   box-sizing: border-box;
   padding: clamp(28px, 3.125vw, 50px);
   border-radius: 18px;
@@ -402,7 +401,7 @@
   }
 
   .login-card {
-    width: min(598px, 100%);
+    width: min(520px, 100%);
     min-height: 0;
     padding: clamp(28px, 5vw, 50px);
   }

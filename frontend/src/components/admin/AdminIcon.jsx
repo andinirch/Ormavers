@@ -23,6 +23,7 @@ const icons = {
   refresh: <><path d="M20 11a8 8 0 0 0-14.8-4L4 9" /><path d="M4 4v5h5M4 13a8 8 0 0 0 14.8 4L20 15" /><path d="M20 20v-5h-5" /></>,
   save: <><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 3v5h7M8 13h8v8H8z" /></>,
   'user-x': <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="17" y1="8" x2="22" y2="13" /><line x1="22" y1="8" x2="17" y2="13" /></>,
+  'user-check': <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="m16 11 2 2 4-4" /></>,
   'chevron-down': <path d="m6 9 6 6 6-6" />,
   'chevron-left': <path d="m15 6-6 6 6 6" />,
   'chevron-right': <path d="m9 6 6 6-6 6" />,

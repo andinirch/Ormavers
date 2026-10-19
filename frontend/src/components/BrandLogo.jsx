@@ -1,7 +1,7 @@
-import logo from '../assets/OrmaversLogo.png'
+import PlatformLogo from './PlatformLogo.jsx'
 
 function BrandLogo({ className = '' }) {
-  return <img className={className} src={logo} alt="Ormavers" />
+  return <PlatformLogo variant="auth" className={className} />
 }
 
 export default BrandLogo

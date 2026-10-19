@@ -5,6 +5,7 @@ import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
+import Footer from '../components/Footer.jsx'
 import {
   validateDocumentFile,
   validatePhotoFile,
@@ -188,18 +189,17 @@ function RegisterBemPage() {
             <section className="rbem-section">
               <SectionTitle>Unggah SK</SectionTitle>
               <div className="rbem-grid">
-                <UploadField id="skOrganisasi" name="skOrganisasi" label="SK Organisasi" accept="application/pdf" onChange={handleFileChange('skOrganisasi')} error={errors.skOrganisasi} fileName={values.skOrganisasi?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Organisasi</strong><small>PDF, maksimal 5 MB</small></UploadField>
-                <UploadField id="skKepengurusan" name="skKepengurusan" label="SK Kepengurusan saat ini" accept="application/pdf" onChange={handleFileChange('skKepengurusan')} error={errors.skKepengurusan} fileName={values.skKepengurusan?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Kepengurusan saat ini</strong><small>PDF, maksimal 5 MB</small></UploadField>
+                <UploadField id="skOrganisasi" name="skOrganisasi" label="SK Organisasi" accept="application/pdf" onChange={handleFileChange('skOrganisasi')} error={errors.skOrganisasi} fileName={values.skOrganisasi?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Organisasi</strong><small>PDF, maksimal 2 MB</small></UploadField>
+                <UploadField id="skKepengurusan" name="skKepengurusan" label="SK Kepengurusan saat ini" accept="application/pdf" onChange={handleFileChange('skKepengurusan')} error={errors.skKepengurusan} fileName={values.skKepengurusan?.name} kind="document"><span className="rbem-upload__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 3.75h7l4 4v12.5H6.5z" /><path d="M13.5 3.75v4h4M12 16.5v-5m0 0-2 2m2-2 2 2" /></svg></span><strong>SK Kepengurusan saat ini</strong><small>PDF, maksimal 2 MB</small></UploadField>
               </div>
             </section>
-             {status === 'success' && <FormMessage variant="info">Registrasi berhasil dikirim dan menunggu verifikasi Administrator.</FormMessage>}
              {status === 'error' && <FormMessage variant="error">Registrasi gagal. Periksa kembali data yang dimasukkan.</FormMessage>}
             <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>
             <p className="rbem-note">Data kamu akan diperiksa oleh Administrator.</p>
           </form>
         </article>
       </main>
-      <footer className="rbem-footer"><span>© 2025 Ormavers — Ekosistem Kolaborasi Ormawa Muhammadiyah Jawa Timur.</span><span><span>Panduan Layanan</span><span>Kontak Bantuan</span></span></footer>
+      <Footer variant="full" />
     </div>
   )
 }

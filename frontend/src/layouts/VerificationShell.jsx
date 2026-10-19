@@ -1,6 +1,10 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import { verificationContexts } from '../services/verification/verificationApi.js'
 import '../styles/verification.css'
+import Footer from '../components/Footer.jsx'
+import PlatformLogo from '../components/PlatformLogo.jsx'
+import LogoutButton from '../components/LogoutButton.jsx'
 
 const navigationByRole = {
   Administrator: [
@@ -29,24 +33,31 @@ function Icon({ name, size = 20 }) {
 
 function VerificationShell() {
   const { pathname, search } = useLocation()
-  const activeContext = pathname.startsWith('/verifikasi/administrator')
-    ? verificationContexts.administrator
-    : pathname.startsWith('/verifikasi/bem')
-      ? verificationContexts.bem
-      : pathname.startsWith('/verifikasi/hmj')
-        ? verificationContexts.hmj
-        : verificationContexts.administrator
+  const { user, roles } = useAuth()
+  const sessionRole = user?.peran || roles[0]?.name || roles[0]
+  const contextKey = sessionRole === 'administrator'
+    ? 'administrator'
+    : sessionRole === 'akun_hmj_ukm'
+      ? 'hmj'
+      : 'bem'
+  const activeContext = verificationContexts[contextKey]
+  const profileName = user?.nama ?? activeContext.organizationName
+  const profileSubtitle = activeContext.role
   const navigation = navigationByRole[activeContext.role] ?? []
+  const defaultPath = contextKey === 'administrator' ? 'administrator' : contextKey === 'hmj' ? 'hmj' : 'bem'
+
+  if (pathname === '/verifikasi' || pathname === '/verifikasi/') {
+    return <Navigate to={defaultPath} replace />
+  }
 
   return <div className="verification-shell">
     <header className="verification-header">
       <NavLink to="/verifikasi/bem" className="verification-brand">
-        <img src="/images/OrmaversLogo.png" alt="" className="verification-brand__logo" />
-        <span>Ormavers</span>
+        <PlatformLogo variant="verification" />
       </NavLink>
       <div className="verification-account">
         <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
-        <span><strong>{activeContext.organizationName}</strong><small>{activeContext.role}</small></span>
+        <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
       </div>
     </header>
     <aside className="verification-sidebar">
@@ -61,15 +72,13 @@ function VerificationShell() {
         </NavLink>)}
         <span className="verification-nav__item is-disabled" aria-disabled="true"><Icon name="profile" /><span>Profil Saya</span></span>
       </nav>
-      <span className="verification-logout is-disabled" aria-disabled="true"><Icon name="logout" /><span>Keluar</span></span>
+        <LogoutButton />
     </aside>
     <main className="verification-main">
       <div className="verification-content">
         <Outlet />
       </div>
-      <footer className="verification-footer">
-        © 2026 Ormavers — Platform Kolaborasi Ormawa Muhammadiyah Jawa Timur.
-      </footer>
+      <Footer variant="content" />
     </main>
   </div>
 }

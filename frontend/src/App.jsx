@@ -12,13 +12,13 @@ import RolesPage from './pages/admin/RolesPage.jsx'
 import ActivityLogPage from './pages/admin/ActivityLogPage.jsx'
 import PermissionsPage from './pages/admin/PermissionsPage.jsx'
 import ProfilePage from './pages/admin/ProfilePage.jsx'
-import VerifikasiBemPage from './pages/admin/VerifikasiBemPage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
 import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
 import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
 import VerifikasiHmjPage from './pages/verifikasi/VerifikasiHmjPage.jsx'
 import RequireAuth from './context/RequireAuth.jsx'
-
+import AccessGuard from './context/AccessGuard.jsx'
+import ForbiddenPage from './pages/ForbiddenPage.jsx'
 function App() {
   return (
     <Routes>
@@ -28,23 +28,46 @@ function App() {
         <Route path="/registrasi/bem" element={<RegisterBemPage />} />
         <Route path="/registrasi/hmj-ukm" element={<RegisterHmjUkmPage />} />
         <Route path="/registrasi/anggota" element={<RegisterAnggotaPage />} />
+        <Route path="/403" element={<ForbiddenPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
-          <Route path="/admin" element={<DashboardPage />} />
-          <Route path="/admin/roles" element={<RolesPage />} />
-          <Route path="/admin/pengguna" element={<UsersPage />} />
-          <Route path="/admin/aktivitas" element={<ActivityLogPage />} />
-          <Route path="/admin/permission" element={<PermissionsPage />} />
-          <Route path="/admin/verifikasi-bem" element={<VerifikasiBemPage />} />
-          <Route path="/admin/profil" element={<ProfilePage />} />
+          <Route element={<AccessGuard roles={['administrator']} />}>
+            <Route path="/admin" element={<Navigate to="/admin/verifikasi-bem" replace />} />
+            <Route path="/admin/verifikasi-bem" element={<VerifikasiAdministratorPage />} />
+            <Route path="/admin/profil" element={<ProfilePage />} />
+          </Route>
+          <Route element={<AccessGuard roles={['super_admin']} />}>
+            <Route path="/superadmin" element={<DashboardPage />} />
+            <Route path="/superadmin/pengguna" element={<UsersPage />} />
+            <Route path="/admin-panel/activities" element={<ActivityLogPage />} />
+            <Route path="/superadmin/profil" element={<ProfilePage />} />
+          </Route>
+          <Route element={<AccessGuard permission="view roles" />}>
+            <Route path="/admin-panel/roles" element={<RolesPage />} />
+            <Route path="/admin-panel/permission" element={<PermissionsPage />} />
+          </Route>
+          <Route path="/admin/pengguna" element={<Navigate to="/superadmin/pengguna" replace />} />
+          <Route path="/admin/aktivitas" element={<Navigate to="/admin-panel/activities" replace />} />
+          <Route path="/superadmin/aktivitas" element={<Navigate to="/admin-panel/activities" replace />} />
+          <Route path="/admin/roles" element={<Navigate to="/admin-panel/roles" replace />} />
+          <Route path="/admin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
+          <Route path="/superadmin/roles" element={<Navigate to="/admin-panel/roles" replace />} />
+          <Route path="/superadmin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
+          <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
         </Route>
         <Route path="/verifikasi" element={<VerificationShell />}>
           <Route index element={<Navigate to="administrator" replace />} />
-          <Route path="administrator" element={<VerifikasiAdministratorPage />} />
-          <Route path="bem" element={<VerifikasiBemPageNew />} />
-          <Route path="hmj" element={<VerifikasiHmjPage />} />
+          <Route element={<AccessGuard roles={['administrator']} />}>
+            <Route path="administrator" element={<Navigate to="/admin/verifikasi-bem" replace />} />
+          </Route>
+          <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
+            <Route path="bem" element={<VerifikasiBemPageNew />} />
+          </Route>
+          <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
+            <Route path="hmj" element={<VerifikasiHmjPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

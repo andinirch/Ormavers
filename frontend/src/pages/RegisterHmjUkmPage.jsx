@@ -7,6 +7,7 @@ import RadioGroup from '../components/form/RadioGroup.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
+import Footer from '../components/Footer.jsx'
 import { getVerifiedBem } from '../services/orgApi.js'
 import {
   isNonEmpty,
@@ -238,7 +239,7 @@ function RegisterHmjUkmPage() {
           </form>
         </article>
       </main>
-      <footer className="rhmj-footer"><span>© 2025 Ormavers — Ekosistem Kolaborasi Ormawa Muhammadiyah Jawa Timur.</span><span><span>Panduan Layanan</span><span>Kontak Bantuan</span></span></footer>
+      <Footer variant="full" />
     </div>
   )
 }

@@ -196,7 +196,8 @@ export default function VerifikasiAdministratorPage() {
   }
 
   return (
-    <div className="verification-page">
+    <main className="admin-page verification-admin-page verification-administrator-page">
+      <div className="verification-page">
       <div className="verification-page__heading">
         <div className="verification-eyebrow">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -433,6 +434,7 @@ export default function VerifikasiAdministratorPage() {
       )}
 
       <Toast message={toastMessage} onClose={() => setToastMessage('')} />
-    </div>
+      </div>
+    </main>
   )
 }

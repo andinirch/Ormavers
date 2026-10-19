@@ -182,7 +182,7 @@ export default function VerifikasiBemPage() {
   const pendingCount = items.filter((it) => it.status === 'menunggu').length
 
   return (
-    <div className="verification-page">
+    <div className="verification-page verification-bem-page">
       <div className="verification-page__heading">
         <div className="verification-eyebrow">
           <ShieldCheckIcon />
@@ -222,7 +222,6 @@ export default function VerifikasiBemPage() {
                   <span>Nama Organisasi</span>
                   <span>Jenis</span>
                   <span>Tanggal</span>
-                  <span>Status</span>
                 </>
               )}
             </div>
@@ -259,12 +258,10 @@ export default function VerifikasiBemPage() {
                           <b>{item.initials}</b>
                           <span>
                             <strong>{item.namaOrganisasi}</strong>
-                            <small>ID: {item.kode}</small>
                           </span>
                         </span>
                         <em>{item.jenis}</em>
                         <span>{item.tanggal}</span>
-                        <em style={{ textTransform: 'capitalize' }}>{item.status}</em>
                       </>
                     )}
                   </button>

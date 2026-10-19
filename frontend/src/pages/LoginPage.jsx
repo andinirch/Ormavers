@@ -48,8 +48,19 @@ function LoginPage() {
       return
     }
     try {
-      await login(values)
-      navigate('/admin', { replace: true })
+      const result = await login(values)
+      const loggedInUser = result?.data?.pengguna
+      const loggedInRoles = (result?.data?.roles ?? []).map((role) => typeof role === 'string' ? role : role?.name)
+      const destination = loggedInUser?.peran === 'super_admin'
+        ? '/superadmin'
+        : loggedInUser?.peran === 'administrator'
+          ? '/admin/verifikasi-bem'
+          : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
+            ? '/verifikasi/bem'
+            : loggedInRoles.includes('akun_hmj_ukm') || loggedInUser?.peran === 'akun_hmj_ukm'
+              ? '/verifikasi/hmj'
+              : '/403'
+      navigate(destination, { replace: true })
     } catch (error) {
       setStatus('error')
       const statusCode = error.response?.status
@@ -98,7 +109,7 @@ function LoginPage() {
           </div>
           <div className="login-hero__footer">
             <VerifiedMark />
-            <span>Ekosistem Digital Resmi Ormawa PTMA Jatim</span>
+            <span>Platform Digital Resmi Ormawa PTMA Jatim</span>
           </div>
         </section>
 

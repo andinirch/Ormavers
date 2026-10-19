@@ -32,7 +32,7 @@ function DashboardPage() {
             <h2>Aktivitas Terbaru</h2>
             <p>Audit jejak operasional institusi</p>
           </div>
-          <Link to="/admin/aktivitas">Lihat semua log →</Link>
+          <Link to="/admin-panel/activities">Lihat semua log →</Link>
         </div>
         {data.activities.length ? (
           <div className="admin-activity-preview">

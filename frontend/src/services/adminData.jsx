@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AdminDataContext } from './AdminDataContext.jsx'
 import { getPermissions, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
-import { listUsers, storeAdministrator, deactivateAdministrator } from '../api/superadmin.js'
+import { listAdministrators, storeAdministrator, deactivateAdministrator } from '../api/superadmin.js'
 
 const ROLE_BAWAAN = ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota']
 
@@ -34,9 +34,9 @@ export function AdminDataProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
-    const [roleResult, userResult, permissionResult] = await Promise.allSettled([getRoles(), listUsers(), getPermissions()])
+    const [roleResult, userResult, permissionResult] = await Promise.allSettled([getRoles(), listAdministrators(), getPermissions()])
     if (roleResult.status === 'fulfilled') setRoles((roleResult.value.data?.roles ?? []).map(normalizeRole))
-    if (userResult.status === 'fulfilled') setUsers((userResult.value.data?.users ?? []).map(normalizeAdministrator))
+    if (userResult.status === 'fulfilled') setUsers((userResult.value.data?.administrators ?? []).map(normalizeAdministrator))
     if (permissionResult.status === 'fulfilled') setPermissions(permissionResult.value.data?.permissions ?? [])
     setLoading(false)
   }

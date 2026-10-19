@@ -101,7 +101,7 @@
 
 .admin-permission-page .admin-permission-table {
   table-layout: fixed;
-  min-width: 64rem;
+  min-width: 0;
 }
 
 .admin-permission-page .admin-permission-col-number {

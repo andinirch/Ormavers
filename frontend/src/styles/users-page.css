@@ -1,5 +1,20 @@
 .admin-users-page {
+  width: 100%;
+  box-sizing: border-box;
+  padding-inline: 2rem;
   padding-bottom: 1.5rem;
+}
+
+@media (max-width: 64rem) {
+  .admin-users-page {
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  .admin-users-page {
+    padding-inline: 1rem;
+  }
 }
 
 .admin-users-page .admin-page-intro .admin-button {
@@ -19,7 +34,7 @@
 
 .admin-users-page .admin-filter-card.admin-users-filter {
   display: grid;
-  grid-template-columns: minmax(18rem, 30rem) minmax(10rem, 12rem) auto;
+  grid-template-columns: minmax(18rem, 24rem) minmax(10rem, 12rem) auto;
   grid-template-areas: "search role actions" "status . .";
   align-items: center;
   gap: .75rem;
@@ -33,6 +48,10 @@
   min-height: 2.75rem;
   border-radius: .6rem;
   background: #f0f2ff;
+}
+
+.admin-filter-card.admin-users-filter .admin-input-wrap input::placeholder {
+  font-size: 13px;
 }
 
 .admin-filter-card.admin-users-filter > .admin-users-select:nth-child(2) {
@@ -57,13 +76,19 @@
   border-radius: .6rem;
   background: transparent;
   padding-right: 2.5rem;
+  font-size: 13px;
 }
 
 .admin-filter-card.admin-users-filter .admin-select-chevron {
   right: .85rem;
   top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1rem;
   transform: translateY(-50%);
   line-height: 1;
+  font-size: 14px;
 }
 
 .admin-filter-card.admin-users-filter .admin-filter-actions {

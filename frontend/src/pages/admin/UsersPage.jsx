@@ -105,8 +105,8 @@ function UsersPage() {
     <main className="admin-page admin-users-page">
       <PageIntro
         eyebrow="AKSES PENGGUNA • SUPER ADMIN"
-        title="Manajemen User"
-        description="Kelola akun, role, dan status seluruh pengguna Ormavers dalam ekosistem kampus."
+        title="Manajemen Administrator"
+        description="Kelola akun Administrator untuk mendukung pengelolaan platform Ormavers."
         actions={<button className="admin-button" onClick={() => setCreating(true)}><AdminIcon name="plus" size={16} />Tambah Administrator</button>}
       />
       {actionError && <p className="admin-form-error" style={{ margin: '0 0 1rem' }}>{actionError}</p>}

@@ -36,13 +36,6 @@ export function DocumentModal({ title, url, fileName, type = 'pdf', onClose }) {
             </>
           )}
         </div>
-        {url && (
-          <div style={{ marginTop: '16px', textAlign: 'center' }}>
-            <a href={url} target="_blank" rel="noopener noreferrer" className="verification-button verification-button--approve" style={{ display: 'inline-block', padding: '10px 20px', textDecoration: 'none', minHeight: 'auto', fontSize: '14px' }}>
-              Buka di Tab Baru
-            </a>
-          </div>
-        )}
       </div>
     </div>
   )
