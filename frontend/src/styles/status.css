@@ -13,6 +13,9 @@
 }
 
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -41,10 +44,6 @@
   width: 2rem;
   height: 2rem;
   object-fit: contain;
-}
-
-.app-brand__text {
-  letter-spacing: -0.025em;
 }
 
 .app-nav {
@@ -124,39 +123,6 @@
   padding: 2.5rem 1.5rem;
 }
 
-/* --- Footer --- */
-
-.app-footer {
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
-}
-
-.app-footer__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem 1.5rem;
-  font-size: 0.8125rem;
-  color: #94a3b8;
-}
-
-.app-footer__copy {
-  margin: 0;
-}
-
-.app-footer__links {
-  display: flex;
-  gap: 1.25rem;
-}
-
-.app-footer__link {
-  color: #94a3b8;
-  cursor: default;
-  opacity: 0.6;
-}
-
 /* --- Page Header --- */
 
 .status-page {
@@ -206,7 +172,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   padding: 1.5rem;
   width: 100%;
-  max-width: 480px;
+  max-width: 360px;
 }
 
 .status-card__header {
@@ -269,9 +235,32 @@
   background: #fee2e2;
 }
 
-.status-pill__icon {
-  font-size: 0.875rem;
+.status-pill--unknown {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.status-pill__fallback-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.625rem;
   line-height: 1;
+}
+
+.status-pill__svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  flex-shrink: 0;
 }
 
 /* --- Menunggu body --- */
@@ -300,9 +289,25 @@
 }
 
 .status-info-box__icon {
-  font-size: 1.125rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 0.5rem;
   flex-shrink: 0;
-  line-height: 1.2;
+}
+
+.status-info-box__svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.25;
 }
 
 .status-info-box__content strong {
@@ -336,9 +341,24 @@
   background: #1d4ed8;
 }
 
+.status-btn-login {
+  width: min(100%, 240px);
+  margin: 1.25rem auto 0;
+}
+
 .status-btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.status-btn-primary__send-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
 }
 
 .status-btn-primary__spinner {
@@ -356,6 +376,12 @@
 }
 
 /* --- Ditolak body --- */
+
+.status-upload-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
 
 .status-section-label {
   margin: 0 0 0.5rem;
@@ -381,9 +407,19 @@
 }
 
 .rejection-box__icon {
-  font-size: 1.125rem;
+  display: inline-flex;
   flex-shrink: 0;
   line-height: 1.2;
+}
+
+.rejection-box__svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
 }
 
 /* --- Upload dropzone --- */
@@ -415,8 +451,24 @@
 }
 
 .upload-dropzone__icon {
-  font-size: 1.5rem;
-  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.upload-dropzone__svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
 }
 
 .upload-dropzone__label {
@@ -427,7 +479,7 @@
 
 .upload-dropzone__hint {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .upload-dropzone__input {
@@ -490,15 +542,43 @@
   animation: status-spin 0.6s linear infinite;
 }
 
-/* --- Unavailable message --- */
+/* --- Status messages --- */
 
-.status-unavailable {
+.status-unavailable,
+.status-message {
   text-align: center;
   padding: 2rem 1rem;
   font-size: 0.9375rem;
   color: #64748b;
   max-width: 480px;
   margin: 0 auto;
+}
+
+.status-message p {
+  margin: 0 0 1rem;
+}
+
+.status-message--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+}
+
+.status-btn-secondary {
+  padding: 0.625rem 1rem;
+  color: #2563eb;
+  font: inherit;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid #2563eb;
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+
+.status-btn-secondary:hover {
+  color: #fff;
+  background: #2563eb;
 }
 
 /* --- Responsive --- */
@@ -532,11 +612,6 @@
     max-width: 100%;
   }
 
-  .app-footer__inner {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
 }
 
 @media (max-width: 480px) {
