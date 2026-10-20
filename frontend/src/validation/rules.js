@@ -1,6 +1,6 @@
 export const PDF_MIME = 'application/pdf'
-export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024
-export const MAX_DOCUMENT_LABEL = '5 MB'
+export const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
+export const MAX_DOCUMENT_LABEL = '2 MB'
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024
 export const MAX_PHOTO_LABEL = '2 MB'
 
