@@ -2,9 +2,10 @@ import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { verificationContexts } from '../services/verification/verificationApi.js'
 import '../styles/verification.css'
+import '../styles/sidebar.css'
 import Footer from '../components/Footer.jsx'
 import PlatformLogo from '../components/PlatformLogo.jsx'
-import LogoutButton from '../components/LogoutButton.jsx'
+import Sidebar from '../components/Sidebar.jsx'
 
 const navigationByRole = {
   Administrator: [
@@ -44,6 +45,18 @@ function VerificationShell() {
   const profileName = user?.nama ?? activeContext.organizationName
   const profileSubtitle = activeContext.role
   const navigation = navigationByRole[activeContext.role] ?? []
+  const groups = [{
+    label: 'MENU UTAMA',
+    items: navigation.map((item) => ({
+      ...item,
+      end: false,
+      isActive: (isActive) => {
+        const itemQuery = new URL(item.to, window.location.origin).search
+        const currentQuery = new URLSearchParams(search).toString()
+        return isActive && (itemQuery ? itemQuery === `?${currentQuery}` : true)
+      },
+    })),
+  }]
   const defaultPath = contextKey === 'administrator' ? 'administrator' : contextKey === 'hmj' ? 'hmj' : 'bem'
 
   if (pathname === '/verifikasi' || pathname === '/verifikasi/') {
@@ -60,25 +73,12 @@ function VerificationShell() {
         <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
       </div>
     </header>
-    <aside className="verification-sidebar">
-      <nav aria-label="Navigasi verifikasi">
-        {navigation.map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => {
-          const itemQuery = new URL(item.to, window.location.origin).search
-          const currentQuery = new URLSearchParams(search).toString()
-          const queryMatches = itemQuery === `?${currentQuery}`
-          return `verification-nav__item${isActive && (itemQuery ? queryMatches : true) ? ' is-active' : ''}`
-        }}>
-          <Icon name={item.icon} /> <span>{item.label}</span>
-        </NavLink>)}
-        <span className="verification-nav__item is-disabled" aria-disabled="true"><Icon name="profile" /><span>Profil Saya</span></span>
-      </nav>
-        <LogoutButton />
-    </aside>
+    <Sidebar groups={groups} logoTo="/verifikasi/bem" ariaLabel="Navigasi verifikasi" showBrand={false} variant="verification" />
     <main className="verification-main">
       <div className="verification-content">
         <Outlet />
       </div>
-      <Footer variant="content" />
+      <Footer variant="verification" />
     </main>
   </div>
 }

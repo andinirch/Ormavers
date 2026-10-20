@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import AppShell from './layouts/AppShell.jsx'
+import RegistrationStatusPage from './pages/RegistrationStatusPage.jsx'
 import AuthLayout from './components/AuthLayout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterBemPage from './pages/RegisterBemPage.jsx'
@@ -22,6 +24,9 @@ import ForbiddenPage from './pages/ForbiddenPage.jsx'
 function App() {
   return (
     <Routes>
+      <Route element={<AppShell />}>
+        <Route path="/status-registrasi" element={<RegistrationStatusPage />} />
+      </Route>
       <Route element={<AuthLayout />}>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
