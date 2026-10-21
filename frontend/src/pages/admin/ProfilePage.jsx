@@ -15,22 +15,10 @@ function ProfilePage() {
       <section className="admin-panel admin-profile-card">
         <div className="admin-profile-avatar">{initials}</div>
         <div className="admin-profile-details">
-          <div>
-            <span>Nama</span>
-            <strong>{nama}</strong>
-          </div>
-          <div>
-            <span>Username</span>
-            <strong>{username}</strong>
-          </div>
-          <div>
-            <span>Role</span>
-            <strong style={{ textTransform: 'capitalize' }}>{roleName.replace(/_/g, ' ')}</strong>
-          </div>
-          <div>
-            <span>Status Akun</span>
-            <strong style={{ textTransform: 'capitalize' }}>{statusAkun}</strong>
-          </div>
+          <div><span>Nama</span><strong>{nama}</strong></div>
+          <div><span>Username</span><strong>{username}</strong></div>
+          <div><span>Role</span><strong style={{ textTransform: 'capitalize' }}>{String(roleName).replace(/_/g, ' ')}</strong></div>
+          <div><span>Status Akun</span><strong style={{ textTransform: 'capitalize' }}>{statusAkun}</strong></div>
         </div>
         <p className="admin-profile-note">Data profil bersifat read-only. Perubahan data diri, kata sandi, dan foto profil belum didukung oleh backend API.</p>
       </section>
