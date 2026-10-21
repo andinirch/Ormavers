@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('ukuran_kb');
             $table->timestamp('diunggah_pada')->useCurrent();
 
-            $table->unique(['id_pendaftaran_organisasi', 'jenis_dokumen']);
+            $table->unique(['id_pendaftaran_organisasi', 'jenis_dokumen'], 'pend_org_file_unique');
         });
     }
 

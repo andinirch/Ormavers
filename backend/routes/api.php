@@ -4,6 +4,7 @@ use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrasiBemController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StatusRegistrasiController;
 use App\Http\Controllers\UniversitasController;
 use App\Http\Controllers\VerifikasiBemController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,14 @@ Route::post('/auth/login', [AuthController::class, 'login'])
 
 Route::post('/register/bem', [RegistrasiBemController::class, 'register'])
     ->middleware('throttle:registrasi-bem');
+
+// Status Registrasi & Logout Registrasi
+Route::middleware(['auth:sanctum', 'akses.status.registrasi'])->group(function () {
+    Route::get('/registration/status', [StatusRegistrasiController::class, 'status'])
+        ->middleware('throttle:30,1');
+    Route::post('/registration/resubmit-sk', [StatusRegistrasiController::class, 'resubmitSk']);
+    Route::post('/registration/logout', [StatusRegistrasiController::class, 'logout']);
+});
 
 // Butuh token
 Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {

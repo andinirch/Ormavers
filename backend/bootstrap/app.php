@@ -22,11 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'peran'              => PeranMiddleware::class,
-            'akun.aktif'         => AkunAktifMiddleware::class,
-            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'peran'                   => PeranMiddleware::class,
+            'akun.aktif'              => AkunAktifMiddleware::class,
+            'akses.status.registrasi' => \App\Http\Middleware\AksesStatusRegistrasiMiddleware::class,
+            'permission'              => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role'                    => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role_or_permission'      => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

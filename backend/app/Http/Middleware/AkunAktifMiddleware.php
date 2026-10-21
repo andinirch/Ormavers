@@ -12,11 +12,20 @@ class AkunAktifMiddleware
     {
         $pengguna = $request->user();
 
-        if ($pengguna && $pengguna->status_akun !== 'aktif') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akun dinonaktifkan',
-            ], 403);
+        if ($pengguna) {
+            if (! $pengguna->tokenCan('*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Silakan login ulang',
+                ], 403);
+            }
+
+            if ($pengguna->status_akun !== 'aktif') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun dinonaktifkan',
+                ], 403);
+            }
         }
 
         return $next($request);

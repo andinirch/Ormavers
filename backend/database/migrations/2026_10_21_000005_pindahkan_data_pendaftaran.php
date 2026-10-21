@@ -72,6 +72,7 @@ return new class extends Migration
                     'jenis_organisasi'   => $p->jenis_organisasi,
                     'nomor_telepon'      => $p->nomor_telepon_organisasi ?? '0',
                     'status_organisasi'  => 'menunggu',
+                    'nama_instansi'      => $namaInstansi,
                     'dibuat_pada'        => now(),
                     'diperbarui_pada'    => now(),
                 ]);
@@ -184,6 +185,11 @@ return new class extends Migration
         // 4. Terapkan constraint NOT NULL, UNIQUE, FK, dan drop kolom lama pada organisasi
         if ($driver === 'mysql') {
             Schema::table('organisasi', function (Blueprint $table) {
+                // Tambahkan baris drop foreign key ini untuk melepas aturan SET NULL lama
+                try {
+                    $table->dropForeign('organisasi_id_pengguna_akun_foreign');
+                } catch (\Throwable $e) {}
+
                 $table->unsignedBigInteger('id_universitas')->nullable(false)->change();
                 $table->unsignedBigInteger('id_akun_organisasi')->nullable(false)->change();
                 $table->string('nomor_telepon', 20)->nullable(false)->change();

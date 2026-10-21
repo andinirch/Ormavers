@@ -345,11 +345,27 @@ class VerifikasiBemTest extends TestCase
             'password' => 'password',
         ]);
 
-        $loginResponse->assertStatus(403)
+        $loginResponse->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'message' => 'Registrasi ditolak',
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
             ]);
+
+        $tokenTerbatas = $loginResponse->json('data.token');
+        auth()->forgetGuards();
+
+        // Token terbatas tidak dapat mengakses rute biasa
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $tokenTerbatas,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
     }
 
     public function test_dokumen_dapat_diunduh_oleh_administrator(): void

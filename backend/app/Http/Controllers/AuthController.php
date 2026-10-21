@@ -28,6 +28,21 @@ class AuthController extends Controller
             ], $result['status']);
         }
 
+        if (isset($result['akses_terbatas']) && $result['akses_terbatas']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data'    => [
+                    'token'          => $result['token'],
+                    'token_type'     => 'Bearer',
+                    'akses_terbatas' => true,
+                    'pengguna'       => $result['pengguna'],
+                    'roles'          => $result['roles'],
+                    'permissions'    => $result['permissions'],
+                ],
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Login berhasil',

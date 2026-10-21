@@ -225,11 +225,27 @@ class RegistrasiBemTest extends TestCase
             'password' => 'Password123',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'message' => 'Akun belum disetujui',
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
             ]);
+
+        $token = $response->json('data.token');
+        auth()->forgetGuards();
+
+        // Token terbatas tidak dapat mengakses rute biasa
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $token,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
     }
 
     public function test_registrasi_berhasil_jika_bem_sebelumnya_berstatus_ditolak(): void

@@ -170,7 +170,7 @@ class AuthTest extends TestCase
     }
 
     // -------------------------------------------------------
-    // 7. Status menunggu → 403
+    // 7. Status menunggu dan ditolak → Login Terbatas 200
     // -------------------------------------------------------
 
     public function test_status_menunggu(): void
@@ -182,11 +182,61 @@ class AuthTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'message' => 'Akun belum disetujui',
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
             ]);
+
+        $token = $response->json('data.token');
+        $this->assertNotEmpty($token);
+
+        // Token terbatas ditolak di rute biasa
+        auth()->forgetGuards();
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $token,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
+    }
+
+    public function test_status_ditolak(): void
+    {
+        $pengguna = $this->buatPengguna(['status_akun' => 'ditolak']);
+
+        $response = $this->postJson('/api/auth/login', [
+            'username' => $pengguna->username,
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
+            ]);
+
+        $token = $response->json('data.token');
+        $this->assertNotEmpty($token);
+
+        // Token terbatas ditolak di rute biasa
+        auth()->forgetGuards();
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $token,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
     }
 
     // -------------------------------------------------------

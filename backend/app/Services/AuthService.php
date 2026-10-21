@@ -27,7 +27,27 @@ class AuthService
 
         $this->bolehLogin($pengguna);
 
-        $token = $pengguna->createToken('auth_token')->plainTextToken;
+        // Jika status menunggu atau ditolak, berikan akses terbatas
+        if (in_array($pengguna->status_akun, ['menunggu', 'ditolak'], true)) {
+            $token = $pengguna->createToken('auth_token', ['status-registrasi'])->plainTextToken;
+
+            $this->logAktivitasService->catat(
+                $pengguna->id_pengguna,
+                'login',
+                "Berhasil masuk dengan akses terbatas dari IP {$ip}"
+            );
+
+            return [
+                'token'          => $token,
+                'akses_terbatas' => true,
+                'message'        => 'Login terbatas: hanya dapat melihat status registrasi',
+                'pengguna'       => $this->dataPengguna($pengguna),
+                'roles'          => $this->dataSpatie($pengguna)['roles'],
+                'permissions'    => [],
+            ];
+        }
+
+        $token = $pengguna->createToken('auth_token', ['*'])->plainTextToken;
 
         $this->logAktivitasService->catat(
             $pengguna->id_pengguna,
@@ -50,14 +70,12 @@ class AuthService
      */
     public function bolehLogin(Pengguna $pengguna): bool
     {
-        if ($pengguna->status_akun === 'aktif') {
+        if (in_array($pengguna->status_akun, ['aktif', 'menunggu', 'ditolak'], true)) {
             return true;
         }
 
         $pesan = match ($pengguna->status_akun) {
-            'menunggu'     => 'Akun belum disetujui',
             'nonaktif'     => 'Akun dinonaktifkan',
-            'ditolak'      => 'Registrasi ditolak',
             'ditangguhkan' => 'Akun ditangguhkan',
             default        => 'Akun tidak dapat digunakan',
         };
