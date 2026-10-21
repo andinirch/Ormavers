@@ -2,15 +2,26 @@
 
 use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PublicOrganisasiController;
+use App\Http\Controllers\RegistrasiAnggotaController;
 use App\Http\Controllers\RegistrasiBemController;
+use App\Http\Controllers\RegistrasiHmjUkmController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusRegistrasiController;
 use App\Http\Controllers\UniversitasController;
 use App\Http\Controllers\VerifikasiBemController;
+use App\Http\Controllers\VerifikasiHmjUkmController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
 Route::get('/universitas', [UniversitasController::class, 'index'])
+    ->middleware('throttle:60,1');
+
+Route::get('/public/bem', [PublicOrganisasiController::class, 'bem'])
+    ->middleware('throttle:60,1');
+
+Route::get('/public/bem/{id}/organisasi', [PublicOrganisasiController::class, 'organisasiDiBawahBem'])
+    ->whereNumber('id')
     ->middleware('throttle:60,1');
 
 Route::post('/auth/login', [AuthController::class, 'login'])
@@ -18,6 +29,12 @@ Route::post('/auth/login', [AuthController::class, 'login'])
 
 Route::post('/register/bem', [RegistrasiBemController::class, 'register'])
     ->middleware('throttle:registrasi-bem');
+
+Route::post('/register/hmj-ukm', [RegistrasiHmjUkmController::class, 'register'])
+    ->middleware('throttle:registrasi-hmj-ukm');
+
+Route::post('/register/anggota', [RegistrasiAnggotaController::class, 'register'])
+    ->middleware('throttle:registrasi-anggota');
 
 // Status Registrasi & Logout Registrasi
 Route::middleware(['auth:sanctum', 'akses.status.registrasi'])->group(function () {
@@ -66,6 +83,21 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:administrator'])
         Route::post('/registrations/bem/{id}/approve', [VerifikasiBemController::class, 'approve'])
             ->whereNumber('id');
         Route::post('/registrations/bem/{id}/reject', [VerifikasiBemController::class, 'reject'])
+            ->whereNumber('id');
+    });
+
+// Akun Organisasi BEM — Verifikasi HMJ/UKM
+Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem'])
+    ->prefix('org/registrations/hmj-ukm')
+    ->group(function () {
+        Route::get('/', [VerifikasiHmjUkmController::class, 'index']);
+        Route::get('/{id}', [VerifikasiHmjUkmController::class, 'show'])
+            ->whereNumber('id');
+        Route::get('/{id}/dokumen/{jenis}', [VerifikasiHmjUkmController::class, 'dokumen'])
+            ->whereNumber('id');
+        Route::post('/{id}/approve', [VerifikasiHmjUkmController::class, 'approve'])
+            ->whereNumber('id');
+        Route::post('/{id}/reject', [VerifikasiHmjUkmController::class, 'reject'])
             ->whereNumber('id');
     });
 
