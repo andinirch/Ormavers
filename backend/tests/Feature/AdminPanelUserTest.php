@@ -63,11 +63,17 @@ class AdminPanelUserTest extends TestCase
             'username' => 'ketua_bem',
         ]);
 
+        $univ = \App\Models\Universitas::create([
+            'nama_universitas' => 'Universitas Contoh',
+        ]);
+
         Organisasi::create([
-            'id_pengguna_akun' => $organisasiUser->id_pengguna,
-            'nama_organisasi'  => 'BEM Fakultas Teknik',
-            'jenis_organisasi' => 'bem',
-            'nama_instansi'    => 'Universitas Contoh',
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $organisasiUser->id_pengguna,
+            'nama_organisasi'    => 'BEM Fakultas Teknik',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '081234567890',
+            'status_organisasi'  => 'aktif',
         ]);
 
         // Catat login untuk admin

@@ -4,10 +4,14 @@ use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrasiBemController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UniversitasController;
 use App\Http\Controllers\VerifikasiBemController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
+Route::get('/universitas', [UniversitasController::class, 'index'])
+    ->middleware('throttle:60,1');
+
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
 

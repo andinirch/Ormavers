@@ -71,7 +71,7 @@ class VerifikasiBemController extends Controller
 
     public function approve(int $id, Request $request): JsonResponse
     {
-        $result = $this->verifikasiBemService->setujui($id, $request->user());
+        $result = $this->verifikasiBemService->setujui($id, $request->user()->id_pengguna);
 
         if (isset($result['error'])) {
             return response()->json([
@@ -91,7 +91,7 @@ class VerifikasiBemController extends Controller
         $result = $this->verifikasiBemService->tolak(
             $id,
             $request->validated()['alasan'],
-            $request->user(),
+            $request->user()->id_pengguna,
         );
 
         if (isset($result['error'])) {

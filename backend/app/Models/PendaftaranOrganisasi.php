@@ -2,35 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PendaftaranOrganisasi extends Model
 {
+    use HasFactory;
+
     protected $table = 'pendaftaran_organisasi';
     protected $primaryKey = 'id_pendaftaran_organisasi';
 
-    const CREATED_AT = 'dibuat_pada';
+    const CREATED_AT = null;
     const UPDATED_AT = 'diperbarui_pada';
 
     protected $fillable = [
         'id_organisasi',
-        'id_pengguna_pendaftar',
-        'jenis_organisasi',
-        'nama_organisasi',
-        'nama_instansi',
-        'nomor_telepon_organisasi',
-        'nama_penanggung_jawab',
-        'nim_penanggung_jawab',
-        'nomor_whatsapp',
-        'foto_ktm',
-        'dokumen_sk_organisasi',
-        'dokumen_sk_kepengurusan',
         'status_pendaftaran',
         'alasan_penolakan',
-        'tanggal_verifikasi',
+        'id_pengguna_verifikator',
         'tanggal_pendaftaran',
+        'tanggal_verifikasi',
     ];
 
     protected function casts(): array
@@ -41,18 +34,18 @@ class PendaftaranOrganisasi extends Model
         ];
     }
 
-    public function pendaftar(): BelongsTo
-    {
-        return $this->belongsTo(Pengguna::class, 'id_pengguna_pendaftar', 'id_pengguna');
-    }
-
     public function organisasi(): BelongsTo
     {
         return $this->belongsTo(Organisasi::class, 'id_organisasi', 'id_organisasi');
     }
 
-    public function riwayatVerifikasi(): HasMany
+    public function verifikator(): BelongsTo
     {
-        return $this->hasMany(RiwayatVerifikasi::class, 'id_pendaftaran_organisasi', 'id_pendaftaran_organisasi');
+        return $this->belongsTo(Pengguna::class, 'id_pengguna_verifikator', 'id_pengguna');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(PendaftaranOrganisasiFile::class, 'id_pendaftaran_organisasi', 'id_pendaftaran_organisasi');
     }
 }

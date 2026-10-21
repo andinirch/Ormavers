@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Organisasi;
 use App\Models\Pengguna;
 use App\Models\PendaftaranOrganisasi;
-use App\Models\RiwayatVerifikasi;
 use Illuminate\Support\Facades\DB;
 
 class VerifikasiBemService
@@ -21,15 +20,20 @@ class VerifikasiBemService
      */
     public function daftarPendaftaran(): array
     {
-        return PendaftaranOrganisasi::where('jenis_organisasi', 'bem')
-            ->where('status_pendaftaran', 'menunggu')
+        return PendaftaranOrganisasi::where('status_pendaftaran', 'menunggu')
+            ->whereHas('organisasi', function ($q) {
+                $q->where('jenis_organisasi', 'bem');
+            })
+            ->with(['organisasi.universitas', 'organisasi.akun'])
             ->orderBy('tanggal_pendaftaran', 'asc')
             ->get()
             ->map(fn (PendaftaranOrganisasi $p) => [
                 'id_pendaftaran_organisasi' => $p->id_pendaftaran_organisasi,
-                'nama_organisasi'           => $p->nama_organisasi,
-                'nama_instansi'             => $p->nama_instansi,
-                'nama_penanggung_jawab'     => $p->nama_penanggung_jawab,
+                'nama_organisasi'           => $p->organisasi->nama_organisasi,
+                'id_universitas'            => $p->organisasi->id_universitas,
+                'nama_universitas'          => $p->organisasi->universitas?->nama_universitas,
+                'nama_instansi'             => $p->organisasi->universitas?->nama_universitas,
+                'nama_penanggung_jawab'     => $p->organisasi->akun?->nama,
                 'tanggal_pendaftaran'       => $p->tanggal_pendaftaran->toISOString(),
             ])
             ->values()
@@ -43,33 +47,37 @@ class VerifikasiBemService
      */
     public function detailPendaftaran(int $id): array
     {
-        $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $id)
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.universitas', 'organisasi.akun', 'files'])
+            ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
-        if (! $pendaftaran || $pendaftaran->jenis_organisasi !== 'bem') {
+        if (! $pendaftaran || $pendaftaran->organisasi?->jenis_organisasi !== 'bem') {
             return [
                 'error'  => 'Pendaftaran BEM tidak ditemukan',
                 'status' => 404,
             ];
         }
 
-        $pendaftar = $pendaftaran->pendaftar;
+        $organisasi = $pendaftaran->organisasi;
+        $pendaftar  = $organisasi?->akun;
 
         return [
             'pendaftaran' => [
                 'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
-                'jenis_organisasi'          => $pendaftaran->jenis_organisasi,
-                'nama_organisasi'           => $pendaftaran->nama_organisasi,
-                'nama_instansi'             => $pendaftaran->nama_instansi,
-                'nomor_telepon_organisasi'  => $pendaftaran->nomor_telepon_organisasi,
+                'jenis_organisasi'          => $organisasi->jenis_organisasi,
+                'nama_organisasi'           => $organisasi->nama_organisasi,
+                'id_universitas'            => $organisasi->id_universitas,
+                'nama_universitas'          => $organisasi->universitas?->nama_universitas,
+                'nama_instansi'             => $organisasi->universitas?->nama_universitas,
+                'nomor_telepon_organisasi'  => $organisasi->nomor_telepon,
                 'status_pendaftaran'        => $pendaftaran->status_pendaftaran,
                 'tanggal_pendaftaran'       => $pendaftaran->tanggal_pendaftaran->toISOString(),
                 'tanggal_verifikasi'        => $pendaftaran->tanggal_verifikasi?->toISOString(),
                 'alasan_penolakan'          => $pendaftaran->alasan_penolakan,
                 'penanggung_jawab'          => [
-                    'nama'           => $pendaftaran->nama_penanggung_jawab,
-                    'nim'            => $pendaftaran->nim_penanggung_jawab,
-                    'nomor_whatsapp' => $pendaftaran->nomor_whatsapp,
+                    'nama'           => $pendaftar?->nama,
+                    'nim'            => $pendaftar?->nim,
+                    'nomor_whatsapp' => $pendaftar?->nomor_whatsapp,
                     'username'       => $pendaftar?->username,
                 ],
                 'dokumen' => [
@@ -88,35 +96,40 @@ class VerifikasiBemService
      */
     public function ambilDokumen(int $id, string $jenis): array
     {
-        $mapKolom = [
-            'ktm'              => 'foto_ktm',
-            'sk-organisasi'    => 'dokumen_sk_organisasi',
-            'sk-kepengurusan'  => 'dokumen_sk_kepengurusan',
-        ];
+        $validJenis = ['ktm', 'sk-organisasi', 'sk-kepengurusan'];
 
-        if (! isset($mapKolom[$jenis])) {
+        if (! in_array($jenis, $validJenis, true)) {
             return [
                 'error'  => 'Jenis dokumen tidak valid',
                 'status' => 404,
             ];
         }
 
-        $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $id)
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun', 'files'])
+            ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
-        if (! $pendaftaran || $pendaftaran->jenis_organisasi !== 'bem') {
+        if (! $pendaftaran || $pendaftaran->organisasi?->jenis_organisasi !== 'bem') {
             return [
                 'error'  => 'Pendaftaran BEM tidak ditemukan',
                 'status' => 404,
             ];
         }
 
-        $kolom = $mapKolom[$jenis];
-        $path  = $pendaftaran->{$kolom};
+        $path = null;
+        if ($jenis === 'ktm') {
+            $path = $pendaftaran->organisasi?->akun?->foto_ktm;
+        } elseif ($jenis === 'sk-organisasi') {
+            $file = $pendaftaran->files->firstWhere('jenis_dokumen', 'sk_organisasi');
+            $path = $file?->path_file;
+        } elseif ($jenis === 'sk-kepengurusan') {
+            $file = $pendaftaran->files->firstWhere('jenis_dokumen', 'sk_kepengurusan');
+            $path = $file?->path_file;
+        }
 
         if (! $path) {
             return [
-                'error'  => 'Dokumen tidak ditemukan',
+                'error'  => 'File dokumen tidak ditemukan',
                 'status' => 404,
             ];
         }
@@ -131,13 +144,13 @@ class VerifikasiBemService
      *
      * @return array
      */
-    public function setujui(int $id, Pengguna $verifikator): array
+    public function setujui(int $id, int $idPelaku): array
     {
-        $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $id)
-            ->where('jenis_organisasi', 'bem')
+        $pendaftaran = PendaftaranOrganisasi::with('organisasi')
+            ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
-        if (! $pendaftaran) {
+        if (! $pendaftaran || $pendaftaran->organisasi?->jenis_organisasi !== 'bem') {
             return [
                 'error'  => 'Pendaftaran BEM tidak ditemukan',
                 'status' => 404,
@@ -151,13 +164,11 @@ class VerifikasiBemService
             ];
         }
 
-        return DB::transaction(function () use ($pendaftaran, $verifikator) {
-            // Kunci baris
+        return DB::transaction(function () use ($pendaftaran, $idPelaku) {
             $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
                 ->lockForUpdate()
                 ->first();
 
-            // Double-check setelah lock
             if ($pendaftaran->status_pendaftaran !== 'menunggu') {
                 return [
                     'error'  => 'Pendaftaran sudah diputuskan',
@@ -165,43 +176,35 @@ class VerifikasiBemService
                 ];
             }
 
-            // 1. Buat organisasi
-            $organisasi = Organisasi::create([
-                'id_pengguna_akun'    => $pendaftaran->id_pengguna_pendaftar,
-                'id_organisasi_induk' => null,
-                'nama_organisasi'     => $pendaftaran->nama_organisasi,
-                'jenis_organisasi'    => 'bem',
-                'nama_instansi'       => $pendaftaran->nama_instansi,
-                'nomor_telepon'       => $pendaftaran->nomor_telepon_organisasi,
-                'nomor_whatsapp'      => $pendaftaran->nomor_whatsapp,
-                'status_organisasi'   => 'aktif',
-            ]);
+            $organisasi = Organisasi::where('id_organisasi', $pendaftaran->id_organisasi)->first();
+
+            // 1. Organisasi diaktifkan
+            if ($organisasi) {
+                $organisasi->update(['status_organisasi' => 'aktif']);
+            }
 
             // 2. Update pendaftaran
             $pendaftaran->update([
-                'status_pendaftaran'  => 'disetujui',
-                'id_organisasi'       => $organisasi->id_organisasi,
-                'tanggal_verifikasi'  => now(),
+                'status_pendaftaran'      => 'disetujui',
+                'id_pengguna_verifikator' => $idPelaku,
+                'tanggal_verifikasi'      => now(),
             ]);
 
-            // 3. Aktifkan akun pendaftar
-            Pengguna::where('id_pengguna', $pendaftaran->id_pengguna_pendaftar)
-                ->update(['status_akun' => 'aktif']);
+            // 3. Aktifkan akun pendaftar dan hapus semua tokennya
+            if ($organisasi && $organisasi->id_akun_organisasi) {
+                $pengguna = Pengguna::find($organisasi->id_akun_organisasi);
+                if ($pengguna) {
+                    $pengguna->update(['status_akun' => 'aktif']);
+                    $pengguna->tokens()->delete();
+                }
+            }
 
-            // 4. Catat riwayat verifikasi
-            RiwayatVerifikasi::create([
-                'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
-                'id_pengguna_verifikator'   => $verifikator->id_pengguna,
-                'status_sebelumnya'         => 'menunggu',
-                'status_sesudahnya'         => 'disetujui',
-                'tanggal_verifikasi'        => now(),
-            ]);
-
-            // 5. Catat log aktivitas
+            // 4. Catat log aktivitas (pelaku log = id verifikator)
+            $namaOrg = $organisasi?->nama_organisasi ?? 'BEM';
             $this->logAktivitasService->catat(
-                $verifikator->id_pengguna,
+                $idPelaku,
                 'verifikasi',
-                "Menyetujui pendaftaran BEM {$pendaftaran->nama_organisasi}"
+                "Menyetujui pendaftaran BEM {$namaOrg}"
             );
 
             return [
@@ -215,13 +218,13 @@ class VerifikasiBemService
      *
      * @return array
      */
-    public function tolak(int $id, string $alasan, Pengguna $verifikator): array
+    public function tolak(int $id, string $alasan, int $idPelaku): array
     {
-        $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $id)
-            ->where('jenis_organisasi', 'bem')
+        $pendaftaran = PendaftaranOrganisasi::with('organisasi')
+            ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
-        if (! $pendaftaran) {
+        if (! $pendaftaran || $pendaftaran->organisasi?->jenis_organisasi !== 'bem') {
             return [
                 'error'  => 'Pendaftaran BEM tidak ditemukan',
                 'status' => 404,
@@ -235,13 +238,11 @@ class VerifikasiBemService
             ];
         }
 
-        return DB::transaction(function () use ($pendaftaran, $alasan, $verifikator) {
-            // Kunci baris
+        return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
             $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
                 ->lockForUpdate()
                 ->first();
 
-            // Double-check setelah lock
             if ($pendaftaran->status_pendaftaran !== 'menunggu') {
                 return [
                     'error'  => 'Pendaftaran sudah diputuskan',
@@ -249,32 +250,28 @@ class VerifikasiBemService
                 ];
             }
 
+            $organisasi = Organisasi::where('id_organisasi', $pendaftaran->id_organisasi)->first();
+
             // 1. Update pendaftaran
             $pendaftaran->update([
-                'status_pendaftaran'  => 'ditolak',
-                'alasan_penolakan'    => $alasan,
-                'tanggal_verifikasi'  => now(),
+                'status_pendaftaran'      => 'ditolak',
+                'alasan_penolakan'        => $alasan,
+                'id_pengguna_verifikator' => $idPelaku,
+                'tanggal_verifikasi'      => now(),
             ]);
 
-            // 2. Update status akun pendaftar
-            Pengguna::where('id_pengguna', $pendaftaran->id_pengguna_pendaftar)
-                ->update(['status_akun' => 'ditolak']);
+            // 2. Update status akun pendaftar menjadi ditolak; organisasi tetap status 'menunggu'
+            if ($organisasi && $organisasi->id_akun_organisasi) {
+                Pengguna::where('id_pengguna', $organisasi->id_akun_organisasi)
+                    ->update(['status_akun' => 'ditolak']);
+            }
 
-            // 3. Catat riwayat verifikasi
-            RiwayatVerifikasi::create([
-                'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
-                'id_pengguna_verifikator'   => $verifikator->id_pengguna,
-                'status_sebelumnya'         => 'menunggu',
-                'status_sesudahnya'         => 'ditolak',
-                'catatan_verifikasi'        => $alasan,
-                'tanggal_verifikasi'        => now(),
-            ]);
-
-            // 4. Catat log aktivitas
+            // 3. Catat log aktivitas (pelaku log = id verifikator)
+            $namaOrg = $organisasi?->nama_organisasi ?? 'BEM';
             $this->logAktivitasService->catat(
-                $verifikator->id_pengguna,
+                $idPelaku,
                 'verifikasi',
-                "Menolak pendaftaran BEM {$pendaftaran->nama_organisasi} dengan alasan: {$alasan}"
+                "Menolak pendaftaran BEM {$namaOrg} dengan alasan: {$alasan}"
             );
 
             return [
