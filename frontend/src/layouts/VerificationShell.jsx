@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { verificationContexts } from '../services/verification/verificationApi.js'
 import '../styles/verification.css'
 import '../styles/sidebar.css'
+import '../styles/profile.css'
 import Footer from '../components/Footer.jsx'
 import PlatformLogo from '../components/PlatformLogo.jsx'
 import Sidebar from '../components/Sidebar.jsx'
@@ -14,9 +15,11 @@ const navigationByRole = {
   'Akun Organisasi BEM': [
     { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj' },
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member' },
+    { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member' },
+    { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile' },
   ],
 }
 

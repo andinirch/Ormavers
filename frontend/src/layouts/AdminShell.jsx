@@ -40,10 +40,10 @@ function AdminShell() {
         { to: '/admin-panel/permission', label: 'Permission', icon: 'sliders' },
       ],
     }] : []),
-    ...(isSuperAdmin ? [{
+    ...(isAdministrator ? [{
       label: 'AKUN',
       items: [
-        { to: '/superadmin/profil', label: 'Profil Saya', icon: 'profile' },
+        { to: '/admin/profil', label: 'Profil Saya', icon: 'profile' },
       ],
     }] : []),
   ].filter((group) => group.items.length > 0)

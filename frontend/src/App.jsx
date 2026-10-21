@@ -14,6 +14,7 @@ import RolesPage from './pages/admin/RolesPage.jsx'
 import ActivityLogPage from './pages/admin/ActivityLogPage.jsx'
 import PermissionsPage from './pages/admin/PermissionsPage.jsx'
 import ProfilePage from './pages/admin/ProfilePage.jsx'
+import OrganizationProfilePage from './pages/OrganizationProfilePage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
 import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
 import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
@@ -21,6 +22,7 @@ import VerifikasiHmjPage from './pages/verifikasi/VerifikasiHmjPage.jsx'
 import RequireAuth from './context/RequireAuth.jsx'
 import AccessGuard from './context/AccessGuard.jsx'
 import ForbiddenPage from './pages/ForbiddenPage.jsx'
+
 function App() {
   return (
     <Routes>
@@ -47,7 +49,6 @@ function App() {
             <Route path="/superadmin" element={<DashboardPage />} />
             <Route path="/superadmin/pengguna" element={<UsersPage />} />
             <Route path="/admin-panel/activities" element={<ActivityLogPage />} />
-            <Route path="/superadmin/profil" element={<ProfilePage />} />
           </Route>
           <Route element={<AccessGuard permission="view roles" />}>
             <Route path="/admin-panel/roles" element={<RolesPage />} />
@@ -62,6 +63,9 @@ function App() {
           <Route path="/superadmin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
           <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
         </Route>
+        <Route element={<AccessGuard roles={['anggota', 'member']} />}>
+          <Route path="/profil" element={<OrganizationProfilePage />} />
+        </Route>
         <Route path="/verifikasi" element={<VerificationShell />}>
           <Route index element={<Navigate to="administrator" replace />} />
           <Route element={<AccessGuard roles={['administrator']} />}>
@@ -69,9 +73,11 @@ function App() {
           </Route>
           <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
             <Route path="bem" element={<VerifikasiBemPageNew />} />
+            <Route path="profil" element={<OrganizationProfilePage />} />
           </Route>
           <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
             <Route path="hmj" element={<VerifikasiHmjPage />} />
+            <Route path="profil-hmj" element={<OrganizationProfilePage />} />
           </Route>
         </Route>
       </Route>
