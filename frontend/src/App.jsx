@@ -1,122 +1,88 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AppShell from './layouts/AppShell.jsx'
+import RegistrationStatusPage from './pages/RegistrationStatusPage.jsx'
+import AuthLayout from './components/AuthLayout.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import RegisterBemPage from './pages/RegisterBemPage.jsx'
+import RegisterHmjUkmPage from './pages/RegisterHmjUkmPage.jsx'
+import RegisterAnggotaPage from './pages/RegisterAnggotaPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
+import AdminShell from './layouts/AdminShell.jsx'
+import DashboardPage from './pages/admin/DashboardPage.jsx'
+import UsersPage from './pages/admin/UsersPage.jsx'
+import RolesPage from './pages/admin/RolesPage.jsx'
+import ActivityLogPage from './pages/admin/ActivityLogPage.jsx'
+import PermissionsPage from './pages/admin/PermissionsPage.jsx'
+import ProfilePage from './pages/admin/ProfilePage.jsx'
+import OrganizationProfilePage from './pages/OrganizationProfilePage.jsx'
+import VerificationShell from './layouts/VerificationShell.jsx'
+import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
+import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
+import VerifikasiHmjPage from './pages/verifikasi/VerifikasiHmjPage.jsx'
+import RequireAuth from './context/RequireAuth.jsx'
+import AccessGuard from './context/AccessGuard.jsx'
+import ForbiddenPage from './pages/ForbiddenPage.jsx'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route path="/status-registrasi" element={<RegistrationStatusPage />} />
+      </Route>
+      <Route element={<AuthLayout />}>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registrasi/bem" element={<RegisterBemPage />} />
+        <Route path="/registrasi/hmj-ukm" element={<RegisterHmjUkmPage />} />
+        <Route path="/registrasi/anggota" element={<RegisterAnggotaPage />} />
+        <Route path="/403" element={<ForbiddenPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+      <Route element={<RequireAuth />}>
+        <Route element={<AdminShell />}>
+          <Route element={<AccessGuard roles={['administrator']} />}>
+            <Route path="/admin" element={<Navigate to="/admin/verifikasi-bem" replace />} />
+            <Route path="/admin/verifikasi-bem" element={<VerifikasiAdministratorPage />} />
+            <Route path="/admin/profil" element={<ProfilePage />} />
+          </Route>
+          <Route element={<AccessGuard roles={['super_admin']} />}>
+            <Route path="/superadmin" element={<DashboardPage />} />
+            <Route path="/superadmin/pengguna" element={<UsersPage />} />
+            <Route path="/admin-panel/activities" element={<ActivityLogPage />} />
+          </Route>
+          <Route element={<AccessGuard permission="view roles" />}>
+            <Route path="/admin-panel/roles" element={<RolesPage />} />
+            <Route path="/admin-panel/permission" element={<PermissionsPage />} />
+          </Route>
+          <Route path="/admin/pengguna" element={<Navigate to="/superadmin/pengguna" replace />} />
+          <Route path="/admin/aktivitas" element={<Navigate to="/admin-panel/activities" replace />} />
+          <Route path="/superadmin/aktivitas" element={<Navigate to="/admin-panel/activities" replace />} />
+          <Route path="/admin/roles" element={<Navigate to="/admin-panel/roles" replace />} />
+          <Route path="/admin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
+          <Route path="/superadmin/roles" element={<Navigate to="/admin-panel/roles" replace />} />
+          <Route path="/superadmin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
+          <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
+        </Route>
+        <Route element={<AccessGuard roles={['anggota', 'member']} />}>
+          <Route path="/profil" element={<OrganizationProfilePage />} />
+        </Route>
+        <Route path="/verifikasi" element={<VerificationShell />}>
+          <Route index element={<Navigate to="administrator" replace />} />
+          <Route element={<AccessGuard roles={['administrator']} />}>
+            <Route path="administrator" element={<Navigate to="/admin/verifikasi-bem" replace />} />
+          </Route>
+          <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
+            <Route path="bem" element={<VerifikasiBemPageNew />} />
+            <Route path="profil" element={<OrganizationProfilePage />} />
+          </Route>
+          <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
+            <Route path="hmj" element={<VerifikasiHmjPage />} />
+            <Route path="profil-hmj" element={<OrganizationProfilePage />} />
+          </Route>
+        </Route>
+      </Route>
+    </Routes>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
   )
 }
-
 export default App

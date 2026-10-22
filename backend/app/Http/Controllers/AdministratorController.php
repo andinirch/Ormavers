@@ -26,6 +26,17 @@ class AdministratorController extends Controller
         ]);
     }
 
+    public function users(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar seluruh pengguna berhasil diambil',
+            'data' => [
+                'users' => $this->administratorService->daftarSemuaPengguna(),
+            ],
+        ]);
+    }
+
     public function store(TambahAdministratorRequest $request): JsonResponse
     {
         $administrator = $this->administratorService->tambahAdministrator(
