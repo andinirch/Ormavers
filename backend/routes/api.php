@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OrgMemberRequestController;
 use App\Http\Controllers\PublicOrganisasiController;
 use App\Http\Controllers\RegistrasiAnggotaController;
 use App\Http\Controllers\RegistrasiBemController;
@@ -98,6 +99,21 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem'])
         Route::post('/{id}/approve', [VerifikasiHmjUkmController::class, 'approve'])
             ->whereNumber('id');
         Route::post('/{id}/reject', [VerifikasiHmjUkmController::class, 'reject'])
+            ->whereNumber('id');
+    });
+
+// Akun Organisasi (BEM / HMJ / UKM) — Verifikasi Anggota
+Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
+    ->prefix('org/member-requests')
+    ->group(function () {
+        Route::get('/', [OrgMemberRequestController::class, 'index']);
+        Route::get('/{id}', [OrgMemberRequestController::class, 'show'])
+            ->whereNumber('id');
+        Route::get('/{id}/dokumen/ktm', [OrgMemberRequestController::class, 'dokumenKtm'])
+            ->whereNumber('id');
+        Route::post('/{id}/approve', [OrgMemberRequestController::class, 'approve'])
+            ->whereNumber('id');
+        Route::post('/{id}/reject', [OrgMemberRequestController::class, 'reject'])
             ->whereNumber('id');
     });
 

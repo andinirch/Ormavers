@@ -70,12 +70,8 @@ class LogAktivitasQueryService
      */
     public function filterOptions(): array
     {
-        $jenis = LogAktivitas::select('jenis_aktivitas')
-            ->distinct()
-            ->orderBy('jenis_aktivitas')
-            ->pluck('jenis_aktivitas')
-            ->values()
-            ->toArray();
+        $jenis = LogAktivitasService::SEMUA_JENIS;
+        sort($jenis);
 
         $userIds = LogAktivitas::select('id_pengguna')
             ->distinct()

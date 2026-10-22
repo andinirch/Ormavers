@@ -90,19 +90,23 @@ class UserAdminService
      */
     public function tambahAdministrator(array $data, int $idPelaku): array
     {
-        $pengguna = Pengguna::create([
-            'nama'        => $data['nama'],
-            'username'    => $data['username'],
-            'kata_sandi'  => $data['password'],
-            'peran'       => 'administrator',
-            'status_akun' => 'aktif',
-        ]);
+        $pengguna = DB::transaction(function () use ($data, $idPelaku) {
+            $pengguna = Pengguna::create([
+                'nama'        => $data['nama'],
+                'username'    => $data['username'],
+                'kata_sandi'  => $data['password'],
+                'peran'       => 'administrator',
+                'status_akun' => 'aktif',
+            ]);
 
-        $this->logAktivitasService->catat(
-            $idPelaku,
-            'kelola_akun',
-            "Membuat akun Administrator: {$pengguna->nama} ({$pengguna->username})"
-        );
+            $this->logAktivitasService->catat(
+                $idPelaku,
+                'kelola_akun',
+                "Membuat akun Administrator: {$pengguna->nama} ({$pengguna->username})"
+            );
+
+            return $pengguna;
+        });
 
         $pengguna->load(['roles', 'organisasi']);
 

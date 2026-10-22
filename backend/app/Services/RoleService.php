@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Pengguna;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -72,21 +73,23 @@ class RoleService
 
     public function buatRole(array $data, int $idPelaku): array
     {
-        $role = Role::create([
-            'name'       => $data['name'],
-            'guard_name' => 'web',
-        ]);
+        return DB::transaction(function () use ($data, $idPelaku) {
+            $role = Role::create([
+                'name'       => $data['name'],
+                'guard_name' => 'web',
+            ]);
 
-        $role->syncPermissions($data['permissions']);
-        $role->load('permissions');
+            $role->syncPermissions($data['permissions']);
+            $role->load('permissions');
 
-        $this->logAktivitasService->catat(
-            $idPelaku,
-            'role',
-            "Membuat role {$role->name}"
-        );
+            $this->logAktivitasService->catat(
+                $idPelaku,
+                'role',
+                "Membuat role {$role->name}"
+            );
 
-        return $this->formatRole($role);
+            return $this->formatRole($role);
+        });
     }
 
     public function ubahRole(int $id, array $data, int $idPelaku): array
@@ -102,18 +105,20 @@ class RoleService
             return ['error' => 'Role super_admin dikunci dan tidak dapat diubah', 'status' => 403];
         }
 
-        // Role lain (termasuk bawaan): nama dan permission boleh diubah
-        $role->update(['name' => $data['name']]);
-        $role->syncPermissions($data['permissions']);
-        $role->load('permissions');
+        return DB::transaction(function () use ($role, $data, $idPelaku) {
+            // Role lain (termasuk bawaan): nama dan permission boleh diubah
+            $role->update(['name' => $data['name']]);
+            $role->syncPermissions($data['permissions']);
+            $role->load('permissions');
 
-        $this->logAktivitasService->catat(
-            $idPelaku,
-            'role',
-            "Mengubah permission role {$role->name}"
-        );
+            $this->logAktivitasService->catat(
+                $idPelaku,
+                'role',
+                "Mengubah permission role {$role->name}"
+            );
 
-        return $this->formatRole($role);
+            return $this->formatRole($role);
+        });
     }
 
     public function hapusRole(int $id, int $idPelaku): array
@@ -139,16 +144,18 @@ class RoleService
             ];
         }
 
-        $namaRole = $role->name;
-        $role->delete();
+        return DB::transaction(function () use ($role, $idPelaku) {
+            $namaRole = $role->name;
+            $role->delete();
 
-        $this->logAktivitasService->catat(
-            $idPelaku,
-            'role',
-            "Menghapus role {$namaRole}"
-        );
+            $this->logAktivitasService->catat(
+                $idPelaku,
+                'role',
+                "Menghapus role {$namaRole}"
+            );
 
-        return ['message' => 'Role berhasil dihapus'];
+            return ['message' => 'Role berhasil dihapus'];
+        });
     }
 
     // ─── Ringkasan Dashboard (A4) ───────────────────────────
