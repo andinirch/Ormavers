@@ -67,6 +67,13 @@
 
 .app-sidebar > .platform-logout {
   margin-top: auto;
+  transform: translateY(0.5rem);
+}
+
+@media (max-height: 40rem) {
+  .app-sidebar > .platform-logout {
+    transform: translateY(0);
+  }
 }
 
 .app-sidebar__overlay {

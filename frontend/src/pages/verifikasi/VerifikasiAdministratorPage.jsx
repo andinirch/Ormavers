@@ -71,6 +71,7 @@ export default function VerifikasiAdministratorPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [downloadingDoc, setDownloadingDoc] = useState(null)
 
   const loadList = async () => {
     setLoading(true)
@@ -133,6 +134,27 @@ export default function VerifikasiAdministratorPage() {
       setPreviewDoc({ title: label, url: blobUrl, type })
     } catch (err) {
       setToastMessage(err?.response?.data?.message ?? 'Gagal membuka dokumen.')
+    }
+  }
+
+  const handleDownloadDoc = async (jenis, fileName, event) => {
+    event.stopPropagation()
+    if (!selectedId || downloadingDoc) return
+    setDownloadingDoc(jenis)
+    try {
+      const response = await getBemDocument(selectedId, jenis)
+      const blobUrl = URL.createObjectURL(response.data)
+      const anchor = document.createElement('a')
+      anchor.href = blobUrl
+      anchor.download = fileName
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      setToastMessage(err?.response?.data?.message ?? 'Gagal mengunduh dokumen.')
+    } finally {
+      setDownloadingDoc(null)
     }
   }
 
@@ -337,11 +359,17 @@ export default function VerifikasiAdministratorPage() {
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Organisasi</strong>
-                    <small>Dokumen Resmi BEM</small>
+                    <small>Maks. 2 MB</small>
                   </span>
-                  <span className="verification-download" aria-label="Buka SK Organisasi">
+                  <button
+                    type="button"
+                    className="verification-download"
+                    aria-label="Unduh SK Organisasi"
+                    onClick={(event) => handleDownloadDoc('sk-organisasi', 'SK_Organisasi.pdf', event)}
+                    disabled={downloadingDoc === 'sk-organisasi'}
+                  >
                     <DownloadIcon />
-                  </span>
+                  </button>
                 </button>
 
                 <button
@@ -352,11 +380,17 @@ export default function VerifikasiAdministratorPage() {
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Kepengurusan</strong>
-                    <small>Surat Keputusan Dekan</small>
+                    <small>Maks. 2 MB</small>
                   </span>
-                  <span className="verification-download" aria-label="Buka SK Kepengurusan">
+                  <button
+                    type="button"
+                    className="verification-download"
+                    aria-label="Unduh SK Kepengurusan"
+                    onClick={(event) => handleDownloadDoc('sk-kepengurusan', 'SK_Kepengurusan.pdf', event)}
+                    disabled={downloadingDoc === 'sk-kepengurusan'}
+                  >
                     <DownloadIcon />
-                  </span>
+                  </button>
                 </button>
               </div>
 
