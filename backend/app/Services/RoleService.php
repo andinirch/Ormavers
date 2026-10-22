@@ -8,18 +8,47 @@ use Spatie\Permission\Models\Role;
 
 class RoleService
 {
-    private const ROLE_BAWAAN = [
-        'super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota',
+    /**
+     * Pemetaan permission → modul (A3).
+     */
+    private const PERMISSION_MODUL = [
+        'view users'                => 'Pengguna & Role',
+        'create users'              => 'Pengguna & Role',
+        'edit users'                => 'Pengguna & Role',
+        'delete users'              => 'Pengguna & Role',
+        'view roles'                => 'Pengguna & Role',
+        'create roles'              => 'Pengguna & Role',
+        'edit roles'                => 'Pengguna & Role',
+        'delete roles'              => 'Pengguna & Role',
+        'verify bem'                => 'Verifikasi',
+        'verify hmj/ukm'            => 'Verifikasi',
+        'verify members'            => 'Verifikasi',
+        'view profile'              => 'Profil & Keanggotaan',
+        'view registration status'  => 'Profil & Keanggotaan',
+        'view members'              => 'Profil & Keanggotaan',
     ];
 
     public function __construct(
         protected LogAktivitasService $logAktivitasService,
     ) {}
 
+    // ─── Permission ─────────────────────────────────────────
+
     public function daftarPermission(): array
     {
-        return Permission::all(['id', 'name'])->toArray();
+        $permissions = Permission::with('roles')->get();
+
+        return $permissions->map(function (Permission $perm) {
+            return [
+                'id'    => $perm->id,
+                'name'  => $perm->name,
+                'modul' => self::PERMISSION_MODUL[$perm->name] ?? null,
+                'roles' => $perm->roles->pluck('name')->values()->toArray(),
+            ];
+        })->toArray();
     }
+
+    // ─── Role CRUD ──────────────────────────────────────────
 
     public function daftarRole(): array
     {
@@ -68,18 +97,12 @@ class RoleService
             return ['error' => 'Role tidak ditemukan', 'status' => 404];
         }
 
-        // Role super_admin tidak boleh diubah sama sekali
+        // Role super_admin tidak boleh diubah sama sekali (terkunci)
         if ($role->name === 'super_admin') {
-            return ['error' => 'Role super_admin tidak dapat diubah', 'status' => 403];
+            return ['error' => 'Role super_admin dikunci dan tidak dapat diubah', 'status' => 403];
         }
 
-        // Role bawaan lain: nama tidak boleh diganti, tapi permission boleh diubah
-        if (in_array($role->name, self::ROLE_BAWAAN, true)) {
-            if ($data['name'] !== $role->name) {
-                return ['error' => 'Nama role bawaan tidak dapat diubah', 'status' => 403];
-            }
-        }
-
+        // Role lain (termasuk bawaan): nama dan permission boleh diubah
         $role->update(['name' => $data['name']]);
         $role->syncPermissions($data['permissions']);
         $role->load('permissions');
@@ -101,9 +124,9 @@ class RoleService
             return ['error' => 'Role tidak ditemukan', 'status' => 404];
         }
 
-        // Role bawaan tidak boleh dihapus
-        if (in_array($role->name, self::ROLE_BAWAAN, true)) {
-            return ['error' => 'Role bawaan tidak dapat dihapus', 'status' => 403];
+        // Role super_admin tidak boleh dihapus (terkunci)
+        if ($role->name === 'super_admin') {
+            return ['error' => 'Role super_admin dikunci dan tidak dapat dihapus', 'status' => 403];
         }
 
         // Cek apakah role masih dipakai
@@ -128,13 +151,50 @@ class RoleService
         return ['message' => 'Role berhasil dihapus'];
     }
 
+    // ─── Ringkasan Dashboard (A4) ───────────────────────────
+
+    public function ringkasan(): array
+    {
+        $logTerbaru = \App\Models\LogAktivitas::with('pengguna')
+            ->orderByDesc('waktu_aktivitas')
+            ->orderByDesc('id_log')
+            ->limit(4)
+            ->get()
+            ->map(function (\App\Models\LogAktivitas $log) {
+                return [
+                    'nama_pengguna'   => $log->pengguna?->nama,
+                    'jenis_aktivitas' => $log->jenis_aktivitas,
+                    'keterangan'      => $log->keterangan,
+                    'waktu_aktivitas' => $log->waktu_aktivitas,
+                ];
+            })
+            ->toArray();
+
+        return [
+            'total_pengguna'      => Pengguna::count(),
+            'administrator_aktif' => Pengguna::where('peran', 'administrator')
+                ->where('status_akun', 'aktif')
+                ->count(),
+            'role_terdefinisi'    => Role::count(),
+            'permission'         => Permission::count(),
+            'aktivitas_terbaru'  => $logTerbaru,
+        ];
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────
+
     private function formatRole(Role $role): array
     {
+        $isBawaan = in_array($role->name, Pengguna::ROLE_BAWAAN, true);
+
         return [
             'id'              => $role->id,
             'name'            => $role->name,
             'permissions'     => $role->permissions->pluck('name')->values()->toArray(),
             'jumlah_pengguna' => Pengguna::role($role->name)->count(),
+            'bawaan'          => $isBawaan,
+            'terkunci'        => $role->name === 'super_admin',
+            'akses_penuh'     => false,
             'dibuat_pada'     => $role->created_at,
         ];
     }

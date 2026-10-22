@@ -40,19 +40,12 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($rolePermissions as $roleName => $perms) {
-            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            $role = Role::findOrCreate($roleName, 'web');
             $role->syncPermissions($perms);
         }
 
         // Sinkronisasi pengguna yang sudah ada berdasarkan kolom peran
-        $pemetaan = [
-            'super_admin'     => 'super_admin',
-            'administrator'   => 'administrator',
-            'anggota'         => 'anggota',
-            'akun_organisasi' => 'akun_bem',
-        ];
-
-        foreach ($pemetaan as $kolom => $namaRole) {
+        foreach (Pengguna::PERAN_ROLE_MAP as $kolom => $namaRole) {
             $role = Role::findByName($namaRole, 'web');
             Pengguna::where('peran', $kolom)->each(function ($p) use ($role) {
                 if (! $p->hasRole($role)) {
