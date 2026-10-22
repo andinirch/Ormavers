@@ -2,12 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\LogAktivitas;
 use App\Models\Organisasi;
-use App\Models\Pengguna;
 use App\Models\PendaftaranOrganisasi;
-use App\Models\RiwayatVerifikasi;
+use App\Models\PendaftaranOrganisasiFile;
+use App\Models\Pengguna;
+use App\Models\Universitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -36,28 +37,59 @@ class VerifikasiBemTest extends TestCase
         Storage::fake('local');
 
         $pendaftar = Pengguna::factory()->akunOrganisasi()->menunggu()->create([
-            'username' => 'bem_user_' . uniqid(),
+            'nama'           => $overrides['nama_penanggung_jawab'] ?? 'Budi Santoso',
+            'username'       => 'bem_user_' . uniqid(),
+            'nim'            => $overrides['nim_penanggung_jawab'] ?? '2024001',
+            'nomor_whatsapp' => $overrides['nomor_whatsapp'] ?? '081234567890',
+            'foto_ktm'       => 'pendaftaran/ktm/ktm.jpg',
         ]);
 
         Storage::disk('local')->put('pendaftaran/ktm/ktm.jpg', 'fake-ktm-content');
         Storage::disk('local')->put('pendaftaran/sk_organisasi/sk_org.pdf', 'fake-sk-org-content');
         Storage::disk('local')->put('pendaftaran/sk_kepengurusan/sk_kep.pdf', 'fake-sk-kep-content');
 
-        return PendaftaranOrganisasi::create(array_merge([
-            'id_pengguna_pendaftar'    => $pendaftar->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Universitas Contoh',
-            'nama_instansi'            => 'Universitas Contoh',
-            'nomor_telepon_organisasi' => '02112345678',
-            'nama_penanggung_jawab'    => 'Budi Santoso',
-            'nim_penanggung_jawab'     => '2024001',
-            'nomor_whatsapp'           => '081234567890',
-            'foto_ktm'                 => 'pendaftaran/ktm/ktm.jpg',
-            'dokumen_sk_organisasi'    => 'pendaftaran/sk_organisasi/sk_org.pdf',
-            'dokumen_sk_kepengurusan'  => 'pendaftaran/sk_kepengurusan/sk_kep.pdf',
-            'status_pendaftaran'       => 'menunggu',
-            'tanggal_pendaftaran'      => now(),
-        ], $overrides));
+        $univNama = $overrides['nama_instansi'] ?? 'Universitas Contoh ' . uniqid();
+        $univ = Universitas::firstOrCreate(
+            ['nama_universitas' => $univNama],
+            ['logo' => null]
+        );
+
+        $organisasi = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_organisasi_induk'=> null,
+            'id_akun_organisasi' => $pendaftar->id_pengguna,
+            'nama_organisasi'    => $overrides['nama_organisasi'] ?? ('BEM ' . $univNama),
+            'jenis_organisasi'   => $overrides['jenis_organisasi'] ?? 'bem',
+            'nomor_telepon'      => $overrides['nomor_telepon_organisasi'] ?? '02112345678',
+            'status_organisasi'  => 'menunggu',
+        ]);
+
+        $pendaftaran = PendaftaranOrganisasi::create([
+            'id_organisasi'       => $organisasi->id_organisasi,
+            'status_pendaftaran'  => $overrides['status_pendaftaran'] ?? 'menunggu',
+            'alasan_penolakan'    => $overrides['alasan_penolakan'] ?? null,
+            'tanggal_pendaftaran' => $overrides['tanggal_pendaftaran'] ?? now(),
+        ]);
+
+        PendaftaranOrganisasiFile::create([
+            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
+            'jenis_dokumen'             => 'sk_organisasi',
+            'nama_file_asli'            => 'sk_org.pdf',
+            'path_file'                 => 'pendaftaran/sk_organisasi/sk_org.pdf',
+            'ukuran_kb'                 => 100,
+            'diunggah_pada'             => now(),
+        ]);
+
+        PendaftaranOrganisasiFile::create([
+            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
+            'jenis_dokumen'             => 'sk_kepengurusan',
+            'nama_file_asli'            => 'sk_kep.pdf',
+            'path_file'                 => 'pendaftaran/sk_kepengurusan/sk_kep.pdf',
+            'ukuran_kb'                 => 100,
+            'diunggah_pada'             => now(),
+        ]);
+
+        return $pendaftaran;
     }
 
     // -------------------------------------------------------
@@ -109,6 +141,8 @@ class VerifikasiBemTest extends TestCase
                         '*' => [
                             'id_pendaftaran_organisasi',
                             'nama_organisasi',
+                            'id_universitas',
+                            'nama_universitas',
                             'nama_instansi',
                             'nama_penanggung_jawab',
                             'tanggal_pendaftaran',
@@ -126,7 +160,10 @@ class VerifikasiBemTest extends TestCase
     public function test_detail_memuat_data_dan_tautan_dokumen(): void
     {
         [$admin, $token] = $this->buatAdmin();
-        $pendaftaran = $this->buatPendaftaranBem();
+        $pendaftaran = $this->buatPendaftaranBem([
+            'nama_organisasi' => 'BEM Universitas Contoh',
+            'nama_instansi'   => 'Universitas Contoh',
+        ]);
 
         $response = $this->getJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}", [
             'Authorization' => 'Bearer ' . $token,
@@ -148,7 +185,7 @@ class VerifikasiBemTest extends TestCase
                             'nama'           => 'Budi Santoso',
                             'nim'            => '2024001',
                             'nomor_whatsapp' => '081234567890',
-                            'username'       => $pendaftaran->pendaftar->username,
+                            'username'       => $pendaftaran->organisasi->akun->username,
                         ],
                         'dokumen' => [
                             'ktm'              => "/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/dokumen/ktm",
@@ -159,7 +196,6 @@ class VerifikasiBemTest extends TestCase
                 ],
             ]);
 
-        // Response tidak boleh memuat kata_sandi maupun path file mentah
         $content = $response->getContent();
         $this->assertStringNotContainsString('kata_sandi', $content);
         $this->assertStringNotContainsString('password', strtolower($content));
@@ -172,6 +208,11 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
+        $pendaftar = $pendaftaran->organisasi->akun;
+
+        // Berikan token awal untuk mengetes pencabutan token saat disetujui
+        $tokenPendaftar = $pendaftar->createToken('auth_token')->plainTextToken;
+        $this->assertDatabaseHas('personal_access_tokens', ['tokenable_id' => $pendaftar->id_pengguna]);
 
         $response = $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/approve", [], [
             'Authorization' => 'Bearer ' . $token,
@@ -183,40 +224,31 @@ class VerifikasiBemTest extends TestCase
                 'message' => 'Registrasi BEM berhasil disetujui',
             ]);
 
-        // 1. Baris organisasi terbentuk dengan benar
+        // 1. Organisasi aktif
         $this->assertDatabaseHas('organisasi', [
-            'id_pengguna_akun'  => $pendaftaran->id_pengguna_pendaftar,
-            'nama_organisasi'   => $pendaftaran->nama_organisasi,
-            'jenis_organisasi'  => 'bem',
-            'nama_instansi'     => $pendaftaran->nama_instansi,
-            'nomor_telepon'     => $pendaftaran->nomor_telepon_organisasi,
-            'nomor_whatsapp'    => $pendaftaran->nomor_whatsapp,
+            'id_organisasi'     => $pendaftaran->id_organisasi,
             'status_organisasi' => 'aktif',
         ]);
 
-        $organisasi = Organisasi::where('id_pengguna_akun', $pendaftaran->id_pengguna_pendaftar)->first();
-        $this->assertNotNull($organisasi);
-        $this->assertNull($organisasi->id_organisasi_induk);
-
-        // 2. Pendaftaran terupdate
+        // 2. Pendaftaran disetujui dengan id_pengguna_verifikator dan tanggal_verifikasi
         $pendaftaranFresh = $pendaftaran->fresh();
         $this->assertEquals('disetujui', $pendaftaranFresh->status_pendaftaran);
-        $this->assertEquals($organisasi->id_organisasi, $pendaftaranFresh->id_organisasi);
+        $this->assertEquals($admin->id_pengguna, $pendaftaranFresh->id_pengguna_verifikator);
         $this->assertNotNull($pendaftaranFresh->tanggal_verifikasi);
 
-        // 3. Pengguna menjadi aktif
+        // 3. Pengguna aktif
         $this->assertDatabaseHas('pengguna', [
-            'id_pengguna' => $pendaftaran->id_pengguna_pendaftar,
+            'id_pengguna' => $pendaftar->id_pengguna,
             'status_akun' => 'aktif',
-            'peran'       => 'akun_organisasi',
         ]);
 
-        // 4. Riwayat verifikasi tercatat
-        $this->assertDatabaseHas('riwayat_verifikasi', [
-            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
-            'id_pengguna_verifikator'   => $admin->id_pengguna,
-            'status_sebelumnya'         => 'menunggu',
-            'status_sesudahnya'         => 'disetujui',
+        // 4. Semua token pendaftar dicabut
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $pendaftar->id_pengguna]);
+
+        // 5. Log verifikasi tercatat dengan pelaku verifikator
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna'     => $admin->id_pengguna,
+            'jenis_aktivitas' => 'verifikasi',
         ]);
     }
 
@@ -224,6 +256,7 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
+        $pendaftar = $pendaftaran->organisasi->akun;
 
         // Verifikasi pendaftaran
         $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/approve", [], [
@@ -232,7 +265,7 @@ class VerifikasiBemTest extends TestCase
 
         // Pendaftar sekarang bisa login
         $loginResponse = $this->postJson('/api/auth/login', [
-            'username' => $pendaftaran->pendaftar->username,
+            'username' => $pendaftar->username,
             'password' => 'password',
         ]);
 
@@ -242,7 +275,7 @@ class VerifikasiBemTest extends TestCase
                 'message' => 'Login berhasil',
                 'data'    => [
                     'pengguna' => [
-                        'username'    => $pendaftaran->pendaftar->username,
+                        'username'    => $pendaftar->username,
                         'peran'       => 'akun_organisasi',
                         'status_akun' => 'aktif',
                     ],
@@ -254,6 +287,7 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
+        $pendaftar = $pendaftaran->organisasi->akun;
 
         $response = $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/reject", [
             'alasan' => 'Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.',
@@ -267,29 +301,30 @@ class VerifikasiBemTest extends TestCase
                 'message' => 'Registrasi BEM berhasil ditolak',
             ]);
 
-        // 1. Pendaftaran terupdate dengan alasan & tanggal
+        // 1. Pendaftaran terupdate dengan alasan, verifikator, & tanggal
         $pendaftaranFresh = $pendaftaran->fresh();
         $this->assertEquals('ditolak', $pendaftaranFresh->status_pendaftaran);
         $this->assertEquals('Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.', $pendaftaranFresh->alasan_penolakan);
+        $this->assertEquals($admin->id_pengguna, $pendaftaranFresh->id_pengguna_verifikator);
         $this->assertNotNull($pendaftaranFresh->tanggal_verifikasi);
-        $this->assertNull($pendaftaranFresh->id_organisasi);
 
-        // 2. Organisasi TIDAK dibuat
-        $this->assertDatabaseCount('organisasi', 0);
+        // 2. Organisasi TETAP menunggu
+        $this->assertDatabaseHas('organisasi', [
+            'id_organisasi'     => $pendaftaran->id_organisasi,
+            'status_organisasi' => 'menunggu',
+        ]);
 
         // 3. Pengguna berstatus ditolak
         $this->assertDatabaseHas('pengguna', [
-            'id_pengguna' => $pendaftaran->id_pengguna_pendaftar,
+            'id_pengguna' => $pendaftar->id_pengguna,
             'status_akun' => 'ditolak',
         ]);
 
-        // 4. Riwayat verifikasi tercatat beserta catatan_verifikasi
-        $this->assertDatabaseHas('riwayat_verifikasi', [
-            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
-            'id_pengguna_verifikator'   => $admin->id_pengguna,
-            'status_sebelumnya'         => 'menunggu',
-            'status_sesudahnya'         => 'ditolak',
-            'catatan_verifikasi'        => 'Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.',
+        // 4. Log verifikasi tercatat dengan pelaku verifikator
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna'     => $admin->id_pengguna,
+            'jenis_aktivitas' => 'verifikasi',
+            'keterangan'      => "Menolak pendaftaran BEM {$pendaftaran->organisasi->nama_organisasi} dengan alasan: Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.",
         ]);
     }
 
@@ -297,6 +332,7 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
+        $pendaftar = $pendaftaran->organisasi->akun;
 
         $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/reject", [
             'alasan' => 'Dokumen tidak valid',
@@ -305,15 +341,31 @@ class VerifikasiBemTest extends TestCase
         ])->assertStatus(200);
 
         $loginResponse = $this->postJson('/api/auth/login', [
-            'username' => $pendaftaran->pendaftar->username,
+            'username' => $pendaftar->username,
             'password' => 'password',
         ]);
 
-        $loginResponse->assertStatus(403)
+        $loginResponse->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'message' => 'Registrasi ditolak',
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
             ]);
+
+        $tokenTerbatas = $loginResponse->json('data.token');
+        auth()->forgetGuards();
+
+        // Token terbatas tidak dapat mengakses rute biasa
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $tokenTerbatas,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
     }
 
     public function test_dokumen_dapat_diunduh_oleh_administrator(): void
@@ -554,70 +606,77 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
-        $pendaftar = $pendaftaran->pendaftar;
+        $pendaftar = $pendaftaran->organisasi->akun;
+        $organisasi = $pendaftaran->organisasi;
 
-        // Pasang event listener creating pada RiwayatVerifikasi yang melempar exception
-        RiwayatVerifikasi::creating(function () {
+        // Pasang event listener creating pada LogAktivitas yang melempar exception
+        LogAktivitas::creating(function () {
             throw new \RuntimeException('Simulasi kegagalan di tengah proses approve');
         });
 
         $service = app(\App\Services\VerifikasiBemService::class);
 
         try {
-            $service->setujui($pendaftaran->id_pendaftaran_organisasi, $admin);
+            $service->setujui($pendaftaran->id_pendaftaran_organisasi, $admin->id_pengguna);
             $this->fail('Harusnya melempar exception');
         } catch (\RuntimeException $e) {
             $this->assertEquals('Simulasi kegagalan di tengah proses approve', $e->getMessage());
         } finally {
-            // Bersihkan listener agar tidak mempengaruhi tes lain
-            RiwayatVerifikasi::flushEventListeners();
+            LogAktivitas::flushEventListeners();
         }
 
-        // Pastikan tabel organisasi tetap kosong
-        $this->assertDatabaseCount('organisasi', 0);
+        // Organisasi tetap menunggu
+        $this->assertEquals('menunggu', $organisasi->fresh()->status_organisasi);
 
-        // Pastikan status pendaftaran tetap menunggu
+        // Status pendaftaran tetap menunggu
         $this->assertEquals('menunggu', $pendaftaran->fresh()->status_pendaftaran);
-        $this->assertNull($pendaftaran->fresh()->id_organisasi);
+        $this->assertNull($pendaftaran->fresh()->tanggal_verifikasi);
 
-        // Pastikan status akun pengguna tetap menunggu
+        // Status akun pengguna tetap menunggu
         $this->assertEquals('menunggu', $pendaftar->fresh()->status_akun);
 
-        // Pastikan tidak ada riwayat verifikasi yang tersimpan
-        $this->assertDatabaseCount('riwayat_verifikasi', 0);
+        // Tidak ada log aktivitas verifikasi tersimpan
+        $this->assertDatabaseMissing('log_aktivitas', [
+            'jenis_aktivitas' => 'verifikasi',
+        ]);
     }
 
     public function test_kegagalan_di_tengah_proses_tolak_rollback(): void
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
-        $pendaftar = $pendaftaran->pendaftar;
+        $pendaftar = $pendaftaran->organisasi->akun;
+        $organisasi = $pendaftaran->organisasi;
 
-        // Pasang event listener creating pada RiwayatVerifikasi yang melempar exception
-        RiwayatVerifikasi::creating(function () {
+        // Pasang event listener creating pada LogAktivitas yang melempar exception
+        LogAktivitas::creating(function () {
             throw new \RuntimeException('Simulasi kegagalan di tengah proses tolak');
         });
 
         $service = app(\App\Services\VerifikasiBemService::class);
 
         try {
-            $service->tolak($pendaftaran->id_pendaftaran_organisasi, 'Alasan ditolak', $admin);
+            $service->tolak($pendaftaran->id_pendaftaran_organisasi, 'Alasan ditolak', $admin->id_pengguna);
             $this->fail('Harusnya melempar exception');
         } catch (\RuntimeException $e) {
             $this->assertEquals('Simulasi kegagalan di tengah proses tolak', $e->getMessage());
         } finally {
-            // Bersihkan listener agar tidak mempengaruhi tes lain
-            RiwayatVerifikasi::flushEventListeners();
+            LogAktivitas::flushEventListeners();
         }
 
-        // Pastikan status pendaftaran tetap menunggu
+        // Status pendaftaran tetap menunggu
         $this->assertEquals('menunggu', $pendaftaran->fresh()->status_pendaftaran);
         $this->assertNull($pendaftaran->fresh()->alasan_penolakan);
 
-        // Pastikan status akun pengguna tetap menunggu
+        // Status akun pengguna tetap menunggu
         $this->assertEquals('menunggu', $pendaftar->fresh()->status_akun);
 
-        // Pastikan tidak ada riwayat verifikasi yang tersimpan
-        $this->assertDatabaseCount('riwayat_verifikasi', 0);
+        // Organisasi tetap menunggu
+        $this->assertEquals('menunggu', $organisasi->fresh()->status_organisasi);
+
+        // Tidak ada log aktivitas verifikasi tersimpan
+        $this->assertDatabaseMissing('log_aktivitas', [
+            'jenis_aktivitas' => 'verifikasi',
+        ]);
     }
 }

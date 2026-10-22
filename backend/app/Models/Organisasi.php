@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Organisasi extends Model
 {
+    use HasFactory;
+
     protected $table = 'organisasi';
     protected $primaryKey = 'id_organisasi';
 
@@ -15,31 +19,37 @@ class Organisasi extends Model
     const UPDATED_AT = 'diperbarui_pada';
 
     protected $fillable = [
-        'id_pengguna_akun',
+        'id_universitas',
         'id_organisasi_induk',
+        'id_akun_organisasi',
+        'id_bidang',
         'nama_organisasi',
         'jenis_organisasi',
-        'nama_instansi',
         'nomor_telepon',
-        'nomor_whatsapp',
         'deskripsi',
         'alamat',
         'logo',
-        'portofolio',
-        'masa_berlaku_sk',
+        'tanggal_mulai_sk',
+        'tanggal_berakhir_sk',
         'status_organisasi',
     ];
 
     protected function casts(): array
     {
         return [
-            'masa_berlaku_sk' => 'date',
+            'tanggal_mulai_sk'    => 'date',
+            'tanggal_berakhir_sk' => 'date',
         ];
     }
 
-    public function akunPengguna(): BelongsTo
+    public function universitas(): BelongsTo
     {
-        return $this->belongsTo(Pengguna::class, 'id_pengguna_akun', 'id_pengguna');
+        return $this->belongsTo(Universitas::class, 'id_universitas', 'id_universitas');
+    }
+
+    public function akun(): BelongsTo
+    {
+        return $this->belongsTo(Pengguna::class, 'id_akun_organisasi', 'id_pengguna');
     }
 
     public function induk(): BelongsTo
@@ -52,8 +62,13 @@ class Organisasi extends Model
         return $this->hasMany(self::class, 'id_organisasi_induk', 'id_organisasi');
     }
 
-    public function pendaftaran(): HasMany
+    public function pendaftaran(): HasOne
     {
-        return $this->hasMany(PendaftaranOrganisasi::class, 'id_organisasi', 'id_organisasi');
+        return $this->hasOne(PendaftaranOrganisasi::class, 'id_organisasi', 'id_organisasi');
+    }
+
+    public function keanggotaan(): HasMany
+    {
+        return $this->hasMany(Keanggotaan::class, 'id_organisasi', 'id_organisasi');
     }
 }

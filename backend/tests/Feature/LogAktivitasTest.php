@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\LogAktivitas;
+use App\Models\Organisasi;
 use App\Models\Pengguna;
 use App\Models\PendaftaranOrganisasi;
+use App\Models\Universitas;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -27,8 +29,10 @@ class LogAktivitasTest extends TestCase
 
     private function validPayloadBem(): array
     {
+        $univ = Universitas::firstOrCreate(['nama_universitas' => 'Institut Teknologi Contoh']);
+
         return [
-            'nama_instansi'            => 'Institut Teknologi Contoh',
+            'id_universitas'           => $univ->id_universitas,
             'nama_organisasi'          => 'BEM IT Contoh',
             'nomor_telepon_organisasi' => '02198765432',
             'nama'                     => 'Ahmad Ketua',
@@ -182,21 +186,20 @@ class LogAktivitasTest extends TestCase
         $admin = Pengguna::factory()->administrator()->create();
         $token = $admin->createToken('auth_token')->plainTextToken;
 
+        $univ = Universitas::firstOrCreate(['nama_universitas' => 'Univ Merdeka']);
         $pendaftar = Pengguna::factory()->akunOrganisasi()->menunggu()->create();
+        $organisasi = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pendaftar->id_pengguna,
+            'nama_organisasi'    => 'BEM Kampus Merdeka',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '021111111',
+            'status_organisasi'  => 'menunggu',
+        ]);
         $pendaftaran = PendaftaranOrganisasi::create([
-            'id_pengguna_pendaftar'    => $pendaftar->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Kampus Merdeka',
-            'nama_instansi'            => 'Univ Merdeka',
-            'nomor_telepon_organisasi' => '021111111',
-            'nama_penanggung_jawab'    => 'Ketua BEM',
-            'nim_penanggung_jawab'     => '12345',
-            'nomor_whatsapp'           => '081234567890',
-            'foto_ktm'                 => 'ktm.jpg',
-            'dokumen_sk_organisasi'    => 'sk.pdf',
-            'dokumen_sk_kepengurusan'  => 'skk.pdf',
-            'status_pendaftaran'       => 'menunggu',
-            'tanggal_pendaftaran'      => now(),
+            'id_organisasi'       => $organisasi->id_organisasi,
+            'status_pendaftaran'  => 'menunggu',
+            'tanggal_pendaftaran' => now(),
         ]);
 
         $response = $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/approve", [], [
@@ -218,21 +221,20 @@ class LogAktivitasTest extends TestCase
         $admin = Pengguna::factory()->administrator()->create();
         $token = $admin->createToken('auth_token')->plainTextToken;
 
+        $univ = Universitas::firstOrCreate(['nama_universitas' => 'Univ Maju']);
         $pendaftar = Pengguna::factory()->akunOrganisasi()->menunggu()->create();
+        $organisasi = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pendaftar->id_pengguna,
+            'nama_organisasi'    => 'BEM Kampus Maju',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '021222222',
+            'status_organisasi'  => 'menunggu',
+        ]);
         $pendaftaran = PendaftaranOrganisasi::create([
-            'id_pengguna_pendaftar'    => $pendaftar->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Kampus Maju',
-            'nama_instansi'            => 'Univ Maju',
-            'nomor_telepon_organisasi' => '021222222',
-            'nama_penanggung_jawab'    => 'Ketua BEM',
-            'nim_penanggung_jawab'     => '12345',
-            'nomor_whatsapp'           => '081234567890',
-            'foto_ktm'                 => 'ktm.jpg',
-            'dokumen_sk_organisasi'    => 'sk.pdf',
-            'dokumen_sk_kepengurusan'  => 'skk.pdf',
-            'status_pendaftaran'       => 'menunggu',
-            'tanggal_pendaftaran'      => now(),
+            'id_organisasi'       => $organisasi->id_organisasi,
+            'status_pendaftaran'  => 'menunggu',
+            'tanggal_pendaftaran' => now(),
         ]);
 
         $response = $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/reject", [
@@ -256,21 +258,20 @@ class LogAktivitasTest extends TestCase
         $admin = Pengguna::factory()->administrator()->create();
         $token = $admin->createToken('auth_token')->plainTextToken;
 
+        $univ = Universitas::firstOrCreate(['nama_universitas' => 'Univ Selesai']);
         $pendaftar = Pengguna::factory()->akunOrganisasi()->create(['status_akun' => 'aktif']);
+        $organisasi = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pendaftar->id_pengguna,
+            'nama_organisasi'    => 'BEM Sudah Selesai',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '021222222',
+            'status_organisasi'  => 'aktif',
+        ]);
         $pendaftaran = PendaftaranOrganisasi::create([
-            'id_pengguna_pendaftar'    => $pendaftar->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Sudah Selesai',
-            'nama_instansi'            => 'Univ Selesai',
-            'nomor_telepon_organisasi' => '021222222',
-            'nama_penanggung_jawab'    => 'Ketua BEM',
-            'nim_penanggung_jawab'     => '12345',
-            'nomor_whatsapp'           => '081234567890',
-            'foto_ktm'                 => 'ktm.jpg',
-            'dokumen_sk_organisasi'    => 'sk.pdf',
-            'dokumen_sk_kepengurusan'  => 'skk.pdf',
-            'status_pendaftaran'       => 'disetujui',
-            'tanggal_pendaftaran'      => now(),
+            'id_organisasi'       => $organisasi->id_organisasi,
+            'status_pendaftaran'  => 'disetujui',
+            'tanggal_pendaftaran' => now(),
         ]);
 
         $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/approve", [], [

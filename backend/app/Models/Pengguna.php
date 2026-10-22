@@ -68,11 +68,6 @@ class Pengguna extends Authenticatable
         });
     }
 
-    public function pendaftaranOrganisasi(): HasMany
-    {
-        return $this->hasMany(PendaftaranOrganisasi::class, 'id_pengguna_pendaftar', 'id_pengguna');
-    }
-
     public function logAktivitas(): HasMany
     {
         return $this->hasMany(LogAktivitas::class, 'id_pengguna', 'id_pengguna');
@@ -80,6 +75,11 @@ class Pengguna extends Authenticatable
 
     public function organisasi(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(Organisasi::class, 'id_pengguna_akun', 'id_pengguna');
+        return $this->hasOne(Organisasi::class, 'id_akun_organisasi', 'id_pengguna');
+    }
+
+    public function keanggotaan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Keanggotaan::class, 'id_pengguna', 'id_pengguna');
     }
 }

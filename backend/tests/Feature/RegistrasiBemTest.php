@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Pengguna;
+use App\Models\LogAktivitas;
+use App\Models\Organisasi;
 use App\Models\PendaftaranOrganisasi;
+use App\Models\PendaftaranOrganisasiFile;
+use App\Models\Pengguna;
+use App\Models\Universitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -23,10 +27,20 @@ class RegistrasiBemTest extends TestCase
         Storage::fake('local');
     }
 
+    private function getOrCreateUniversitas(string $nama = 'Universitas Contoh'): Universitas
+    {
+        return Universitas::firstOrCreate(
+            ['nama_universitas' => $nama],
+            ['logo' => null]
+        );
+    }
+
     private function validPayload(array $overrides = []): array
     {
+        $univ = $this->getOrCreateUniversitas();
+
         return array_merge([
-            'nama_instansi'            => 'Universitas Contoh',
+            'id_universitas'           => $univ->id_universitas,
             'nama_organisasi'          => 'BEM Universitas Contoh',
             'nomor_telepon_organisasi' => '02112345678',
             'nama'                     => 'Budi Santoso',
@@ -54,7 +68,6 @@ class RegistrasiBemTest extends TestCase
      */
     private function jpegHeader(): string
     {
-        // JFIF JPEG header
         return "\xFF\xD8\xFF\xE0" . str_repeat("\x00", 100);
     }
 
@@ -74,6 +87,7 @@ class RegistrasiBemTest extends TestCase
     {
         $this->fakeStorage();
 
+        $univ = $this->getOrCreateUniversitas();
         $response = $this->postJson('/api/register/bem', $this->validPayload());
 
         $response->assertStatus(201)
@@ -82,9 +96,11 @@ class RegistrasiBemTest extends TestCase
                 'message' => 'Registrasi BEM berhasil dikirim',
                 'data'    => [
                     'pendaftaran' => [
-                        'jenis_organisasi'  => 'bem',
-                        'nama_organisasi'   => 'BEM Universitas Contoh',
-                        'nama_instansi'     => 'Universitas Contoh',
+                        'jenis_organisasi'   => 'bem',
+                        'nama_organisasi'    => 'BEM Universitas Contoh',
+                        'id_universitas'     => $univ->id_universitas,
+                        'nama_universitas'   => 'Universitas Contoh',
+                        'nama_instansi'      => 'Universitas Contoh',
                         'status_pendaftaran' => 'menunggu',
                     ],
                 ],
@@ -96,6 +112,8 @@ class RegistrasiBemTest extends TestCase
                         'id_pendaftaran_organisasi',
                         'jenis_organisasi',
                         'nama_organisasi',
+                        'id_universitas',
+                        'nama_universitas',
                         'nama_instansi',
                         'status_pendaftaran',
                         'tanggal_pendaftaran',
@@ -103,45 +121,80 @@ class RegistrasiBemTest extends TestCase
                 ],
             ]);
 
-        // Pengguna terbentuk dengan peran & status yang benar
+        // 1. Pengguna terbentuk dengan peran, status, nim, whatsapp, dan foto_ktm
         $this->assertDatabaseHas('pengguna', [
-            'username'    => 'budi_bem',
-            'peran'       => 'akun_organisasi',
-            'status_akun' => 'menunggu',
+            'username'       => 'budi_bem',
+            'peran'          => 'akun_organisasi',
+            'status_akun'    => 'menunggu',
+            'nim'            => '2024001',
+            'nomor_whatsapp' => '081234567890',
         ]);
 
-        // Password ter-hash
         $pengguna = Pengguna::where('username', 'budi_bem')->first();
         $this->assertNotNull($pengguna);
         $this->assertTrue(Hash::check('Password123', $pengguna->kata_sandi));
+        $this->assertNotNull($pengguna->foto_ktm);
 
-        // Pendaftaran organisasi terbentuk
-        $this->assertDatabaseHas('pendaftaran_organisasi', [
-            'id_pengguna_pendaftar' => $pengguna->id_pengguna,
-            'jenis_organisasi'      => 'bem',
-            'status_pendaftaran'    => 'menunggu',
-            'nama_instansi'         => 'Universitas Contoh',
-            'nama_organisasi'       => 'BEM Universitas Contoh',
+        // 2. Organisasi terbentuk dengan status menunggu
+        $this->assertDatabaseHas('organisasi', [
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pengguna->id_pengguna,
+            'nama_organisasi'    => 'BEM Universitas Contoh',
+            'jenis_organisasi'   => 'bem',
+            'status_organisasi'  => 'menunggu',
         ]);
 
-        // id_organisasi kosong (belum dibuat)
-        $pendaftaran = PendaftaranOrganisasi::where('id_pengguna_pendaftar', $pengguna->id_pengguna)->first();
-        $this->assertNull($pendaftaran->id_organisasi);
+        $organisasi = Organisasi::where('id_akun_organisasi', $pengguna->id_pengguna)->first();
+        $this->assertNotNull($organisasi);
 
-        // 3 file tersimpan di disk privat
-        Storage::disk('local')->assertExists($pendaftaran->foto_ktm);
-        Storage::disk('local')->assertExists($pendaftaran->dokumen_sk_organisasi);
-        Storage::disk('local')->assertExists($pendaftaran->dokumen_sk_kepengurusan);
+        // 3. Pendaftaran organisasi terbentuk
+        $this->assertDatabaseHas('pendaftaran_organisasi', [
+            'id_organisasi'      => $organisasi->id_organisasi,
+            'status_pendaftaran' => 'menunggu',
+        ]);
+
+        $pendaftaran = PendaftaranOrganisasi::where('id_organisasi', $organisasi->id_organisasi)->first();
+        $this->assertNotNull($pendaftaran);
+
+        // 4. 2 baris file pendaftaran_organisasi_file terbentuk
+        $this->assertDatabaseHas('pendaftaran_organisasi_file', [
+            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
+            'jenis_dokumen'             => 'sk_organisasi',
+        ]);
+        $this->assertDatabaseHas('pendaftaran_organisasi_file', [
+            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
+            'jenis_dokumen'             => 'sk_kepengurusan',
+        ]);
+
+        // 5. Berkas tersimpan di disk lokal
+        $fileSkOrg = PendaftaranOrganisasiFile::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            ->where('jenis_dokumen', 'sk_organisasi')->first();
+        $fileSkKep = PendaftaranOrganisasiFile::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            ->where('jenis_dokumen', 'sk_kepengurusan')->first();
+
+        Storage::disk('local')->assertExists($pengguna->foto_ktm);
+        Storage::disk('local')->assertExists($fileSkOrg->path_file);
+        Storage::disk('local')->assertExists($fileSkKep->path_file);
+
+        // 6. Log aktivitas pendaftaran tercatat
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna'     => $pengguna->id_pengguna,
+            'jenis_aktivitas' => 'pendaftaran',
+        ]);
     }
 
-    public function test_tabel_organisasi_tetap_kosong_setelah_registrasi(): void
+    public function test_organisasi_berstatus_menunggu_setelah_registrasi(): void
     {
         $this->fakeStorage();
 
         $this->postJson('/api/register/bem', $this->validPayload())
             ->assertStatus(201);
 
-        $this->assertDatabaseCount('organisasi', 0);
+        $this->assertDatabaseCount('organisasi', 1);
+        $this->assertDatabaseHas('organisasi', [
+            'status_organisasi' => 'menunggu',
+            'jenis_organisasi'  => 'bem',
+        ]);
     }
 
     public function test_response_tanpa_kata_sandi_dan_tanpa_path_file(): void
@@ -172,35 +225,58 @@ class RegistrasiBemTest extends TestCase
             'password' => 'Password123',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'message' => 'Akun belum disetujui',
+                'success' => true,
+                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
+                'data'    => [
+                    'akses_terbatas' => true,
+                    'permissions'    => [],
+                ],
             ]);
+
+        $token = $response->json('data.token');
+        auth()->forgetGuards();
+
+        // Token terbatas tidak dapat mengakses rute biasa
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer ' . $token,
+        ])->assertStatus(403)
+          ->assertJson([
+              'success' => false,
+              'message' => 'Silakan login ulang',
+          ]);
     }
 
-    public function test_registrasi_berhasil_jika_instansi_sebelumnya_berstatus_ditolak(): void
+    public function test_registrasi_berhasil_jika_bem_sebelumnya_berstatus_ditolak(): void
     {
         $this->fakeStorage();
 
-        // Buat pendaftaran sebelumnya yang ditolak
-        $penggunaDitolak = Pengguna::factory()->akunOrganisasi()->menunggu()->create();
+        $univ = $this->getOrCreateUniversitas();
+
+        // Buat BEM pendaftaran sebelumnya yang ditolak di universitas yang sama
+        $penggunaDitolak = Pengguna::factory()->akunOrganisasi()->create(['status_akun' => 'ditolak']);
+        $organisasiDitolak = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $penggunaDitolak->id_pengguna,
+            'nama_organisasi'    => 'BEM Univ Lama',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '02100000000',
+            'status_organisasi'  => 'menunggu',
+        ]);
         PendaftaranOrganisasi::create([
-            'id_pengguna_pendaftar'    => $penggunaDitolak->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Univ Lama',
-            'nama_instansi'            => 'Universitas Contoh',
-            'nomor_telepon_organisasi' => '02100000000',
-            'nama_penanggung_jawab'    => 'Andi',
-            'nim_penanggung_jawab'     => '2024999',
-            'nomor_whatsapp'           => '081200000000',
-            'foto_ktm'                 => 'old/ktm.jpg',
-            'dokumen_sk_organisasi'    => 'old/sk.pdf',
-            'dokumen_sk_kepengurusan'  => 'old/skk.pdf',
-            'status_pendaftaran'       => 'ditolak',
+            'id_organisasi'       => $organisasiDitolak->id_organisasi,
+            'status_pendaftaran'  => 'ditolak',
+            'alasan_penolakan'    => 'SK tidak sesuai',
+            'tanggal_pendaftaran' => now()->subDays(5),
+            'tanggal_verifikasi'  => now()->subDays(4),
         ]);
 
-        $response = $this->postJson('/api/register/bem', $this->validPayload());
+        // Pendaftaran BEM baru untuk universitas yang sama berhasil 201
+        $response = $this->postJson('/api/register/bem', $this->validPayload([
+            'nama_organisasi' => 'BEM Baru Universitas Contoh',
+            'username'        => 'budi_bem_baru',
+        ]));
 
         $response->assertStatus(201);
     }
@@ -221,7 +297,7 @@ class RegistrasiBemTest extends TestCase
                 'message' => 'Data tidak valid',
             ])
             ->assertJsonValidationErrors([
-                'nama_instansi',
+                'id_universitas',
                 'nama_organisasi',
                 'nomor_telepon_organisasi',
                 'nama',
@@ -233,6 +309,18 @@ class RegistrasiBemTest extends TestCase
                 'sk_organisasi',
                 'sk_kepengurusan',
             ]);
+    }
+
+    public function test_id_universitas_tidak_ada_mengembalikan_422(): void
+    {
+        $this->fakeStorage();
+
+        $response = $this->postJson('/api/register/bem', $this->validPayload([
+            'id_universitas' => 999999,
+        ]));
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['id_universitas']);
     }
 
     public function test_username_sudah_ada_mengembalikan_422(): void
@@ -398,10 +486,10 @@ class RegistrasiBemTest extends TestCase
     }
 
     // -------------------------------------------------------
-    // DUPLIKASI NAMA INSTANSI
+    // ATURAN BEM PER UNIVERSITAS & NAMA KEMBAR
     // -------------------------------------------------------
 
-    public function test_duplikasi_nama_instansi_status_menunggu_mengembalikan_422(): void
+    public function test_duplikasi_bem_status_menunggu_mengembalikan_422(): void
     {
         $this->fakeStorage();
 
@@ -409,9 +497,10 @@ class RegistrasiBemTest extends TestCase
         $this->postJson('/api/register/bem', $this->validPayload())
             ->assertStatus(201);
 
-        // Pendaftaran kedua dengan instansi sama
+        // Pendaftaran BEM kedua untuk universitas yang sama
         $response = $this->postJson('/api/register/bem', $this->validPayload([
-            'username' => 'budi_bem2',
+            'nama_organisasi' => 'BEM Berbeda',
+            'username'        => 'budi_bem2',
         ]));
 
         $response->assertStatus(422)
@@ -419,82 +508,71 @@ class RegistrasiBemTest extends TestCase
                 'success' => false,
                 'message' => 'Data tidak valid',
                 'errors'  => [
-                    'nama_instansi' => ['BEM untuk instansi ini sudah terdaftar'],
+                    'id_universitas' => ['BEM untuk universitas ini sudah terdaftar'],
                 ],
             ]);
     }
 
-    public function test_duplikasi_nama_instansi_beda_huruf_besar_kecil_mengembalikan_422(): void
+    public function test_duplikasi_bem_status_disetujui_mengembalikan_422(): void
     {
         $this->fakeStorage();
 
-        $this->postJson('/api/register/bem', $this->validPayload())
-            ->assertStatus(201);
+        $univ = $this->getOrCreateUniversitas();
 
-        $response = $this->postJson('/api/register/bem', $this->validPayload([
-            'nama_instansi' => 'UNIVERSITAS CONTOH',
-            'username'      => 'budi_bem2',
-        ]));
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'errors' => [
-                    'nama_instansi' => ['BEM untuk instansi ini sudah terdaftar'],
-                ],
-            ]);
-    }
-
-    public function test_duplikasi_nama_instansi_spasi_di_tepi_mengembalikan_422(): void
-    {
-        $this->fakeStorage();
-
-        $this->postJson('/api/register/bem', $this->validPayload())
-            ->assertStatus(201);
-
-        $response = $this->postJson('/api/register/bem', $this->validPayload([
-            'nama_instansi' => '  Universitas Contoh  ',
-            'username'      => 'budi_bem2',
-        ]));
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'errors' => [
-                    'nama_instansi' => ['BEM untuk instansi ini sudah terdaftar'],
-                ],
-            ]);
-    }
-
-    public function test_duplikasi_nama_instansi_status_disetujui_mengembalikan_422(): void
-    {
-        $this->fakeStorage();
-
-        // Buat pendaftaran yang sudah disetujui
         $pengguna = Pengguna::factory()->akunOrganisasi()->create();
+        $organisasi = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pengguna->id_pengguna,
+            'nama_organisasi'    => 'BEM Universitas Contoh',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '02100000000',
+            'status_organisasi'  => 'aktif',
+        ]);
         PendaftaranOrganisasi::create([
-            'id_pengguna_pendaftar'    => $pengguna->id_pengguna,
-            'jenis_organisasi'         => 'bem',
-            'nama_organisasi'          => 'BEM Universitas Contoh',
-            'nama_instansi'            => 'Universitas Contoh',
-            'nomor_telepon_organisasi' => '02100000000',
-            'nama_penanggung_jawab'    => 'Andi',
-            'nim_penanggung_jawab'     => '2024999',
-            'nomor_whatsapp'           => '081200000000',
-            'foto_ktm'                 => 'old/ktm.jpg',
-            'dokumen_sk_organisasi'    => 'old/sk.pdf',
-            'dokumen_sk_kepengurusan'  => 'old/skk.pdf',
-            'status_pendaftaran'       => 'disetujui',
+            'id_organisasi'       => $organisasi->id_organisasi,
+            'status_pendaftaran'  => 'disetujui',
+            'tanggal_pendaftaran' => now(),
+            'tanggal_verifikasi'  => now(),
         ]);
 
-        $response = $this->postJson('/api/register/bem', $this->validPayload());
+        $response = $this->postJson('/api/register/bem', $this->validPayload([
+            'nama_organisasi' => 'BEM Baru Lagi',
+            'username'        => 'budi_bem2',
+        ]));
 
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
                 'message' => 'Data tidak valid',
                 'errors'  => [
-                    'nama_instansi' => ['BEM untuk instansi ini sudah terdaftar'],
+                    'id_universitas' => ['BEM untuk universitas ini sudah terdaftar'],
                 ],
             ]);
+    }
+
+    public function test_nama_organisasi_kembar_dalam_universitas_sama_mengembalikan_422(): void
+    {
+        $this->fakeStorage();
+
+        $univ = $this->getOrCreateUniversitas();
+
+        $pengguna = Pengguna::factory()->akunOrganisasi()->create();
+        Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $pengguna->id_pengguna,
+            'nama_organisasi'    => 'BEM Universitas Contoh',
+            'jenis_organisasi'   => 'hmj', // bukan BEM agar lolos aturan 1 BEM
+            'nomor_telepon'      => '02100000000',
+            'status_organisasi'  => 'aktif',
+        ]);
+
+        $response = $this->postJson('/api/register/bem', $this->validPayload([
+            'nama_organisasi' => 'BEM Universitas Contoh',
+            'username'        => 'budi_bem2',
+        ]));
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['nama_organisasi']);
     }
 
     // -------------------------------------------------------
@@ -506,9 +584,9 @@ class RegistrasiBemTest extends TestCase
         $this->fakeStorage();
 
         $response = $this->postJson('/api/register/bem', $this->validPayload([
-            'peran'                => 'super_admin',
-            'status_akun'          => 'aktif',
-            'status_pendaftaran'   => 'disetujui',
+            'peran'              => 'super_admin',
+            'status_akun'        => 'aktif',
+            'status_pendaftaran' => 'disetujui',
         ]));
 
         $response->assertStatus(201);
@@ -532,21 +610,54 @@ class RegistrasiBemTest extends TestCase
     {
         $this->fakeStorage();
 
-        // Pertama, daftarkan BEM dengan sukses
+        // 1. Simpan satu pendaftaran sukses
         $this->postJson('/api/register/bem', $this->validPayload())
             ->assertStatus(201);
 
         $jumlahPengguna = Pengguna::count();
+        $jumlahOrganisasi = Organisasi::count();
         $jumlahPendaftaran = PendaftaranOrganisasi::count();
+        $jumlahFiles = PendaftaranOrganisasiFile::count();
 
-        // Kedua, coba daftarkan BEM duplikat (akan gagal)
+        // 2. Coba daftarkan duplikat (gagal 422)
         $this->postJson('/api/register/bem', $this->validPayload([
             'username' => 'budi_bem2',
         ]))->assertStatus(422);
 
-        // Pastikan tidak ada pengguna atau pendaftaran tambahan
+        // 3. Pastikan tidak ada data yang bertambah
         $this->assertDatabaseCount('pengguna', $jumlahPengguna);
+        $this->assertDatabaseCount('organisasi', $jumlahOrganisasi);
         $this->assertDatabaseCount('pendaftaran_organisasi', $jumlahPendaftaran);
+        $this->assertDatabaseCount('pendaftaran_organisasi_file', $jumlahFiles);
+    }
+
+    public function test_rollback_transaksi_menghapus_file_yang_sempat_disimpan(): void
+    {
+        $this->fakeStorage();
+
+        // Pasang listener pada Organisasi yang melempar exception untuk mensimulasikan kegagalan transaksi
+        Organisasi::creating(function () {
+            throw new \RuntimeException('Simulasi error DB di tengah transaksi registrasi');
+        });
+
+        try {
+            $this->postJson('/api/register/bem', $this->validPayload([
+                'username' => 'user_rollback_test',
+            ]));
+        } catch (\RuntimeException) {
+        } finally {
+            Organisasi::flushEventListeners();
+        }
+
+        // Pengguna dan organisasi tidak tersimpan
+        $this->assertDatabaseMissing('pengguna', ['username' => 'user_rollback_test']);
+        $this->assertDatabaseCount('organisasi', 0);
+        $this->assertDatabaseCount('pendaftaran_organisasi', 0);
+        $this->assertDatabaseCount('pendaftaran_organisasi_file', 0);
+
+        // Berkas di storage local bersih (tidak ada file yatim)
+        $files = Storage::disk('local')->allFiles('pendaftaran');
+        $this->assertEmpty($files);
     }
 
     // -------------------------------------------------------
@@ -557,16 +668,22 @@ class RegistrasiBemTest extends TestCase
     {
         $this->fakeStorage();
 
+        $univ = $this->getOrCreateUniversitas();
+
         for ($i = 0; $i < 10; $i++) {
+            $otherUniv = Universitas::create(['nama_universitas' => 'Univ Ke ' . $i]);
             $this->postJson('/api/register/bem', $this->validPayload([
-                'username' => 'user_' . $i,
-                'nama_instansi' => 'Instansi ' . $i,
+                'id_universitas'  => $otherUniv->id_universitas,
+                'nama_organisasi' => 'BEM Univ ' . $i,
+                'username'        => 'user_' . $i,
             ]));
         }
 
+        $otherUniv11 = Universitas::create(['nama_universitas' => 'Univ Ke 11']);
         $response = $this->postJson('/api/register/bem', $this->validPayload([
-            'username' => 'user_overflow',
-            'nama_instansi' => 'Instansi Overflow',
+            'id_universitas'  => $otherUniv11->id_universitas,
+            'nama_organisasi' => 'BEM Univ 11',
+            'username'        => 'user_overflow',
         ]));
 
         $response->assertStatus(429)

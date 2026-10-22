@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Organisasi;
+use App\Models\PendaftaranOrganisasi;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -16,7 +18,7 @@ class RegistrasiBemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_instansi'            => ['required', 'string', 'max:150'],
+            'id_universitas'           => ['required', 'integer', 'exists:universitas,id_universitas'],
             'nama_organisasi'          => ['required', 'string', 'max:150'],
             'nomor_telepon_organisasi' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
             'nama'                     => ['required', 'string', 'max:150'],
@@ -33,9 +35,9 @@ class RegistrasiBemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nama_instansi.required'            => 'Nama instansi wajib diisi',
-            'nama_instansi.string'              => 'Nama instansi harus berupa teks',
-            'nama_instansi.max'                 => 'Nama instansi maksimal 150 karakter',
+            'id_universitas.required'           => 'Universitas wajib dipilih',
+            'id_universitas.integer'            => 'ID universitas harus berupa angka',
+            'id_universitas.exists'             => 'Universitas tidak ditemukan',
             'nama_organisasi.required'          => 'Nama organisasi wajib diisi',
             'nama_organisasi.string'            => 'Nama organisasi harus berupa teks',
             'nama_organisasi.max'               => 'Nama organisasi maksimal 150 karakter',
@@ -73,6 +75,43 @@ class RegistrasiBemRequest extends FormRequest
             'sk_kepengurusan.mimes'             => 'SK Kepengurusan harus berformat PDF',
             'sk_kepengurusan.max'               => 'SK Kepengurusan maksimal 2 MB',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $idUniversitas = $this->input('id_universitas');
+            $namaOrganisasi = $this->input('nama_organisasi');
+
+            if ($idUniversitas) {
+                // Satu BEM per universitas: tidak boleh ada BEM lain dengan status menunggu atau disetujui
+                $adaBem = PendaftaranOrganisasi::whereIn('status_pendaftaran', ['menunggu', 'disetujui'])
+                    ->whereHas('organisasi', function ($q) use ($idUniversitas) {
+                        $q->where('id_universitas', $idUniversitas)
+                            ->where('jenis_organisasi', 'bem');
+                    })
+                    ->exists();
+
+                if ($adaBem) {
+                    $validator->errors()->add('id_universitas', 'BEM untuk universitas ini sudah terdaftar');
+                }
+
+                // Nama organisasi unik dalam universitas yang sama
+                if ($namaOrganisasi) {
+                    $namaKembar = Organisasi::where('id_universitas', $idUniversitas)
+                        ->whereRaw('LOWER(TRIM(nama_organisasi)) = ?', [strtolower(trim($namaOrganisasi))])
+                        ->exists();
+
+                    if ($namaKembar) {
+                        $validator->errors()->add('nama_organisasi', 'Nama organisasi sudah terdaftar di universitas ini');
+                    }
+                }
+            }
+        });
     }
 
     protected function failedValidation(Validator $validator): void
