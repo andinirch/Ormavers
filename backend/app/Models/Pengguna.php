@@ -58,7 +58,21 @@ class Pengguna extends Authenticatable
     {
         static::saved(function (Pengguna $pengguna) {
             if ($pengguna->wasChanged('peran') || $pengguna->wasRecentlyCreated) {
+                if ($pengguna->peran === 'akun_organisasi' && $pengguna->hasRole('akun_hmj_ukm')) {
+                    return;
+                }
+
                 $namaRole = self::PERAN_ROLE_MAP[$pengguna->peran] ?? null;
+
+                if ($pengguna->peran === 'akun_organisasi') {
+                    $organisasi = $pengguna->relationLoaded('organisasi')
+                        ? $pengguna->organisasi
+                        : $pengguna->organisasi()->first();
+
+                    if ($organisasi && in_array($organisasi->jenis_organisasi, ['hmj', 'ukm'], true)) {
+                        $namaRole = 'akun_hmj_ukm';
+                    }
+                }
 
                 if ($namaRole) {
                     $role = \Spatie\Permission\Models\Role::findOrCreate($namaRole, 'web');
