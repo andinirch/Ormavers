@@ -94,10 +94,27 @@ class AdministratorService
         ];
     }
 
+    public function daftarSemuaPengguna(): array
+    {
+        return Pengguna::query()
+            ->select('pengguna.*')
+            ->selectSub(function ($query) {
+                $query->from('personal_access_tokens')
+                    ->selectRaw('MAX(created_at)')
+                    ->whereColumn('tokenable_id', 'pengguna.id_pengguna')
+                    ->where('tokenable_type', Pengguna::class);
+            }, 'login_terakhir')
+            ->orderByDesc('dibuat_pada')
+            ->get()
+            ->map(fn (Pengguna $pengguna) => $this->formatPengguna($pengguna, true))
+            ->values()
+            ->all();
+    }
+
     /**
      * Format data pengguna untuk response tanpa menyertakan kata sandi.
      */
-    public function formatPengguna(Pengguna $pengguna): array
+    public function formatPengguna(Pengguna $pengguna, bool $includeLogin = false): array
     {
         return [
             'id_pengguna' => $pengguna->id_pengguna,
@@ -106,6 +123,7 @@ class AdministratorService
             'peran'       => $pengguna->peran,
             'status_akun' => $pengguna->status_akun,
             'foto_profil' => $pengguna->foto_profil,
+            ...($includeLogin ? ['login_terakhir' => $pengguna->login_terakhir] : []),
         ];
     }
 }

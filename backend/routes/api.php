@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdministratorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrasiBemController;
@@ -24,8 +25,9 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:super_admin'])
     ->prefix('superadmin')
     ->group(function () {
-        Route::get('/administrators', [AdministratorController::class, 'index']);
-        Route::post('/administrators', [AdministratorController::class, 'store']);
+         Route::get('/administrators', [AdministratorController::class, 'index']);
+         Route::get('/users', [AdministratorController::class, 'users']);
+         Route::post('/administrators', [AdministratorController::class, 'store']);
         Route::patch('/administrators/{id}/nonaktif', [AdministratorController::class, 'nonaktifkan'])
             ->whereNumber('id');
     });
@@ -61,8 +63,10 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])
         Route::put('/roles/{id}', [RoleController::class, 'update'])
             ->middleware('permission:edit roles')
             ->whereNumber('id');
-        Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
-            ->middleware('permission:delete roles')
-            ->whereNumber('id');
-    });
+         Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
+             ->middleware('permission:delete roles')
+             ->whereNumber('id');
+         Route::get('/activities', [ActivityLogController::class, 'index'])
+             ->middleware('peran:super_admin');
+     });
 
