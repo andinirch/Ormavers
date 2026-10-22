@@ -10,6 +10,10 @@ use Illuminate\Validation\ValidationException;
 
 class RegistrasiBemService
 {
+    public function __construct(
+        protected LogAktivitasService $logAktivitasService,
+    ) {}
+
     /**
      * Mendaftarkan BEM baru.
      *
@@ -68,6 +72,13 @@ class RegistrasiBemService
                     'status_pendaftaran'       => 'menunggu',
                     'tanggal_pendaftaran'      => now(),
                 ]);
+
+                // 5. Catat log aktivitas
+                $this->logAktivitasService->catat(
+                    $pengguna->id_pengguna,
+                    'pendaftaran',
+                    "Pendaftaran BEM {$pendaftaran->nama_organisasi} dari {$pendaftaran->nama_instansi}"
+                );
 
                 return [
                     'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,

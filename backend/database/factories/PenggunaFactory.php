@@ -53,4 +53,9 @@ class PenggunaFactory extends Factory
     {
         return $this->state(['status_akun' => 'ditolak']);
     }
+
+    public function ditangguhkan(): static
+    {
+        return $this->state(['status_akun' => 'ditangguhkan']);
+    }
 }

@@ -361,19 +361,40 @@ class RegistrasiBemTest extends TestCase
             ->assertJsonValidationErrors(['sk_organisasi']);
     }
 
-    public function test_sk_kepengurusan_lebih_dari_5mb_mengembalikan_422(): void
+    public function test_sk_kepengurusan_lebih_dari_2mb_mengembalikan_422(): void
     {
         $this->fakeStorage();
 
         $response = $this->postJson('/api/register/bem', $this->validPayload([
             'sk_kepengurusan' => UploadedFile::fake()->createWithContent(
                 'sk.pdf',
-                $this->pdfHeader() . str_repeat('x', 5 * 1024 * 1024)
+                $this->pdfHeader() . str_repeat('x', 2049 * 1024)
             ),
         ]));
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['sk_kepengurusan']);
+            ->assertJsonValidationErrors(['sk_kepengurusan'])
+            ->assertJsonFragment([
+                'sk_kepengurusan' => ['SK Kepengurusan maksimal 2 MB'],
+            ]);
+    }
+
+    public function test_sk_organisasi_dan_kepengurusan_sekitar_2mb_lolos(): void
+    {
+        $this->fakeStorage();
+
+        $response = $this->postJson('/api/register/bem', $this->validPayload([
+            'sk_organisasi' => UploadedFile::fake()->createWithContent(
+                'sk_org.pdf',
+                $this->pdfHeader() . str_repeat('x', 2040 * 1024)
+            ),
+            'sk_kepengurusan' => UploadedFile::fake()->createWithContent(
+                'sk_kep.pdf',
+                $this->pdfHeader() . str_repeat('x', 2040 * 1024)
+            ),
+        ]));
+
+        $response->assertStatus(201);
     }
 
     // -------------------------------------------------------

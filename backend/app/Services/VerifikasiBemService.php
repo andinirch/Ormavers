@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class VerifikasiBemService
 {
+    public function __construct(
+        protected LogAktivitasService $logAktivitasService,
+    ) {}
+
     /**
      * Daftar pendaftaran BEM berstatus menunggu, terlama dulu.
      *
@@ -193,6 +197,13 @@ class VerifikasiBemService
                 'tanggal_verifikasi'        => now(),
             ]);
 
+            // 5. Catat log aktivitas
+            $this->logAktivitasService->catat(
+                $verifikator->id_pengguna,
+                'verifikasi',
+                "Menyetujui pendaftaran BEM {$pendaftaran->nama_organisasi}"
+            );
+
             return [
                 'message' => 'Registrasi BEM berhasil disetujui',
             ];
@@ -258,6 +269,13 @@ class VerifikasiBemService
                 'catatan_verifikasi'        => $alasan,
                 'tanggal_verifikasi'        => now(),
             ]);
+
+            // 4. Catat log aktivitas
+            $this->logAktivitasService->catat(
+                $verifikator->id_pengguna,
+                'verifikasi',
+                "Menolak pendaftaran BEM {$pendaftaran->nama_organisasi} dengan alasan: {$alasan}"
+            );
 
             return [
                 'message' => 'Registrasi BEM berhasil ditolak',

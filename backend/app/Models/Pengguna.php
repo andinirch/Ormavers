@@ -22,6 +22,7 @@ class Pengguna extends Authenticatable
 
     protected $fillable = [
         'nama', 'username', 'kata_sandi', 'peran', 'status_akun', 'foto_profil',
+        'nim', 'nomor_whatsapp', 'foto_ktm',
     ];
 
     protected $hidden = ['kata_sandi'];
@@ -60,5 +61,10 @@ class Pengguna extends Authenticatable
     public function pendaftaranOrganisasi(): HasMany
     {
         return $this->hasMany(PendaftaranOrganisasi::class, 'id_pengguna_pendaftar', 'id_pengguna');
+    }
+
+    public function logAktivitas(): HasMany
+    {
+        return $this->hasMany(LogAktivitas::class, 'id_pengguna', 'id_pengguna');
     }
 }

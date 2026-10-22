@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TambahAdministratorRequest;
 use App\Services\AdministratorService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdministratorController extends Controller
 {
@@ -39,7 +40,8 @@ class AdministratorController extends Controller
     public function store(TambahAdministratorRequest $request): JsonResponse
     {
         $administrator = $this->administratorService->tambahAdministrator(
-            $request->validated()
+            $request->validated(),
+            $request->user()->id_pengguna,
         );
 
         return response()->json([
@@ -51,9 +53,12 @@ class AdministratorController extends Controller
         ], 201);
     }
 
-    public function nonaktifkan(int $id): JsonResponse
+    public function nonaktifkan(int $id, Request $request): JsonResponse
     {
-        $result = $this->administratorService->nonaktifkanAdministrator($id);
+        $result = $this->administratorService->nonaktifkanAdministrator(
+            $id,
+            $request->user()->id_pengguna,
+        );
 
         if (isset($result['error'])) {
             return response()->json([

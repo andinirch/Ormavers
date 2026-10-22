@@ -209,6 +209,22 @@ class AuthTest extends TestCase
             ]);
     }
 
+    public function test_status_ditangguhkan(): void
+    {
+        $pengguna = $this->buatPengguna(['status_akun' => 'ditangguhkan']);
+
+        $response = $this->postJson('/api/auth/login', [
+            'username' => $pengguna->username,
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Akun ditangguhkan',
+            ]);
+    }
+
     // -------------------------------------------------------
     // 9. Percobaan ke-6 → 429
     // -------------------------------------------------------
