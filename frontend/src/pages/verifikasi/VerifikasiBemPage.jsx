@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  approveMockRegistration,
-  getMockRegistrationDetail,
-  listMockRegistrations,
-  rejectMockRegistration,
+  approveHmjRegistration,
+  approveMemberRequest,
+  getHmjDocument,
+  getHmjRegistrationDetail,
+  getMemberKtm,
+  getMemberRequestDetail,
+  listHmjRegistrations,
+  listMemberRequests,
+  rejectHmjRegistration,
+  rejectMemberRequest,
 } from '../../services/verification/verificationApi.js'
 import {
   ConfirmationModal,
@@ -74,6 +80,7 @@ export default function VerifikasiBemPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [downloadingDoc, setDownloadingDoc] = useState(null)
 
   const [refreshIndex, setRefreshIndex] = useState(0)
 
@@ -81,8 +88,7 @@ export default function VerifikasiBemPage() {
     let cancelled = false
     const run = async () => {
       setLoading(true)
-      const typeKey = bagian === 'anggota' ? 'member-bem' : 'hmj'
-      const res = await listMockRegistrations(typeKey)
+      const res = isMemberMode ? await listMemberRequests() : await listHmjRegistrations()
       if (cancelled) return
       const list = res.data ?? []
       setItems(list)
@@ -98,7 +104,7 @@ export default function VerifikasiBemPage() {
     return () => {
       cancelled = true
     }
-  }, [bagian, refreshIndex])
+  }, [bagian, isMemberMode, refreshIndex])
 
   useEffect(() => {
     if (!selectedId) {
@@ -108,8 +114,7 @@ export default function VerifikasiBemPage() {
     let cancelled = false
     const fetchDetail = async () => {
       setDetailLoading(true)
-      const typeKey = isMemberMode ? 'member-bem' : 'hmj'
-      const res = await getMockRegistrationDetail(typeKey, selectedId)
+      const res = isMemberMode ? await getMemberRequestDetail(selectedId) : await getHmjRegistrationDetail(selectedId)
       if (!cancelled) {
         setSelectedDetail(res.data ?? null)
         setRejectionReason('')
@@ -122,6 +127,37 @@ export default function VerifikasiBemPage() {
       cancelled = true
     }
   }, [selectedId, isMemberMode])
+
+  const handlePreviewDocument = async (jenis, title, fileName, type = 'pdf') => {
+    if (!selectedId) return
+    try {
+      const response = isMemberMode ? await getMemberKtm(selectedId) : await getHmjDocument(selectedId, jenis)
+      const blobUrl = URL.createObjectURL(response.data)
+      setPreviewDoc({ title, url: blobUrl, fileName, type })
+    } catch (error) {
+      setToastMessage(error.response?.data?.message ?? 'Gagal membuka dokumen.')
+    }
+  }
+
+  const handleDownloadDocument = async (jenis, fileName) => {
+    if (!selectedId || downloadingDoc) return
+    setDownloadingDoc(jenis)
+    try {
+      const response = isMemberMode ? await getMemberKtm(selectedId) : await getHmjDocument(selectedId, jenis)
+      const blobUrl = URL.createObjectURL(response.data)
+      const anchor = document.createElement('a')
+      anchor.href = blobUrl
+      anchor.download = fileName
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      setToastMessage(error.response?.data?.message ?? 'Gagal mengunduh dokumen.')
+    } finally {
+      setDownloadingDoc(null)
+    }
+  }
 
   const handleApprove = () => {
     const targetName = isMemberMode ? selectedDetail?.namaLengkap : selectedDetail?.namaOrganisasi
@@ -153,14 +189,15 @@ export default function VerifikasiBemPage() {
   const executeAction = async () => {
     if (!confirmDialog || !selectedId) return
     setActionLoading(true)
-    const typeKey = isMemberMode ? 'member-bem' : 'hmj'
     try {
       if (confirmDialog.type === 'approve') {
-        await approveMockRegistration(typeKey, selectedId)
-        setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} berhasil disetujui (mock).`)
+        if (isMemberMode) await approveMemberRequest(selectedId)
+        else await approveHmjRegistration(selectedId)
+        setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} berhasil disetujui.`)
       } else {
-        await rejectMockRegistration(typeKey, selectedId, rejectionReason.trim())
-        setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} telah ditolak (mock).`)
+        if (isMemberMode) await rejectMemberRequest(selectedId, rejectionReason.trim())
+        else await rejectHmjRegistration(selectedId, rejectionReason.trim())
+        setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} telah ditolak.`)
       }
       setConfirmDialog(null)
       setRejectionReason('')
@@ -310,9 +347,10 @@ export default function VerifikasiBemPage() {
                       <strong>{selectedDetail.fileName}</strong>
                       <small>{selectedDetail.fileDate} • {selectedDetail.fileSize}</small>
                     </div>
-                    <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <EyeIcon /> Perbesar
-                    </span>
+                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                       <button type="button" className="verification-download" aria-label="Unduh KTM" onClick={() => handleDownloadDocument('ktm', selectedDetail.fileName)} disabled={downloadingDoc === 'ktm'}><DownloadIcon /></button>
+                       <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon /> Perbesar</span>
+                     </span>
                   </div>
                 </div>
               </div>
@@ -428,31 +466,27 @@ export default function VerifikasiBemPage() {
                 <button
                   type="button"
                   className="verification-doc-row"
-                  onClick={() => setPreviewDoc({ title: 'SK Organisasi', fileName: 'SK_Organisasi_HMIF_2026.pdf', type: 'pdf' })}
+                  onClick={() => handlePreviewDocument('sk-organisasi', 'SK Organisasi', 'SK_Organisasi.pdf')}
                 >
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Organisasi</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <span className="verification-download" aria-label="Unduh SK Organisasi">
-                    <DownloadIcon />
-                  </span>
+                  <button type="button" className="verification-download" aria-label="Unduh SK Organisasi" onClick={() => handleDownloadDocument('sk-organisasi', 'SK_Organisasi.pdf')} disabled={downloadingDoc === 'sk-organisasi'}><DownloadIcon /></button>
                 </button>
 
                 <button
                   type="button"
                   className="verification-doc-row"
-                  onClick={() => setPreviewDoc({ title: 'SK Kepengurusan', fileName: 'SK_Kepengurusan_HMIF_2026.pdf', type: 'pdf' })}
+                  onClick={() => handlePreviewDocument('sk-kepengurusan', 'SK Kepengurusan', 'SK_Kepengurusan.pdf')}
                 >
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Kepengurusan</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <span className="verification-download" aria-label="Unduh SK Kepengurusan">
-                    <DownloadIcon />
-                  </span>
+                  <button type="button" className="verification-download" aria-label="Unduh SK Kepengurusan" onClick={() => handleDownloadDocument('sk-kepengurusan', 'SK_Kepengurusan.pdf')} disabled={downloadingDoc === 'sk-kepengurusan'}><DownloadIcon /></button>
                 </button>
               </div>
 

@@ -28,11 +28,17 @@ export function DocumentModal({ title, url, fileName, type = 'pdf', onClose }) {
             ) : (
               <div className="verification-photo-placeholder">Foto KTM Mahasiswa</div>
             )
+          ) : url ? (
+            <iframe
+              src={url}
+              title={title}
+              className="verification-pdf-preview"
+            />
           ) : (
             <>
               <strong>PDF</strong>
               <span>{fileName || 'Dokumen Surat Keputusan'}</span>
-              <small>Pratinjau berkas digital</small>
+              <small>Dokumen belum tersedia untuk dipratinjau.</small>
             </>
           )}
         </div>

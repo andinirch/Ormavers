@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import '../styles/profile.css'
 
@@ -72,18 +73,75 @@ function OrganizationProfilePage() {
   const key = roleKey(user, roles)
   const fixture = fixtures[key]
   const [personal, setPersonal] = useState(fixture.personal)
+  const [photoUrl, setPhotoUrl] = useState(null)
   const [password, setPassword] = useState({ old: '', next: '', confirm: '' })
   const [passwordVisibility, setPasswordVisibility] = useState({ old: false, next: false, confirm: false })
   const [message, setMessage] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const updatePersonal = (event) => setPersonal((current) => ({ ...current, [event.target.name]: event.target.value }))
-  const savePersonal = (event) => { event.preventDefault(); setMessage('Data berhasil diperbarui.') }
-  const savePassword = (event) => {
+  const savePersonal = async (event) => {
+    event.preventDefault()
+    setSaving(true)
+    setMessage(null)
+    try {
+      const result = await updateProfile({ nama: personal.name, nomor_whatsapp: personal.whatsapp || null })
+      const data = result?.data ?? result
+      setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, whatsapp: data?.nomor_whatsapp ?? current.whatsapp }))
+      setMessage('Data berhasil diperbarui.')
+    } catch (error) {
+      setMessage(error.response?.data?.message ?? 'Data gagal diperbarui.')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const savePassword = async (event) => {
     event.preventDefault()
     if (password.next.length < 8) return setMessage('Password baru minimal 8 karakter.')
     if (password.next !== password.confirm) return setMessage('Konfirmasi password tidak cocok.')
-    setPassword({ old: '', next: '', confirm: '' })
-    setMessage('Password berhasil diubah.')
+    setSaving(true)
+    setMessage(null)
+    try {
+      await updatePassword({ password_lama: password.old, password_baru: password.next, konfirmasi_password: password.confirm })
+      setPassword({ old: '', next: '', confirm: '' })
+      setMessage('Password berhasil diubah.')
+    } catch (error) {
+      setMessage(error.response?.data?.message ?? error.response?.data?.errors?.password_lama?.[0] ?? 'Password gagal diubah.')
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const handlePhotoChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setSaving(true)
+    try {
+      const result = await uploadProfilePhoto(file)
+      const data = result?.data ?? result
+      setPhotoUrl(data?.foto_profil_url ?? photoUrl)
+      setMessage('Foto profil berhasil diubah.')
+    } catch (error) {
+      setMessage(error.response?.data?.message ?? 'Foto profil gagal diubah.')
+    } finally {
+      setSaving(false)
+    }
+  }
+  useEffect(() => {
+    let active = true
+    getProfile().then((result) => {
+      if (!active) return
+      const data = result?.data ?? result
+      setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, whatsapp: data?.nomor_whatsapp ?? current.whatsapp, username: data?.username ?? current.username }))
+      setPhotoUrl(data?.foto_profil_url ?? null)
+    }).catch(() => {
+      if (active) setMessage('Data profil gagal dimuat. Menggunakan data tampilan sementara.')
+    }).finally(() => {
+      if (active) setLoading(false)
+    })
+    return () => { active = false }
+  }, [])
+
   const roleName = useMemo(() => fixture.roleLabel, [fixture.roleLabel])
   const organizationLabels = { name: 'Nama organisasi', campus: 'Kampus', parent: 'BEM induk', type: 'Jenis', phone: 'No. telepon' }
   const bemOrganizationLabels = { name: 'Nama organisasi', campus: 'Kampus', phone: 'No. telepon' }
@@ -91,9 +149,10 @@ function OrganizationProfilePage() {
   return (
     <main className="admin-page profile-page">
       <div className="profile-page__heading"><h1>Profil Saya</h1><p>Kelola data diri, password, dan foto profil</p></div>
+      {loading && <p className="profile-message" role="status">Memuat data profil...</p>}
       <div className="profile-layout">
         <div className="profile-side">
-          <section className="profile-card profile-summary"><div className="profile-avatar">{fixture.initials}</div><h2>{fixture.displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><button className="profile-button profile-button--outline" type="button"><CameraIcon /> Ubah foto profil</button><small>JPG atau PNG</small></section>
+          <section className="profile-card profile-summary"><div className="profile-avatar">{photoUrl ? <img src={photoUrl} alt="Foto profil" /> : fixture.initials}</div><h2>{fixture.displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><label className="profile-button profile-button--outline"><CameraIcon /> Ubah foto profil<input className="profile-photo-input" type="file" accept="image/jpeg,image/png" onChange={handlePhotoChange} disabled={saving} /></label><small>JPG atau PNG</small></section>
           <section className={`profile-card profile-organization${key === 'anggota' ? ' profile-organization--member' : ''}`}><h2>{key === 'hmj' ? <OrganizationIcon /> : <AdminIcon name="grid" />} Organisasi</h2>{key === 'anggota' ? <div className="profile-member-org-list"><div className="profile-member-org"><MemberOrganizationIcon type="bem" /><div><small>Badan Eksekutif Mahasiswa</small><strong>{fixture.affiliations[0]}</strong></div></div><div className="profile-member-org"><MemberOrganizationIcon type="hmj" /><div><small>Himpunan Mahasiswa Jurusan (HMJ)</small><strong>{fixture.affiliations[1]}</strong></div></div></div> : Object.entries(fixture.organization).map(([label, value]) => <div className="profile-detail" key={label}><small>{key === 'bem' ? bemOrganizationLabels[label] : key === 'hmj' ? organizationLabels[label] : label === 'parent' ? 'BEM induk' : label}</small><strong>{value}</strong></div>)}</section>
           {key === 'anggota' && <section className="profile-card profile-other-organizations"><h2><span className="profile-other-organizations__title"><AdminIcon name="users" /> Organisasi lain yang diikuti</span><span className="profile-count">{fixture.otherOrganizations.length}</span></h2><p>Unit Kegiatan Mahasiswa dan komunitas aktif yang Anda ikuti.</p><div className="profile-other-list">{fixture.otherOrganizations.map((item) => <span key={item}>{item}</span>)}</div><button className="profile-button profile-button--outline" type="button"><AdminIcon name="plus" /> Tambah HMJ/UKM</button></section>}
         </div>

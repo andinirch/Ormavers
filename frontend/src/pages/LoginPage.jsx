@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
@@ -25,6 +25,7 @@ function LoginPage() {
   const [message, setMessage] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -51,15 +52,18 @@ function LoginPage() {
       const result = await login(values)
       const loggedInUser = result?.data?.pengguna
       const loggedInRoles = (result?.data?.roles ?? []).map((role) => typeof role === 'string' ? role : role?.name)
-      const destination = loggedInUser?.peran === 'super_admin'
-        ? '/superadmin'
-        : loggedInUser?.peran === 'administrator'
-          ? '/admin/verifikasi-bem'
-          : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
-            ? '/verifikasi/bem'
-            : loggedInRoles.includes('akun_hmj_ukm') || loggedInUser?.peran === 'akun_hmj_ukm'
-              ? '/verifikasi/hmj'
-              : '/403'
+      const redirect = searchParams.get('redirect')
+      const destination = result?.data?.akses_terbatas
+        ? '/status-registrasi'
+        : redirect || (loggedInUser?.peran === 'super_admin'
+          ? '/superadmin'
+          : loggedInUser?.peran === 'administrator'
+            ? '/admin/verifikasi-bem'
+            : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
+              ? '/verifikasi/bem'
+              : loggedInRoles.includes('akun_hmj_ukm') || loggedInUser?.peran === 'akun_hmj_ukm'
+                ? '/verifikasi/hmj'
+                : '/403')
       navigate(destination, { replace: true })
     } catch (error) {
       setStatus('error')

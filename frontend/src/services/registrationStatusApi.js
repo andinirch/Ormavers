@@ -1,10 +1,28 @@
-// TODO(kontrak-be): endpoint status registrasi milik pendaftar yang sedang
-// login belum dikonfirmasi backend. Fungsi ini mengembalikan bentuk
-// normalisasi UI. Sesuaikan implementasi setelah kontrak tersedia.
-//
-// TODO(dependensi-auth): kebijakan autentikasi dan cara mengidentifikasi
-// registrasi milik pendaftar belum ditetapkan. Jangan menampilkan data
-// registrasi pribadi tanpa mekanisme otorisasi yang jelas.
+import api from '../api/api.js'
+
+function normalizeStatus(result) {
+  const data = result?.data ?? result
+  const status = data?.status_pendaftaran ?? 'menunggu'
+  const jenisPendaftar = data?.pendaftar?.jenis_pendaftar ?? 'organisasi'
+  const dokumenDitolak = data?.dokumen?.find((item) => item.jenis_dokumen === 'sk_organisasi' || item.jenis_dokumen === 'sk_kepengurusan')
+  const labelDokumen = {
+    sk_organisasi: 'SK Organisasi',
+    sk_kepengurusan: 'SK Kepengurusan',
+  }
+
+  return {
+    jenisPendaftar,
+    namaPendaftar: data?.organisasi?.nama_organisasi ?? data?.pendaftar?.nama ?? '',
+    tanggalKirim: data?.tanggal_pendaftaran ?? null,
+    status,
+    alasanPenolakan: data?.alasan_penolakan ?? null,
+    jenisDokumenDitolak: dokumenDitolak?.jenis_dokumen ?? null,
+    namaDokumenDitolak: labelDokumen[dokumenDitolak?.jenis_dokumen] ?? null,
+    dokumen: data?.dokumen ?? [],
+    bisaUnggahUlang: Boolean(data?.bisa_unggah_ulang),
+    batasUkuranSkMb: data?.batas_ukuran_sk_mb ?? 2,
+  }
+}
 
 /**
  * @typedef {Object} RegistrationStatusData
@@ -20,16 +38,34 @@
  * @returns {Promise<{data: RegistrationStatusData|null, unavailable: boolean, error: string|null}>}
  */
 export async function getMyRegistrationStatus() {
-  // TODO(kontrak-be): ganti dengan pemanggilan endpoint sesungguhnya
-  return { data: null, unavailable: true, error: null }
+  try {
+    const response = await api.get('/registration/status')
+    return { data: normalizeStatus(response.data), unavailable: false, error: null }
+  } catch (error) {
+    const message = error.response?.data?.message ?? 'Status registrasi gagal dimuat. Silakan coba lagi.'
+    return { data: null, unavailable: false, error: message }
+  }
 }
 
 /**
  * @param {File} file
+ * @param {'sk_organisasi'|'sk_kepengurusan'} documentType
  * @returns {Promise<{ok: boolean, unavailable: boolean, error: string|null}>}
  */
-export async function resubmitSk(file) {
-  // TODO(kontrak-be): ganti dengan pemanggilan endpoint unggah ulang SK
-  void file
-  return { ok: false, unavailable: true, error: null }
+export async function resubmitSk(file, documentType = 'sk_kepengurusan') {
+  const formData = new FormData()
+  formData.append(documentType, file)
+
+  try {
+    await api.post('/registration/resubmit-sk', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return { ok: true, unavailable: false, error: null }
+  } catch (error) {
+    const validationErrors = error.response?.data?.errors
+    const message = validationErrors
+      ? Object.values(validationErrors).flat()[0]
+      : error.response?.data?.message ?? 'Dokumen gagal dikirim. Silakan coba lagi.'
+    return { ok: false, unavailable: false, error: message }
+  }
 }

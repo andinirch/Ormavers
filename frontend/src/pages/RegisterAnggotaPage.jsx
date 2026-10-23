@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
@@ -8,6 +8,7 @@ import FormMessage from '../components/form/FormMessage.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem, getVerifiedHmjUkm } from '../services/orgApi.js'
+import { registerAnggota } from '../api/register.js'
 import {
   requiredError,
   validatePhotoFile,
@@ -63,6 +64,7 @@ function Header() {
 }
 
 function RegisterAnggotaPage() {
+  const navigate = useNavigate()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
@@ -119,7 +121,7 @@ function RegisterAnggotaPage() {
     setErrors((prev) => ({ ...prev, fotoKtm: undefined }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const nextErrors = { ...validateRequiredFields(textFields.map((field) => ({ name: field.name, label: field.label, value: values[field.name] }))) }
     if (!values.bem) nextErrors.bem = requiredError('BEM')
@@ -131,7 +133,28 @@ function RegisterAnggotaPage() {
       setStatus('idle')
       return
     }
-    setStatus('unavailable')
+    const formData = new FormData()
+    const fields = {
+      id_organisasi: values.hmjUkm || values.bem,
+      nama: values.nama,
+      nim: values.nim,
+      username: values.username,
+      password: values.password,
+      foto_ktm: values.fotoKtm,
+    }
+    Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
+    try {
+      await registerAnggota(formData)
+      navigate('/login?redirect=/status-registrasi', { replace: true })
+    } catch (error) {
+      const apiErrors = error.response?.data?.errors ?? {}
+      const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
+        { id_organisasi: 'hmjUkm', nama: 'nama', nim: 'nim', username: 'username', foto_ktm: 'fotoKtm' }[name] ?? name,
+        messages[0],
+      ]))
+      setErrors(mappedErrors)
+      setStatus('error')
+    }
   }
 
   const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM'

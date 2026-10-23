@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
+import SelectInput from '../components/form/SelectInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
@@ -12,9 +13,11 @@ import {
   validateRequiredFields,
 } from '../validation/rules.js'
 import { registerBem } from '../api/register.js'
+import { getUniversitas } from '../services/orgApi.js'
 import '../styles/register-bem.css'
 
 const initialValues = {
+  idUniversitas: '',
   namaInstansi: '',
   namaOrganisasi: '',
   teleponOrganisasi: '',
@@ -29,7 +32,6 @@ const initialValues = {
 }
 
 const textFields = [
-  { name: 'namaInstansi', label: 'Nama instansi/kampus' },
   { name: 'namaOrganisasi', label: 'Nama organisasi' },
   { name: 'teleponOrganisasi', label: 'Nomor telepon organisasi' },
   { name: 'namaPj', label: 'Nama penanggung jawab' },
@@ -57,9 +59,24 @@ function SectionTitle({ children }) {
 }
 
 function RegisterBemPage() {
+  const navigate = useNavigate()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
+  const [universitas, setUniversitas] = useState([])
+  const [universitasLoading, setUniversitasLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    getUniversitas().then((data) => {
+      if (active) setUniversitas(data)
+    }).catch(() => {
+      if (active) setErrors((current) => ({ ...current, idUniversitas: 'Daftar universitas gagal dimuat.' }))
+    }).finally(() => {
+      if (active) setUniversitasLoading(false)
+    })
+    return () => { active = false }
+  }, [])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -84,6 +101,7 @@ function RegisterBemPage() {
         })),
       ),
     }
+    if (!values.idUniversitas) nextErrors.idUniversitas = 'Universitas wajib dipilih.'
     const fotoError = validatePhotoFile(values.foto)
     if (fotoError) nextErrors.foto = fotoError
     const skOrganisasiError = validateDocumentFile(values.skOrganisasi, 'SK Organisasi')
@@ -97,7 +115,7 @@ function RegisterBemPage() {
     }
     const formData = new FormData()
     const fields = {
-      nama_instansi: values.namaInstansi,
+      id_universitas: values.idUniversitas,
       nama_organisasi: values.namaOrganisasi,
       nomor_telepon_organisasi: values.teleponOrganisasi,
       nama: values.namaPj,
@@ -112,12 +130,11 @@ function RegisterBemPage() {
     Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
     try {
       await registerBem(formData)
-      setStatus('success')
-      setValues(initialValues)
+      navigate('/login?redirect=/status-registrasi', { replace: true })
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
-        { nama_instansi: 'namaInstansi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
+        { id_universitas: 'idUniversitas', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
         messages[0],
       ]))
       setErrors(mappedErrors)
@@ -156,7 +173,7 @@ function RegisterBemPage() {
           <form className="auth-form rbem-form" onSubmit={handleSubmit} noValidate>
             <section className="rbem-section">
               <SectionTitle>Data instansi</SectionTitle>
-              <TextInput id="namaInstansi" name="namaInstansi" label="Nama instansi/kampus" placeholder="Contoh: Universitas Muhammadiyah Gresik" value={values.namaInstansi} onChange={handleChange} required hint="Ketik sendiri nama kampus organisasi kamu" error={errors.namaInstansi} />
+              <SelectInput id="idUniversitas" name="idUniversitas" label="Nama instansi/kampus" value={values.idUniversitas} onChange={handleChange} options={universitas} required disabled={universitasLoading || universitas.length === 0} placeholder={universitasLoading ? 'Memuat daftar universitas…' : 'Pilih universitas'} error={errors.idUniversitas} hint="Pilih universitas organisasi kamu" />
             </section>
             <hr />
             <section className="rbem-section">
