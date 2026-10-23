@@ -32,25 +32,32 @@ class RegistrasiBemService
 
         try {
             return DB::transaction(function () use ($data, $files, &$uploadedPaths) {
-                // 1. Ambil universitas
-                $universitas = Universitas::findOrFail($data['id_universitas']);
+                // 1. Cari atau buat otomatis data universitas dari input teks manual nama_instansi
+                $namaInstansi = trim($data['nama_instansi']);
+                
+                $universitas = Universitas::firstOrCreate(
+                    ['nama_universitas' => $namaInstansi],
+                    [
+                        'logo' => null, // Nilai default jika kolom logo bersifat nullable
+                    ]
+                );
 
                 // 2. Cek BEM aktif/menunggu di universitas yang sama
                 $adaBem = PendaftaranOrganisasi::whereIn('status_pendaftaran', ['menunggu', 'disetujui'])
-                    ->whereHas('organisasi', function ($q) use ($data) {
-                        $q->where('id_universitas', $data['id_universitas'])
+                    ->whereHas('organisasi', function ($q) use ($universitas) {
+                        $q->where('id_universitas', $universitas->id_universitas)
                             ->where('jenis_organisasi', 'bem');
                     })
                     ->exists();
 
                 if ($adaBem) {
                     throw ValidationException::withMessages([
-                        'id_universitas' => ['BEM untuk universitas ini sudah terdaftar'],
+                        'nama_instansi' => ['BEM untuk universitas ini sudah terdaftar'],
                     ]);
                 }
 
                 // 3. Cek keunikan nama organisasi di universitas yang sama
-                $namaKembar = Organisasi::where('id_universitas', $data['id_universitas'])
+                $namaKembar = Organisasi::where('id_universitas', $universitas->id_universitas)
                     ->whereRaw('LOWER(TRIM(nama_organisasi)) = ?', [strtolower(trim($data['nama_organisasi']))])
                     ->exists();
 

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Organisasi;
 use App\Models\PendaftaranOrganisasi;
+use App\Models\Universitas;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -18,7 +19,7 @@ class RegistrasiBemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_universitas'           => ['required', 'integer', 'exists:universitas,id_universitas'],
+            'nama_instansi'            => ['required', 'string', 'max:150'],
             'nama_organisasi'          => ['required', 'string', 'max:150'],
             'nomor_telepon_organisasi' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
             'nama'                     => ['required', 'string', 'max:150'],
@@ -35,9 +36,9 @@ class RegistrasiBemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id_universitas.required'           => 'Universitas wajib dipilih',
-            'id_universitas.integer'            => 'ID universitas harus berupa angka',
-            'id_universitas.exists'             => 'Universitas tidak ditemukan',
+            'nama_instansi.required'            => 'Nama instansi/kampus wajib diisi',
+            'nama_instansi.string'              => 'Nama instansi/kampus harus berupa teks',
+            'nama_instansi.max'                 => 'Nama instansi/kampus maksimal 150 karakter',
             'nama_organisasi.required'          => 'Nama organisasi wajib diisi',
             'nama_organisasi.string'            => 'Nama organisasi harus berupa teks',
             'nama_organisasi.max'               => 'Nama organisasi maksimal 150 karakter',
@@ -64,8 +65,8 @@ class RegistrasiBemRequest extends FormRequest
             'password.regex'                    => 'Password harus mengandung huruf dan angka',
             'foto_ktm.required'                 => 'Foto KTM wajib diunggah',
             'foto_ktm.file'                     => 'Foto KTM harus berupa file',
-            'foto_ktm.mimes'                    => 'Foto KTM harus berformat JPG/JPEG atau PNG',
-            'foto_ktm.max'                      => 'Foto KTM maksimal 2 MB',
+            'foto_ktm.mimes'                    => 'Foto KTM harus berformat JPG/JPEG',
+            'foto_ktm.max'                      => 'Foto KTM maksimal 1 MB',
             'sk_organisasi.required'            => 'SK Organisasi wajib diunggah',
             'sk_organisasi.file'                => 'SK Organisasi harus berupa file',
             'sk_organisasi.mimes'               => 'SK Organisasi harus berformat PDF',
@@ -84,25 +85,28 @@ class RegistrasiBemRequest extends FormRequest
                 return;
             }
 
-            $idUniversitas = $this->input('id_universitas');
+            $namaInstansi = trim($this->input('nama_instansi'));
             $namaOrganisasi = $this->input('nama_organisasi');
 
-            if ($idUniversitas) {
+            // Cari data universitas berdasarkan nama yang diketik user (case-insensitive)
+            $universitas = Universitas::whereRaw('LOWER(TRIM(nama_universitas)) = ?', [strtolower($namaInstansi)])->first();
+
+            if ($universitas) {
                 // Satu BEM per universitas: tidak boleh ada BEM lain dengan status menunggu atau disetujui
                 $adaBem = PendaftaranOrganisasi::whereIn('status_pendaftaran', ['menunggu', 'disetujui'])
-                    ->whereHas('organisasi', function ($q) use ($idUniversitas) {
-                        $q->where('id_universitas', $idUniversitas)
+                    ->whereHas('organisasi', function ($q) use ($universitas) {
+                        $q->where('id_universitas', $universitas->id_universitas)
                             ->where('jenis_organisasi', 'bem');
                     })
                     ->exists();
 
                 if ($adaBem) {
-                    $validator->errors()->add('id_universitas', 'BEM untuk universitas ini sudah terdaftar');
+                    $validator->errors()->add('nama_instansi', 'BEM untuk universitas ini sudah terdaftar');
                 }
 
                 // Nama organisasi unik dalam universitas yang sama
                 if ($namaOrganisasi) {
-                    $namaKembar = Organisasi::where('id_universitas', $idUniversitas)
+                    $namaKembar = Organisasi::where('id_universitas', $universitas->id_universitas)
                         ->whereRaw('LOWER(TRIM(nama_organisasi)) = ?', [strtolower(trim($namaOrganisasi))])
                         ->exists();
 
