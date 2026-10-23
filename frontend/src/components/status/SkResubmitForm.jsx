@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { validateDocumentFile } from '../../validation/rules.js'
 
-function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK' }) {
+function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', documentType }) {
   const [file, setFile] = useState(null)
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
@@ -24,7 +24,8 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK' }) {
       setError(err)
       return
     }
-    const submitted = await onSubmit(file)
+    const submitted = await onSubmit(file, documentType || (documentName === 'SK Organisasi' ? 'sk_organisasi' : 'sk_kepengurusan'))
+
     if (submitted) {
       setFile(null)
       setError(null)
@@ -57,8 +58,10 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK' }) {
           ref={inputRef}
           type="file"
           accept="application/pdf"
-          onChange={handleChange}
-          className="upload-dropzone__input"
+           onChange={handleChange}
+           onClick={(event) => event.stopPropagation()}
+           className="upload-dropzone__input"
+
           tabIndex={-1}
           aria-label={`Pilih ${documentName} baru`}
           aria-describedby={hasError ? 'document-upload-hint document-upload-error' : 'document-upload-hint'}

@@ -1,5 +1,9 @@
 import api, { responseData } from './api.js'
 
-export const registerBem = (formData) => api.post('/register/bem', formData, {
+const multipartPost = (path, formData) => api.post(path, formData, {
   headers: { 'Content-Type': 'multipart/form-data' },
 }).then(responseData)
+
+export const registerBem = (formData) => multipartPost('/register/bem', formData)
+export const registerHmjUkm = (formData) => multipartPost('/register/hmj-ukm', formData)
+export const registerAnggota = (formData) => multipartPost('/register/anggota', formData)

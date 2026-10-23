@@ -156,7 +156,74 @@ const stores = {
   memberBem: mockBemMemberRequests.map((item) => ({ ...item })),
 }
 
+import api from '../../api/api.js'
+
 const simulateDelay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function normalizeRegistration(item) {
+  return {
+    id: item.id_pendaftaran_organisasi ?? item.id,
+    parentBemId: item.id_organisasi_induk,
+    namaOrganisasi: item.nama_organisasi,
+    jenis: item.jenis_organisasi?.toUpperCase() ?? item.jenis,
+    jenisLengkap: item.jenis_organisasi,
+    tanggal: item.tanggal_pendaftaran,
+    status: item.status_pendaftaran ?? item.status,
+    initials: item.nama_organisasi?.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() ?? '',
+    kode: item.kode_pendaftaran ?? item.kode,
+    nomorTelepon: item.nomor_telepon_organisasi,
+    penanggungJawab: item.penanggung_jawab?.nama ?? item.nama,
+    nim: item.penanggung_jawab?.nim ?? item.nim,
+    whatsapp: item.penanggung_jawab?.nomor_whatsapp ?? item.nomor_whatsapp,
+    dokumen: (item.dokumen ?? item.files ?? []).map((file) => ({
+      jenis: file.jenis_dokumen,
+      label: file.jenis_dokumen === 'sk_organisasi' ? 'SK Organisasi' : file.jenis_dokumen === 'sk_kepengurusan' ? 'SK Kepengurusan' : 'Foto selfie dengan KTM',
+      file: file.nama_file_asli,
+      size: file.ukuran_kb ? `${(file.ukuran_kb / 1024).toFixed(1)} MB` : '',
+      tipe: file.jenis_dokumen === 'ktm' ? 'image' : 'pdf',
+    })),
+  }
+}
+
+export async function listHmjRegistrations() {
+  const response = await api.get('/org/registrations/hmj-ukm')
+  const items = response.data?.data?.pendaftaran ?? response.data?.data ?? []
+  return { success: true, data: items.map(normalizeRegistration) }
+}
+
+export async function getHmjRegistrationDetail(id) {
+  const response = await api.get(`/org/registrations/hmj-ukm/${id}`)
+  return { success: true, data: normalizeRegistration(response.data?.data?.pendaftaran ?? response.data?.data) }
+}
+
+export async function approveHmjRegistration(id) {
+  return api.post(`/org/registrations/hmj-ukm/${id}/approve`)
+}
+
+export async function rejectHmjRegistration(id, alasan) {
+  return api.post(`/org/registrations/hmj-ukm/${id}/reject`, { alasan })
+}
+
+export async function getHmjDocument(id, jenis) {
+  return api.get(`/org/registrations/hmj-ukm/${id}/dokumen/${jenis}`, { responseType: 'blob' })
+}
+
+export async function listMemberRequests() {
+  const response = await api.get('/org/member-requests')
+  const payload = response.data?.data
+  const items = payload?.data ?? payload?.permintaan ?? payload ?? []
+  return { success: true, data: items.map((item) => ({ ...item, id: item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama, tanggal: item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status })) }
+}
+
+export async function getMemberRequestDetail(id) {
+  const response = await api.get(`/org/member-requests/${id}`)
+  const item = response.data?.data?.permintaan ?? response.data?.data
+  return { success: true, data: { ...item, id: item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama, tanggal: item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status } }
+}
+
+export async function approveMemberRequest(id) { return api.post(`/org/member-requests/${id}/approve`) }
+export async function rejectMemberRequest(id, alasan) { return api.post(`/org/member-requests/${id}/reject`, { alasan }) }
+export async function getMemberKtm(id) { return api.get(`/org/member-requests/${id}/dokumen/ktm`, { responseType: 'blob' }) }
 
 export async function listMockRegistrations(type) {
   await simulateDelay()

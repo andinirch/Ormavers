@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
@@ -9,6 +9,7 @@ import FormMessage from '../components/form/FormMessage.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem } from '../services/orgApi.js'
+import { registerHmjUkm } from '../api/register.js'
 import {
   isNonEmpty,
   requiredError,
@@ -101,6 +102,7 @@ function Header() {
 }
 
 function RegisterHmjUkmPage() {
+  const navigate = useNavigate()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
@@ -133,7 +135,7 @@ function RegisterHmjUkmPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const nextErrors = {
       ...validateRequiredFields(
@@ -161,7 +163,34 @@ function RegisterHmjUkmPage() {
       setStatus('idle')
       return
     }
-    setStatus('unavailable')
+    const formData = new FormData()
+    const fields = {
+      id_organisasi_induk: values.bemInduk,
+      jenis_organisasi: values.jenisOrganisasi,
+      nama_organisasi: values.namaOrganisasi,
+      nomor_telepon_organisasi: values.teleponOrganisasi,
+      nama: values.namaPj,
+      nim: values.nim,
+      nomor_whatsapp: values.whatsapp,
+      username: values.username,
+      password: values.password,
+      foto_ktm: values.foto,
+      sk_organisasi: values.skOrganisasi,
+      sk_kepengurusan: values.skKepengurusan,
+    }
+    Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
+    try {
+      await registerHmjUkm(formData)
+      navigate('/login?redirect=/status-registrasi', { replace: true })
+    } catch (error) {
+      const apiErrors = error.response?.data?.errors ?? {}
+      const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
+        { id_organisasi_induk: 'bemInduk', jenis_organisasi: 'jenisOrganisasi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
+        messages[0],
+      ]))
+      setErrors(mappedErrors)
+      setStatus('error')
+    }
   }
 
   const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM terverifikasi'

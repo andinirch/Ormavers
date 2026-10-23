@@ -44,13 +44,13 @@ function RegistrationStatusPage() {
     return undefined
   }, [isPreview, loadStatus])
 
-  const handleResubmit = useCallback(async (file) => {
+  const handleResubmit = useCallback(async (file, documentType) => {
     setSubmitting(true)
     setSubmitResult(null)
     try {
       const result = isPreview
         ? await simulateResubmit(previewKey === 'ditolak-gagal')
-        : await resubmitSk(file)
+        : await resubmitSk(file, documentType)
 
       setSubmitResult(result)
 

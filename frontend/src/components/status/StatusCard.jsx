@@ -22,6 +22,7 @@ function StatusCard({ data, onResubmit, submitting, submitResult }) {
     alasanPenolakan,
     jenisPendaftar,
     namaDokumenDitolak,
+    jenisDokumenDitolak,
   } = data
   const isOrganisasi = jenisPendaftar === 'organisasi'
   const isDitolak = status === 'ditolak'
@@ -95,6 +96,7 @@ function StatusCard({ data, onResubmit, submitting, submitResult }) {
                   onSubmit={onResubmit}
                   submitting={submitting}
                   documentName={namaDokumenDitolak || 'Dokumen SK'}
+                  documentType={jenisDokumenDitolak || undefined}
                 />
               )}
             </>

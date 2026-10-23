@@ -1,34 +1,34 @@
-// TODO(kontrak-be): endpoint dan metode HTTP daftar BEM terverifikasi.
-// Organization options use the future API shape so the page does not need
-// another mapping when the backend is connected.
-export async function getVerifiedBem() {
-  return { data: [], unavailable: true }
-}
+import api, { responseData } from '../api/api.js'
 
 function normalizeOrganizationOption(option) {
-  const organizationId = option.organization_id ?? option.value
+  const organizationId = option.id_organisasi ?? option.organization_id ?? option.value
   return {
     ...option,
     value: organizationId,
+    label: option.nama_organisasi ?? option.label,
     organization_id: organizationId,
-    organization_type: option.organization_type ?? option.type,
+    organization_type: option.jenis_organisasi ?? option.organization_type ?? option.type,
   }
 }
 
-// TODO(kontrak-be): return the selected BEM as the first option, followed by
-// its verified HMJ/UKM children. The optional BEM option is only metadata from
-// the already-loaded verified BEM list, not a replacement for backend checks.
-export async function getVerifiedHmjUkm(bemId, bemOption) {
-  const data = []
-  if (bemOption) {
-    data.push(
-      normalizeOrganizationOption({
-        value: bemId,
-        label: `Anggota BEM ${bemOption.label}`,
-        organization_id: bemId,
-        organization_type: 'bem',
-      }),
-    )
-  }
-  return { data, unavailable: true }
+export async function getUniversitas() {
+  const result = await api.get('/universitas').then(responseData)
+  const items = result?.data?.universitas ?? result?.universitas ?? []
+  return items.map((item) => ({
+    value: item.id_universitas,
+    label: item.nama_universitas,
+    logo: item.logo,
+  }))
+}
+
+export async function getVerifiedBem() {
+  const result = await api.get('/public/bem').then(responseData)
+  const items = result?.data?.bem ?? result?.bem ?? []
+  return { data: items.map(normalizeOrganizationOption), unavailable: false }
+}
+
+export async function getVerifiedHmjUkm(bemId) {
+  const result = await api.get(`/public/bem/${bemId}/organisasi`).then(responseData)
+  const items = result?.data?.organisasi ?? result?.organisasi ?? []
+  return { data: items.map(normalizeOrganizationOption), unavailable: false }
 }

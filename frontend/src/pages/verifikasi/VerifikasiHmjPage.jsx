@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  approveMockRegistration,
-  getMockRegistrationDetail,
-  listMockRegistrations,
-  rejectMockRegistration,
+  approveMemberRequest,
+  getMemberRequestDetail,
+  listMemberRequests,
+  getMemberKtm,
+  rejectMemberRequest,
 } from '../../services/verification/verificationApi.js'
 import {
   ConfirmationModal,
@@ -18,6 +19,10 @@ function EyeIcon() {
       <circle cx="12" cy="12" r="3" />
     </svg>
   )
+}
+
+function DownloadIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
 }
 
 function CheckIcon() {
@@ -58,10 +63,11 @@ export default function VerifikasiHmjPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [downloadingDoc, setDownloadingDoc] = useState(false)
 
   const loadData = async () => {
     setLoading(true)
-    const res = await listMockRegistrations('member-hmj')
+    const res = await listMemberRequests()
     const list = res.data ?? []
     setItems(list)
     if (list.length > 0) {
@@ -85,7 +91,7 @@ export default function VerifikasiHmjPage() {
     let cancelled = false
     const fetchDetail = async () => {
       setDetailLoading(true)
-      const res = await getMockRegistrationDetail('member-hmj', selectedId)
+      const res = await getMemberRequestDetail(selectedId)
       if (!cancelled) {
         setSelectedDetail(res.data ?? null)
         setRejectionReason('')
@@ -98,6 +104,26 @@ export default function VerifikasiHmjPage() {
       cancelled = true
     }
   }, [selectedId])
+
+  const handleDownloadKtm = async () => {
+    if (!selectedId || downloadingDoc) return
+    setDownloadingDoc(true)
+    try {
+      const response = await getMemberKtm(selectedId)
+      const blobUrl = URL.createObjectURL(response.data)
+      const anchor = document.createElement('a')
+      anchor.href = blobUrl
+      anchor.download = selectedDetail?.fileName || 'KTM.pdf'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      setToastMessage(error.response?.data?.message ?? 'Gagal mengunduh KTM.')
+    } finally {
+      setDownloadingDoc(false)
+    }
+  }
 
   const handleApprove = () => {
     setConfirmDialog({
@@ -129,10 +155,10 @@ export default function VerifikasiHmjPage() {
     setActionLoading(true)
     try {
       if (confirmDialog.type === 'approve') {
-        await approveMockRegistration('member-hmj', selectedId)
+        await approveMemberRequest(selectedId)
         setToastMessage('Permintaan keanggotaan berhasil disetujui (mock).')
       } else {
-        await rejectMockRegistration('member-hmj', selectedId, rejectionReason.trim())
+        await rejectMemberRequest(selectedId, rejectionReason.trim())
         setToastMessage('Permintaan keanggotaan telah ditolak (mock).')
       }
       setConfirmDialog(null)
@@ -266,9 +292,10 @@ export default function VerifikasiHmjPage() {
                         <small>{selectedDetail.fileDate} • {selectedDetail.fileSize}</small>
                       </div>
                     </div>
-                    <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <EyeIcon /> Perbesar
-                    </span>
+                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                       <button type="button" className="verification-download" aria-label="Unduh KTM" onClick={handleDownloadKtm} disabled={downloadingDoc}><DownloadIcon /></button>
+                       <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon /> Perbesar</span>
+                     </span>
                   </div>
                 </div>
               </div>
