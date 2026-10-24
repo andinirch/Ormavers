@@ -6,6 +6,7 @@ use App\Http\Requests\TambahAdministratorRequest;
 use App\Services\AdministratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\UbahStatusAdministratorRequest;
 
 class AdministratorController extends Controller
 {
@@ -75,4 +76,37 @@ class AdministratorController extends Controller
             ],
         ]);
     }
+public function ubahStatus(
+    int $id,
+    UbahStatusAdministratorRequest $request
+): JsonResponse {
+    $statusBaru = $request->validated()['status_akun'];
+
+    $result = $this->administratorService->ubahStatusAdministrator(
+        $id,
+        $statusBaru,
+        $request->user()->id_pengguna,
+    );
+
+    if (isset($result['error'])) {
+        return response()->json([
+            'success' => false,
+            'message' => $result['error'],
+        ], $result['status']);
+    }
+
+    $message = $statusBaru === 'aktif'
+        ? 'Akun Administrator Berhasil Diaktifkan'
+        : 'Akun Administrator Berhasil Dinonaktifkan';
+
+    return response()->json([
+        'success' => true,
+        'message' => $message,
+        'data' => [
+            'administrator' => $result['administrator'],
+        ],
+    ]);
+}
+
+
 }

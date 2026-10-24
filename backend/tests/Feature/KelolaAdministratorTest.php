@@ -413,4 +413,115 @@ class KelolaAdministratorTest extends TestCase
         $patchResponse->assertStatus(200);
         $this->assertArrayNotHasKey('kata_sandi', $patchResponse->json('data.administrator'));
     }
+    
+public function test_super_admin_dapat_mengubah_status_administrator_menjadi_nonaktif_dan_token_dicabut(): void
+{
+    $tokenSuperAdmin = $this->tokenSuperAdmin();
+
+    $admin = Pengguna::factory()->administrator()->create();
+    $tokenAdmin = $this->tokenPengguna($admin);
+
+    $response = $this->patchJson(
+        "/api/superadmin/administrators/{$admin->id_pengguna}/status",
+        ['status_akun' => 'nonaktif'],
+        ['Authorization' => 'Bearer ' . $tokenSuperAdmin]
+    );
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+            'message' => 'Akun Administrator Berhasil Dinonaktifkan',
+            'data' => [
+                'administrator' => [
+                    'id_pengguna' => $admin->id_pengguna,
+                    'status_akun' => 'nonaktif',
+                ],
+            ],
+        ]);
+
+    $this->assertDatabaseHas('pengguna', [
+        'id_pengguna' => $admin->id_pengguna,
+        'status_akun' => 'nonaktif',
+    ]);
+
+    $this->assertDatabaseMissing('personal_access_tokens', [
+        'tokenable_id' => $admin->id_pengguna,
+        'token' => hash('sha256', $tokenAdmin),
+    ]);
+
+    auth()->forgetGuards();
+
+    $this->getJson('/api/auth/me', [
+        'Authorization' => 'Bearer ' . $tokenAdmin,
+    ])->assertStatus(401);
+}
+
+public function test_super_admin_dapat_mengaktifkan_kembali_administrator(): void
+{
+    $tokenSuperAdmin = $this->tokenSuperAdmin();
+
+    $admin = Pengguna::factory()->administrator()->nonaktif()->create();
+
+    $response = $this->patchJson(
+        "/api/superadmin/administrators/{$admin->id_pengguna}/status",
+        ['status_akun' => 'aktif'],
+        ['Authorization' => 'Bearer ' . $tokenSuperAdmin]
+    );
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+            'message' => 'Akun Administrator Berhasil Diaktifkan',
+            'data' => [
+                'administrator' => [
+                    'id_pengguna' => $admin->id_pengguna,
+                    'status_akun' => 'aktif',
+                ],
+            ],
+        ]);
+
+    $this->assertDatabaseHas('pengguna', [
+        'id_pengguna' => $admin->id_pengguna,
+        'status_akun' => 'aktif',
+    ]);
+}
+
+public function test_ubah_status_administrator_menolak_status_tidak_valid(): void
+{
+    $tokenSuperAdmin = $this->tokenSuperAdmin();
+
+    $admin = Pengguna::factory()->administrator()->create();
+
+    $response = $this->patchJson(
+        "/api/superadmin/administrators/{$admin->id_pengguna}/status",
+        ['status_akun' => 'ditangguhkan'],
+        ['Authorization' => 'Bearer ' . $tokenSuperAdmin]
+    );
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['status_akun']);
+
+    $this->assertDatabaseHas('pengguna', [
+        'id_pengguna' => $admin->id_pengguna,
+        'status_akun' => 'aktif',
+    ]);
+}
+
+public function test_ubah_status_administrator_yang_tidak_ditemukan_mengembalikan_404(): void
+{
+    $tokenSuperAdmin = $this->tokenSuperAdmin();
+
+    $response = $this->patchJson(
+        '/api/superadmin/administrators/99999/status',
+        ['status_akun' => 'aktif'],
+        ['Authorization' => 'Bearer ' . $tokenSuperAdmin]
+    );
+
+    $response->assertStatus(404)
+        ->assertJson([
+            'success' => false,
+            'message' => 'Administrator tidak ditemukan',
+        ]);
+}
+
 }

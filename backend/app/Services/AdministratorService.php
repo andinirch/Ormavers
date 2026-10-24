@@ -98,6 +98,60 @@ class AdministratorService
         ];
     }
 
+
+/**
+ * Mengubah status akun administrator.
+ *
+ * @return array{error?: string, status?: int, administrator?: array}
+ */
+public function ubahStatusAdministrator(
+    int $id,
+    string $statusBaru,
+    int $idPelaku
+): array {
+    $pengguna = Pengguna::where('id_pengguna', $id)->first();
+
+    if (! $pengguna || $pengguna->peran !== 'administrator') {
+        return [
+            'error' => 'Administrator tidak ditemukan',
+            'status' => 404,
+        ];
+    }
+
+    if ($pengguna->status_akun === $statusBaru) {
+        return [
+            'error' => 'Status akun sudah sesuai',
+            'status' => 409,
+        ];
+    }
+
+    DB::transaction(function () use ($pengguna, $statusBaru, $idPelaku) {
+        $pengguna->update([
+            'status_akun' => $statusBaru,
+        ]);
+
+        // Token dicabut saat akun dinonaktifkan.
+        if ($statusBaru === 'nonaktif') {
+            $pengguna->tokens()->delete();
+        }
+
+        $aksi = $statusBaru === 'aktif'
+            ? 'Mengaktifkan'
+            : 'Menonaktifkan';
+
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'kelola_akun',
+            "{$aksi} akun Administrator: {$pengguna->nama}"
+        );
+    });
+
+    return [
+        'administrator' => $this->formatPengguna($pengguna->fresh()),
+    ];
+}
+
+
     public function daftarSemuaPengguna(): array
     {
         return Pengguna::query()

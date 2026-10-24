@@ -13,6 +13,7 @@ use App\Http\Controllers\StatusRegistrasiController;
 use App\Http\Controllers\UniversitasController;
 use App\Http\Controllers\VerifikasiBemController;
 use App\Http\Controllers\VerifikasiHmjUkmController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -71,6 +72,8 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:super_admin'])
         Route::post('/administrators', [AdministratorController::class, 'store']);
         Route::patch('/administrators/{id}/nonaktif', [AdministratorController::class, 'nonaktifkan'])
             ->whereNumber('id');
+            Route::patch('/administrators/{id}/status', [AdministratorController::class, 'ubahStatus'])
+    ->whereNumber('id');
     });
 
 // Administrator — Verifikasi BEM
@@ -126,6 +129,16 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])
             ->middleware('role:super_admin');
         Route::get('/permissions', [RoleController::class, 'permissions'])
             ->middleware('permission:view roles');
+            
+        Route::post('/permissions', [PermissionController::class, 'store'])
+            ->middleware('permission:create roles');
+        Route::put('/permissions/{id}', [PermissionController::class, 'update'])
+            ->middleware('permission:edit roles')
+            ->whereNumber('id');
+        Route::delete('/permissions/{id}', [PermissionController::class, 'destroy'])
+            ->middleware('permission:delete roles')
+            ->whereNumber('id');
+
         Route::get('/roles', [RoleController::class, 'index'])
             ->middleware('permission:view roles');
         Route::get('/roles/{id}', [RoleController::class, 'show'])
