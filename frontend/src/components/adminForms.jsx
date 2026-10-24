@@ -25,18 +25,26 @@ function RoleForm({ item, onClose }) {
   const submit = async (event) => {
     event.preventDefault()
     if (submitting) return
-    if (!name.trim()) return setError('Nama role wajib diisi.')
+    const normalizedName = name.trim()
+    if (!normalizedName) return setError('Nama role wajib diisi.')
+    if (normalizedName.length < 3) return setError('Nama role minimal 3 karakter.')
+    if (normalizedName.length > 50) return setError('Nama role maksimal 50 karakter.')
+    if (!/^[a-z0-9_/]+$/.test(normalizedName)) {
+      return setError('Nama role hanya boleh huruf kecil, angka, garis bawah, dan garis miring.')
+    }
     setError('')
     setSubmitting(true)
     try {
       if (item) {
-        await updateRole(item.id, { name: name.trim(), permissions: [...selected].join(', ') })
-      } else {
-        await createRole({ name: name.trim(), permissions: [...selected].join(', ') })
+          await updateRole(item.id, { name: normalizedName, permissions: [...selected].join(', ') })
+        } else {
+          await createRole({ name: normalizedName, permissions: [...selected].join(', ') })
       }
       onClose()
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Gagal menyimpan role.')
+      const validationErrors = err?.response?.data?.errors
+      const validationMessage = validationErrors ? Object.values(validationErrors).flat()[0] : null
+      setError(validationMessage || err?.response?.data?.message || err?.message || 'Gagal menyimpan role.')
     } finally {
       setSubmitting(false)
     }

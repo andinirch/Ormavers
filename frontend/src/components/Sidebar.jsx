@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import PlatformLogo from './PlatformLogo.jsx'
+import OrmaLogo from './OrmaLogo.jsx'
 import AdminIcon from './admin/AdminIcon.jsx'
 import LogoutButton from './LogoutButton.jsx'
 
@@ -7,9 +7,7 @@ function Sidebar({ groups, open = false, onClose, logoTo = '/', ariaLabel = 'Nav
   return (
     <>
       <aside className={`app-sidebar${variant ? ` app-sidebar--${variant}` : ''}${open ? ' is-open' : ''}`}>
-        {showBrand && <NavLink to={logoTo} onClick={onClose} className="app-sidebar__brand">
-          <PlatformLogo variant="sidebar" />
-        </NavLink>}
+        {showBrand && <OrmaLogo to={logoTo} onClick={onClose} variant="sidebar" className="app-sidebar__brand" />}
         <nav className="app-sidebar__nav" aria-label={ariaLabel}>
           {groups.map((group) => (
             <div className="app-sidebar__group" key={group.label}>

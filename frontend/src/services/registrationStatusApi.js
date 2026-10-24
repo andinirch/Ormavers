@@ -12,6 +12,7 @@ function normalizeStatus(result) {
 
   return {
     jenisPendaftar,
+    jenisOrganisasi: data?.organisasi?.jenis_organisasi ?? null,
     namaPendaftar: data?.organisasi?.nama_organisasi ?? data?.pendaftar?.nama ?? '',
     tanggalKirim: data?.tanggal_pendaftaran ?? null,
     status,
@@ -19,6 +20,7 @@ function normalizeStatus(result) {
     jenisDokumenDitolak: dokumenDitolak?.jenis_dokumen ?? null,
     namaDokumenDitolak: labelDokumen[dokumenDitolak?.jenis_dokumen] ?? null,
     dokumen: data?.dokumen ?? [],
+    organisasiDetail: data?.organisasi ?? null,
     bisaUnggahUlang: Boolean(data?.bisa_unggah_ulang),
     batasUkuranSkMb: data?.batas_ukuran_sk_mb ?? 2,
   }

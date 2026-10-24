@@ -14,6 +14,11 @@ export const verificationContexts = {
     organizationId: 'hmif',
     organizationName: 'HMJ',
   },
+  anggota: {
+    role: 'Anggota',
+    organizationId: null,
+    organizationName: 'Anggota',
+  },
 }
 
 const mockHmjRegistrations = [
@@ -161,8 +166,13 @@ import api from '../../api/api.js'
 const simulateDelay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function normalizeRegistration(item) {
+  const rawDocuments = item?.dokumen ?? item?.files ?? []
+  const documents = Array.isArray(rawDocuments)
+    ? rawDocuments
+    : Object.entries(rawDocuments).map(([jenis, url]) => ({ jenis_dokumen: jenis, url }))
+
   return {
-    id: item.id_pendaftaran_organisasi ?? item.id,
+    id: item.id_pendaftaran_organisasi,
     parentBemId: item.id_organisasi_induk,
     namaOrganisasi: item.nama_organisasi,
     jenis: item.jenis_organisasi?.toUpperCase() ?? item.jenis,
@@ -175,12 +185,13 @@ function normalizeRegistration(item) {
     penanggungJawab: item.penanggung_jawab?.nama ?? item.nama,
     nim: item.penanggung_jawab?.nim ?? item.nim,
     whatsapp: item.penanggung_jawab?.nomor_whatsapp ?? item.nomor_whatsapp,
-    dokumen: (item.dokumen ?? item.files ?? []).map((file) => ({
-      jenis: file.jenis_dokumen,
+    dokumen: documents.map((file) => ({
+      jenis: file.jenis_dokumen ?? file.jenis,
+      url: file.url,
       label: file.jenis_dokumen === 'sk_organisasi' ? 'SK Organisasi' : file.jenis_dokumen === 'sk_kepengurusan' ? 'SK Kepengurusan' : 'Foto selfie dengan KTM',
-      file: file.nama_file_asli,
+      file: file.nama_file_asli ?? file.file,
       size: file.ukuran_kb ? `${(file.ukuran_kb / 1024).toFixed(1)} MB` : '',
-      tipe: file.jenis_dokumen === 'ktm' ? 'image' : 'pdf',
+      tipe: (file.jenis_dokumen ?? file.jenis) === 'ktm' ? 'image' : 'pdf',
     })),
   }
 }
@@ -192,8 +203,10 @@ export async function listHmjRegistrations() {
 }
 
 export async function getHmjRegistrationDetail(id) {
+  if (!id) throw new Error('ID pendaftaran HMJ/UKM tidak tersedia.')
   const response = await api.get(`/org/registrations/hmj-ukm/${id}`)
-  return { success: true, data: normalizeRegistration(response.data?.data?.pendaftaran ?? response.data?.data) }
+  const detail = response.data?.data?.pendaftaran ?? response.data?.pendaftaran ?? response.data?.data
+  return { success: true, data: normalizeRegistration(detail) }
 }
 
 export async function approveHmjRegistration(id) {
@@ -211,14 +224,15 @@ export async function getHmjDocument(id, jenis) {
 export async function listMemberRequests() {
   const response = await api.get('/org/member-requests')
   const payload = response.data?.data
-  const items = payload?.data ?? payload?.permintaan ?? payload ?? []
-  return { success: true, data: items.map((item) => ({ ...item, id: item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama, tanggal: item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status })) }
+  const items = payload?.requests ?? payload?.data ?? payload?.permintaan ?? payload ?? []
+  return { success: true, data: items.map((item) => ({ ...item, id: item.id_keanggotaan ?? item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama ?? item.pengguna?.nama, nim: item.nim ?? item.pengguna?.nim, tanggal: item.tanggal_pendaftaran ?? item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status ?? 'menunggu' })) }
 }
 
 export async function getMemberRequestDetail(id) {
+  if (!id) throw new Error('ID permintaan keanggotaan tidak tersedia.')
   const response = await api.get(`/org/member-requests/${id}`)
-  const item = response.data?.data?.permintaan ?? response.data?.data
-  return { success: true, data: { ...item, id: item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama, tanggal: item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status } }
+  const item = response.data?.data?.request ?? response.data?.data?.permintaan ?? response.data?.data
+  return { success: true, data: { ...item, id: item.id_keanggotaan ?? item.id_permintaan ?? item.id, namaLengkap: item.nama_lengkap ?? item.nama ?? item.pengguna?.nama, nim: item.nim ?? item.pengguna?.nim, tanggal: item.tanggal_pendaftaran ?? item.tanggal_pengajuan ?? item.tanggal, status: item.status_keanggotaan ?? item.status ?? 'menunggu', fileName: item.file_name ?? item.nama_file ?? item.pengguna?.foto_ktm, fileSize: item.file_size ?? item.ukuran_file } }
 }
 
 export async function approveMemberRequest(id) { return api.post(`/org/member-requests/${id}/approve`) }

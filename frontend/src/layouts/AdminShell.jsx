@@ -14,7 +14,7 @@ function AdminShell() {
   const { user, roles, permissions } = useAuth()
   const sessionRole = roles[0]?.name ?? roles[0] ?? user?.peran
   const profileSubtitle = sessionRole === 'super_admin' ? 'Super Admin' : sessionRole === 'administrator' ? 'Administrator' : sessionRole === 'akun_hmj_ukm' ? 'Akun Organisasi HMJ/UKM' : 'Akun Organisasi BEM'
-  const profileName = sessionRole === 'super_admin' ? 'Super Admin' : sessionRole === 'administrator' ? 'Administrator' : user?.nama ?? 'Akun Organisasi'
+  const profileName = user?.username ?? user?.nama ?? (sessionRole === 'super_admin' ? 'Super Admin' : sessionRole === 'administrator' ? 'Administrator' : 'Akun Organisasi')
   const isSuperAdmin = user?.peran === 'super_admin'
   const isAdministrator = user?.peran === 'administrator'
   const canViewRoles = permissions?.includes('view roles') || isSuperAdmin
@@ -53,6 +53,6 @@ function AdminShell() {
       document.body.style.overflow = ''
     }
   }, [open])
-  return <AdminDataProvider><div className="admin-shell"><Sidebar groups={groups} open={open} onClose={() => setOpen(false)} logoTo="/admin" ariaLabel="Navigasi admin" /><div className="admin-main"><header className="admin-topbar"><button className="admin-menu-button" type="button" aria-label="Buka menu" onClick={() => setOpen(true)}><AdminIcon name="menu" /></button><div className="admin-context"><PlatformLogo variant="topbar" /><span>PTMA Jawa Timur&nbsp; / &nbsp;<strong>Pusat Tata Kelola</strong></span></div><div className="admin-top-account"><span className="admin-notification"><AdminIcon name="bell" /><i /></span><span className="admin-top-divider" /><span className="admin-account-copy"><strong>{profileName}</strong><small>{profileSubtitle}</small></span><span className="admin-avatar"><AdminIcon name="profile" size={17} /></span></div></header><Outlet /><Footer variant="content" /></div></div></AdminDataProvider>
+  return <AdminDataProvider><div className="admin-shell"><Sidebar groups={groups} open={open} onClose={() => setOpen(false)} logoTo="/admin" ariaLabel="Navigasi admin" /><div className="admin-main"><header className="admin-topbar"><button className="admin-menu-button" type="button" aria-label="Buka menu" onClick={() => setOpen(true)}><AdminIcon name="menu" /></button><div className="admin-context"><PlatformLogo variant="topbar" /><span>PTMA Jawa Timur&nbsp; / &nbsp;<strong>Pusat Tata Kelola</strong></span></div><div className="admin-top-account"><span className="admin-notification"><AdminIcon name="bell" /><i /></span><span className="admin-top-divider" /><span className="admin-account-copy"><strong>{profileName}</strong><small>{profileSubtitle}</small></span><span className="admin-avatar"><AdminIcon name="profile-bold" size={20} strokeWidth={2.2} /></span></div></header><Outlet /><Footer variant="content" /></div></div></AdminDataProvider>
 }
 export default AdminShell

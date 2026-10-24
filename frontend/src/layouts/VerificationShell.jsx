@@ -1,11 +1,13 @@
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
 import { verificationContexts } from '../services/verification/verificationApi.js'
 import '../styles/verification.css'
 import '../styles/sidebar.css'
 import '../styles/profile.css'
 import Footer from '../components/Footer.jsx'
-import PlatformLogo from '../components/PlatformLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import Sidebar from '../components/Sidebar.jsx'
 
 const navigationByRole = {
@@ -20,6 +22,9 @@ const navigationByRole = {
   'Akun Organisasi HMJ/UKM': [
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile' },
+  ],
+  Anggota: [
+    { to: '/profil', label: 'Profil Saya', icon: 'profile' },
   ],
 }
 
@@ -38,15 +43,37 @@ function Icon({ name, size = 20 }) {
 function VerificationShell() {
   const { pathname, search } = useLocation()
   const { user, roles } = useAuth()
-  const sessionRole = user?.peran || roles[0]?.name || roles[0]
+  const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
+  const sessionRole = roleNames.includes('akun_hmj_ukm')
+    ? 'akun_hmj_ukm'
+    : roleNames.includes('akun_bem')
+      ? 'akun_bem'
+      : user?.peran || roleNames[0]
   const contextKey = sessionRole === 'administrator'
     ? 'administrator'
     : sessionRole === 'akun_hmj_ukm'
       ? 'hmj'
-      : 'bem'
+      : sessionRole === 'anggota' || sessionRole === 'member'
+        ? 'anggota'
+        : 'bem'
   const activeContext = verificationContexts[contextKey]
-  const profileName = user?.nama ?? activeContext.organizationName
-  const profileSubtitle = activeContext.role
+  const [organizationName, setOrganizationName] = useState(null)
+
+  useEffect(() => {
+    if (contextKey !== 'bem' && contextKey !== 'hmj') return undefined
+
+    let active = true
+    getMyRegistrationStatus().then((result) => {
+      if (active) setOrganizationName(result.data?.organisasiDetail?.nama_organisasi ?? null)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [contextKey])
+
+  const profileName = user?.username ?? user?.nama ?? activeContext.organizationName
+  const profileSubtitle = organizationName ?? activeContext.role
   const navigation = navigationByRole[activeContext.role] ?? []
   const groups = [{
     label: 'MENU UTAMA',
@@ -60,7 +87,8 @@ function VerificationShell() {
       },
     })),
   }]
-  const defaultPath = contextKey === 'administrator' ? 'administrator' : contextKey === 'hmj' ? 'hmj' : 'bem'
+  const defaultPath = contextKey === 'administrator' ? 'administrator' : contextKey === 'hmj' ? 'hmj' : contextKey === 'anggota' ? 'profil' : 'bem'
+  const defaultLink = contextKey === 'anggota' ? '/profil' : `/verifikasi/${defaultPath}`
 
   if (pathname === '/verifikasi' || pathname === '/verifikasi/') {
     return <Navigate to={defaultPath} replace />
@@ -68,20 +96,18 @@ function VerificationShell() {
 
   return <div className="verification-shell">
     <header className="verification-header">
-      <NavLink to="/verifikasi/bem" className="verification-brand">
-        <PlatformLogo variant="verification" />
-      </NavLink>
+       <OrmaLogo to={defaultLink} variant="verification" className="verification-brand" />
       <div className="verification-account">
         <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
         <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
       </div>
     </header>
-    <Sidebar groups={groups} logoTo="/verifikasi/bem" ariaLabel="Navigasi verifikasi" showBrand={false} variant="verification" />
+    <Sidebar groups={groups} logoTo={defaultLink} ariaLabel="Navigasi verifikasi" showBrand variant="verification" />
     <main className="verification-main">
       <div className="verification-content">
         <Outlet />
       </div>
-      <Footer variant="verification" />
+      <Footer variant="content" />
     </main>
   </div>
 }

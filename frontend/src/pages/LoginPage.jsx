@@ -4,7 +4,7 @@ import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import { isNonEmpty, requiredError } from '../validation/rules.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/login.css'
@@ -53,17 +53,33 @@ function LoginPage() {
       const loggedInUser = result?.data?.pengguna
       const loggedInRoles = (result?.data?.roles ?? []).map((role) => typeof role === 'string' ? role : role?.name)
       const redirect = searchParams.get('redirect')
-      const destination = result?.data?.akses_terbatas
+      const isOrganizationOrMember = loggedInUser?.peran === 'akun_bem'
+        || loggedInUser?.peran === 'akun_hmj_ukm'
+        || loggedInUser?.peran === 'akun_organisasi'
+        || loggedInUser?.peran === 'anggota'
+        || loggedInUser?.peran === 'member'
+        || loggedInRoles.includes('akun_bem')
+        || loggedInRoles.includes('akun_hmj_ukm')
+        || loggedInRoles.includes('anggota')
+        || loggedInRoles.includes('member')
+      const statusSeenKey = loggedInUser?.username
+        ? `ormavers:status-seen:${loggedInUser.username}`
+        : null
+      const approvedStatusSeen = statusSeenKey && localStorage.getItem(statusSeenKey) === 'true'
+      const safeRedirect = redirect === '/status-registrasi' && approvedStatusSeen ? null : redirect
+      const destination = result?.data?.akses_terbatas || (isOrganizationOrMember && !approvedStatusSeen)
         ? '/status-registrasi'
-        : redirect || (loggedInUser?.peran === 'super_admin'
+        : safeRedirect || (loggedInUser?.peran === 'super_admin'
           ? '/superadmin'
-          : loggedInUser?.peran === 'administrator'
-            ? '/admin/verifikasi-bem'
-            : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
-              ? '/verifikasi/bem'
-              : loggedInRoles.includes('akun_hmj_ukm') || loggedInUser?.peran === 'akun_hmj_ukm'
+            : loggedInUser?.peran === 'administrator'
+              ? '/admin/verifikasi-bem'
+              : loggedInRoles.includes('akun_hmj_ukm')
                 ? '/verifikasi/hmj'
-                : '/403')
+                : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
+                  ? '/verifikasi/bem'
+                  : loggedInUser?.peran === 'anggota' || loggedInUser?.peran === 'member' || loggedInRoles.includes('anggota') || loggedInRoles.includes('member')
+                    ? '/profil'
+                    : '/')
       navigate(destination, { replace: true })
     } catch (error) {
       setStatus('error')
@@ -83,9 +99,7 @@ function LoginPage() {
   return (
     <div className="login-page">
       <header className="login-header">
-        <div className="login-header__brand">
-          <BrandLogo className="login-logo" />
-        </div>
+        <OrmaLogo to="/" className="login-header__brand login-logo" />
       </header>
 
       <main className="login-main">

@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import StatusCard from '../components/status/StatusCard.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import PreviewBanner from '../components/status/PreviewBanner.jsx'
 import { getMyRegistrationStatus, resubmitSk } from '../services/registrationStatusApi.js'
 import { getPreviewKey, getFixture, simulateResubmit } from '../services/registrationStatusFixture.js'
 
 function RegistrationStatusPage() {
+  const { user } = useAuth()
   const previewKey = getPreviewKey()
   const isPreview = Boolean(previewKey)
 
@@ -43,6 +45,12 @@ function RegistrationStatusPage() {
     Promise.resolve().then(() => loadStatus()).catch(() => {})
     return undefined
   }, [isPreview, loadStatus])
+
+  const handleApprovedLogin = useCallback(() => {
+    if (!isPreview && user?.username) {
+      localStorage.setItem(`ormavers:status-seen:${user.username}`, 'true')
+    }
+  }, [isPreview, user])
 
   const handleResubmit = useCallback(async (file, documentType) => {
     setSubmitting(true)
@@ -103,6 +111,7 @@ function RegistrationStatusPage() {
           <StatusCard
             data={data}
             onResubmit={handleResubmit}
+            onApprovedLogin={handleApprovedLogin}
             submitting={submitting}
             submitResult={submitResult}
           />

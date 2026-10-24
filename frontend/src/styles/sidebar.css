@@ -7,7 +7,7 @@
   box-sizing: border-box;
   width: 16.25rem;
   height: 100dvh;
-  padding: 1.5rem 1.25rem 1.25rem;
+  padding: 0 1.25rem 1.25rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   color: #0f172a;
@@ -18,7 +18,9 @@
 .app-sidebar__brand {
   display: flex;
   align-items: center;
-  padding: 0.125rem 0 1.75rem;
+  height: 4.25rem;
+  padding: 0;
+  margin-bottom: 0;
 }
 
 .app-sidebar__nav {
@@ -85,9 +87,13 @@
 }
 
 .app-sidebar--verification {
-  top: var(--verification-header-height, 68px);
-  height: calc(100dvh - var(--verification-header-height, 68px));
-  padding-top: 1.125rem;
+  top: 0;
+  height: 100dvh;
+  padding-top: 0;
+}
+
+.app-sidebar--verification .app-sidebar__brand {
+  margin-bottom: 1rem;
 }
 
 .app-sidebar--verification .app-sidebar__group > p {
@@ -111,12 +117,14 @@
 
 @media (max-height: 40rem) and (min-width: 64.01rem) {
   .app-sidebar {
-    padding-top: 1rem;
+    padding-top: 0;
     padding-bottom: 0.75rem;
   }
 
   .app-sidebar__brand {
-    padding-bottom: 1rem;
+    height: 4.25rem;
+    padding-bottom: 0;
+    margin-bottom: 0.25rem;
   }
 
   .app-sidebar__nav {

@@ -361,15 +361,16 @@ export default function VerifikasiAdministratorPage() {
                     <strong>SK Organisasi</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <button
-                    type="button"
+                  <span
                     className="verification-download"
+                    role="button"
+                    tabIndex={0}
                     aria-label="Unduh SK Organisasi"
                     onClick={(event) => handleDownloadDoc('sk-organisasi', 'SK_Organisasi.pdf', event)}
-                    disabled={downloadingDoc === 'sk-organisasi'}
+                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') handleDownloadDoc('sk-organisasi', 'SK_Organisasi.pdf', event) }}
                   >
                     <DownloadIcon />
-                  </button>
+                  </span>
                 </button>
 
                 <button
@@ -382,15 +383,16 @@ export default function VerifikasiAdministratorPage() {
                     <strong>SK Kepengurusan</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <button
-                    type="button"
+                  <span
                     className="verification-download"
+                    role="button"
+                    tabIndex={0}
                     aria-label="Unduh SK Kepengurusan"
                     onClick={(event) => handleDownloadDoc('sk-kepengurusan', 'SK_Kepengurusan.pdf', event)}
-                    disabled={downloadingDoc === 'sk-kepengurusan'}
+                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') handleDownloadDoc('sk-kepengurusan', 'SK_Kepengurusan.pdf', event) }}
                   >
                     <DownloadIcon />
-                  </button>
+                  </span>
                 </button>
               </div>
 

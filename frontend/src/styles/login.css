@@ -12,12 +12,12 @@
 }
 
 .login-header {
-  height: clamp(64px, 6vh, 80px);
+  height: var(--orma-logo-band);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: clamp(24px, 3.75vw, 60px);
-  padding: 0 clamp(20px, 2.625vw, 42px);
+  padding: 0 var(--orma-logo-inset);
   background: #faf8ff;
 }
 
@@ -28,22 +28,15 @@
   line-height: 1;
 }
 
-.login-logo {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: block;
-  object-fit: contain;
-}
-
 .login-main {
-  min-height: calc(100dvh - clamp(64px, 6vh, 80px));
+  min-height: calc(100dvh - var(--orma-logo-band));
   display: grid;
   grid-template-columns: 50% 50%;
 }
 
 .login-hero {
   position: relative;
-  min-height: calc(100dvh - clamp(64px, 6vh, 80px));
+  min-height: calc(100dvh - var(--orma-logo-band));
   overflow: hidden;
   isolation: isolate;
   color: #fff;
@@ -182,7 +175,7 @@
 
 .login-side {
   min-width: 0;
-  min-height: calc(100dvh - clamp(64px, 6vh, 80px));
+  min-height: calc(100dvh - var(--orma-logo-band));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -377,8 +370,8 @@
   }
 
   .login-header {
-    height: 72px;
-    padding: 0 clamp(20px, 4vw, 32px);
+    height: var(--orma-logo-band);
+    padding: 0 var(--orma-logo-inset);
     gap: clamp(20px, 4vw, 32px);
   }
 

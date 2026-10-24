@@ -6,8 +6,12 @@ function roleName(role) {
 }
 
 export default function AccessGuard({ roles = [], permission }) {
-  const { roles: sessionRoles, permissions, user } = useAuth()
+  const { roles: sessionRoles, permissions, user, aksesTerbatas } = useAuth()
   const location = useLocation()
+
+  if (aksesTerbatas && location.pathname !== '/status-registrasi') {
+    return <Navigate to="/status-registrasi" replace />
+  }
   const availableRoles = new Set([
     user?.peran,
     ...sessionRoles.map(roleName),
@@ -16,7 +20,7 @@ export default function AccessGuard({ roles = [], permission }) {
   const hasPermission = !permission || permissions.includes(permission)
 
   if (!hasRole || !hasPermission) {
-    return <Navigate to="/403" replace state={{ from: location.pathname }} />
+    return <Navigate to="/" replace />
   }
 
   return <Outlet />
