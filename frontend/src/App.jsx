@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage.jsx'
 import RegisterBemPage from './pages/RegisterBemPage.jsx'
 import RegisterHmjUkmPage from './pages/RegisterHmjUkmPage.jsx'
 import RegisterAnggotaPage from './pages/RegisterAnggotaPage.jsx'
-import NotFoundPage from './pages/NotFoundPage.jsx'
 import AdminShell from './layouts/AdminShell.jsx'
 import DashboardPage from './pages/admin/DashboardPage.jsx'
 import UsersPage from './pages/admin/UsersPage.jsx'
@@ -21,7 +20,6 @@ import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
 import VerifikasiHmjPage from './pages/verifikasi/VerifikasiHmjPage.jsx'
 import RequireAuth from './context/RequireAuth.jsx'
 import AccessGuard from './context/AccessGuard.jsx'
-import ForbiddenPage from './pages/ForbiddenPage.jsx'
 
 function App() {
   return (
@@ -35,8 +33,7 @@ function App() {
         <Route path="/registrasi/bem" element={<RegisterBemPage />} />
         <Route path="/registrasi/hmj-ukm" element={<RegisterHmjUkmPage />} />
         <Route path="/registrasi/anggota" element={<RegisterAnggotaPage />} />
-        <Route path="/403" element={<ForbiddenPage />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
@@ -63,8 +60,10 @@ function App() {
           <Route path="/superadmin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
           <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
         </Route>
-        <Route element={<AccessGuard roles={['anggota', 'member']} />}>
-          <Route path="/profil" element={<OrganizationProfilePage />} />
+        <Route element={<VerificationShell />}>
+          <Route element={<AccessGuard roles={['anggota', 'member']} />}>
+            <Route path="/profil" element={<OrganizationProfilePage />} />
+          </Route>
         </Route>
         <Route path="/verifikasi" element={<VerificationShell />}>
           <Route index element={<Navigate to="administrator" replace />} />

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { PageIntro } from './DashboardPage.jsx'
 import { useAdminData } from '../../services/useAdminData.jsx'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
 import { RoleForm } from '../../components/adminForms.jsx'
@@ -29,11 +28,23 @@ function RolesPage() {
   const { roles, deleteRole } = useAdminData()
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState(null)
+  const [creating, setCreating] = useState(false)
   const filtered = useMemo(() => roles.filter((role) => `${role.name} ${role.permissions}`.toLowerCase().includes(query.toLowerCase())), [roles, query])
 
   return (
     <main className="admin-page admin-roles-page">
-      <PageIntro eyebrow="AKSES & KEAMANAN • SUPER ADMIN" title="Role" description="Kelola role dan hak akses (permission) pengguna Ormavers." />
+      <header className="admin-role-heading">
+        <span className="admin-eyebrow">{ '\u25CF' } AKSES & KEAMANAN SUPER ADMIN</span>
+        <div className="admin-role-title-row">
+          <div className="admin-role-title-copy">
+            <h1>Role</h1>
+            <p>Kelola role dan hak akses (permission) pengguna Ormavers.</p>
+          </div>
+          <button className="admin-button" type="button" onClick={() => setCreating(true)}>
+            <AdminIcon name="plus" size={16} /> Tambah Role
+          </button>
+        </div>
+      </header>
       <div className="admin-summary-grid admin-role-summary">
         <Stat label="TOTAL ROLE AKTIF" value="5" />
         <Stat label="TOTAL HAK AKSES" value="28" />
@@ -45,8 +56,8 @@ function RolesPage() {
             <h2>Daftar Role <span className="admin-count-pill">5 role</span></h2>
             <p>Seluruh role yang terdaftar di sistem</p>
           </div>
-          <div className="admin-role-tools">
-            <div className="admin-input-wrap admin-role-search">
+           <div className="admin-role-tools">
+             <div className="admin-input-wrap admin-role-search">
               <AdminIcon name="search" />
               <input placeholder="Cari nama role / izin..." value={query} onChange={(event) => setQuery(event.target.value)} />
             </div>
@@ -74,7 +85,7 @@ function RolesPage() {
                     <td>#{index + 1}</td>
                     <td>
                       <div className="admin-role-cell">
-                        <span className={`admin-role-badge admin-role-badge--${variant}`}>● {roleLabel(role.name)}</span>
+                        <span className={`admin-role-badge admin-role-badge--${variant}`}>{'\u25CF'} {roleLabel(role.name)}</span>
                       </div>
                     </td>
                     <td>
@@ -123,6 +134,7 @@ function RolesPage() {
           <span>Role <b>super admin</b> dikunci dan tidak dapat diubah atau dihapus untuk menjaga integritas sistem.</span>
         </footer>
       </section>
+      {creating && <RoleForm item={null} onClose={() => setCreating(false)} />}
       {editing && <RoleForm item={editing} onClose={() => setEditing(null)} />}
     </main>
   )

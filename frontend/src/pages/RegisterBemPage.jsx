@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TextInput from '../components/form/TextInput.jsx'
-import SelectInput from '../components/form/SelectInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import {
   validateDocumentFile,
@@ -13,11 +12,9 @@ import {
   validateRequiredFields,
 } from '../validation/rules.js'
 import { registerBem } from '../api/register.js'
-import { getUniversitas } from '../services/orgApi.js'
 import '../styles/register-bem.css'
 
 const initialValues = {
-  idUniversitas: '',
   namaInstansi: '',
   namaOrganisasi: '',
   teleponOrganisasi: '',
@@ -63,20 +60,6 @@ function RegisterBemPage() {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
-  const [universitas, setUniversitas] = useState([])
-  const [universitasLoading, setUniversitasLoading] = useState(true)
-
-  useEffect(() => {
-    let active = true
-    getUniversitas().then((data) => {
-      if (active) setUniversitas(data)
-    }).catch(() => {
-      if (active) setErrors((current) => ({ ...current, idUniversitas: 'Daftar universitas gagal dimuat.' }))
-    }).finally(() => {
-      if (active) setUniversitasLoading(false)
-    })
-    return () => { active = false }
-  }, [])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -101,7 +84,6 @@ function RegisterBemPage() {
         })),
       ),
     }
-    if (!values.idUniversitas) nextErrors.idUniversitas = 'Universitas wajib dipilih.'
     const fotoError = validatePhotoFile(values.foto)
     if (fotoError) nextErrors.foto = fotoError
     const skOrganisasiError = validateDocumentFile(values.skOrganisasi, 'SK Organisasi')
@@ -115,7 +97,7 @@ function RegisterBemPage() {
     }
     const formData = new FormData()
     const fields = {
-      id_universitas: values.idUniversitas,
+      nama_instansi: values.namaInstansi,
       nama_organisasi: values.namaOrganisasi,
       nomor_telepon_organisasi: values.teleponOrganisasi,
       nama: values.namaPj,
@@ -134,7 +116,7 @@ function RegisterBemPage() {
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
-        { id_universitas: 'idUniversitas', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
+        { nama_instansi: 'namaInstansi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
         messages[0],
       ]))
       setErrors(mappedErrors)
@@ -145,9 +127,7 @@ function RegisterBemPage() {
   return (
     <div className="rbem-page">
       <header className="rbem-header">
-        <Link className="rbem-brand" to="/">
-          <BrandLogo className="rbem-logo" />
-        </Link>
+        <OrmaLogo to="/" className="rbem-brand rbem-logo" />
         <nav className="rbem-nav" aria-label="Navigasi utama">
           <span className="rbem-nav__active">Pendaftaran</span>
         </nav>
@@ -173,7 +153,7 @@ function RegisterBemPage() {
           <form className="auth-form rbem-form" onSubmit={handleSubmit} noValidate>
             <section className="rbem-section">
               <SectionTitle>Data instansi</SectionTitle>
-              <SelectInput id="idUniversitas" name="idUniversitas" label="Nama instansi/kampus" value={values.idUniversitas} onChange={handleChange} options={universitas} required disabled={universitasLoading || universitas.length === 0} placeholder={universitasLoading ? 'Memuat daftar universitas…' : 'Pilih universitas'} error={errors.idUniversitas} hint="Pilih universitas organisasi kamu" />
+               <TextInput id="namaInstansi" name="namaInstansi" label="Nama instansi/kampus" placeholder="Contoh: Universitas Muhammadiyah Gresik" value={values.namaInstansi} onChange={handleChange} required hint="Ketik sendiri nama kampus organisasi kamu" error={errors.namaInstansi} />
             </section>
             <hr />
             <section className="rbem-section">
@@ -188,13 +168,13 @@ function RegisterBemPage() {
                 <TextInput id="namaPj" name="namaPj" label="Nama penanggung jawab" placeholder="Nama lengkap" value={values.namaPj} onChange={handleChange} required error={errors.namaPj} />
                 <TextInput id="nim" name="nim" label="NIM" placeholder="Nomor Induk Mahasiswa" value={values.nim} onChange={handleChange} required error={errors.nim} />
               </div>
-              <UploadField id="foto" name="foto" label="Foto Selfie dengan KTM" accept="image/jpeg,image/png" onChange={handleFileChange('foto')} required error={errors.foto} fileName={values.foto?.name} kind="photo">
+              <UploadField id="foto" name="foto" label="Foto Selfie dengan KTM" accept="image/jpeg" onChange={handleFileChange('foto')} required error={errors.foto} fileName={values.foto?.name} kind="photo">
                 <span className="rbem-upload__icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M7.5 18.5h8.75a4.25 4.25 0 0 0 .54-8.47A5.5 5.5 0 0 0 6.1 8.9 3.75 3.75 0 0 0 7.5 18.5Z" />
                     <path d="M12 16V10.5m0 0-2.25 2.25M12 10.5l2.25 2.25" />
                   </svg>
-                </span><strong>Unggah foto selfie memegang KTM</strong><small>Format file: JPG atau PNG</small>
+                </span><strong>Unggah foto selfie memegang KTM</strong><small>Format file: JPG/JPEG, maksimal 1 MB</small>
               </UploadField>
               <TextInput id="whatsapp" name="whatsapp" label="Nomor WhatsApp" type="tel" placeholder="Contoh: 0812xxxxxxxx" value={values.whatsapp} onChange={handleChange} required error={errors.whatsapp} />
               <div className="rbem-grid">

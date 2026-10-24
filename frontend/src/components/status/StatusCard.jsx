@@ -14,7 +14,18 @@ function formatDate(isoDate) {
   }).format(date)
 }
 
-function StatusCard({ data, onResubmit, submitting, submitResult }) {
+function getDestination(data) {
+  if (data.jenisPendaftar === 'anggota') return '/profil'
+  return data.jenisOrganisasi === 'hmj' || data.jenisOrganisasi === 'ukm'
+    ? '/verifikasi/hmj'
+    : '/verifikasi/bem'
+}
+
+function getLoginDestination(data) {
+  return `/login?redirect=${encodeURIComponent(getDestination(data))}`
+}
+
+function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResult }) {
   const {
     status,
     namaPendaftar,
@@ -62,7 +73,7 @@ function StatusCard({ data, onResubmit, submitting, submitResult }) {
           <p className="status-body__text">
             Akun kamu sudah aktif. Masuk dengan username dan password kamu.
           </p>
-          <Link to="/login" className="status-btn-primary status-btn-login">
+          <Link to={getLoginDestination(data)} onClick={onApprovedLogin} className="status-btn-primary status-btn-login">
             Masuk <span aria-hidden="true">&rarr;</span>
           </Link>
         </>

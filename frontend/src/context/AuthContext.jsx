@@ -4,18 +4,23 @@ import { login as loginRequest, logout as logoutRequest, me } from '../api/auth.
 import { clearToken, getToken, setToken } from '../api/api.js'
 
 const AuthContext = createContext(null)
+const LIMITED_ACCESS_KEY = 'ormavers_limited_access'
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState({ user: null, roles: [], permissions: [], loading: true })
+  const [session, setSession] = useState({ user: null, roles: [], permissions: [], aksesTerbatas: false, loading: true })
 
   const applySession = (data) => {
     const next = data?.data ?? data
+    const aksesTerbatas = Boolean(next?.akses_terbatas)
     setSession({
       user: next?.pengguna ?? null,
       roles: next?.roles ?? [],
       permissions: next?.permissions ?? [],
+      aksesTerbatas,
       loading: false,
     })
+    if (aksesTerbatas) localStorage.setItem(LIMITED_ACCESS_KEY, 'true')
+    else localStorage.removeItem(LIMITED_ACCESS_KEY)
     return next
   }
 
@@ -31,18 +36,24 @@ export function AuthProvider({ children }) {
       if (getToken()) await logoutRequest()
     } finally {
       clearToken()
-      setSession({ user: null, roles: [], permissions: [], loading: false })
+      localStorage.removeItem(LIMITED_ACCESS_KEY)
+      setSession({ user: null, roles: [], permissions: [], aksesTerbatas: false, loading: false })
     }
   }
 
   useEffect(() => {
     const handleUnauthorized = () => {
       clearToken()
-      setSession({ user: null, roles: [], permissions: [], loading: false })
+      localStorage.removeItem(LIMITED_ACCESS_KEY)
+      setSession({ user: null, roles: [], permissions: [], aksesTerbatas: false, loading: false })
     }
     window.addEventListener('ormavers:unauthorized', handleUnauthorized)
     if (!getToken()) {
       queueMicrotask(() => setSession((current) => ({ ...current, loading: false })))
+      return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
+    }
+    if (localStorage.getItem(LIMITED_ACCESS_KEY) === 'true') {
+      queueMicrotask(() => setSession((current) => ({ ...current, aksesTerbatas: true, loading: false })))
       return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
     }
     me().then((result) => applySession(result)).catch(() => handleUnauthorized())

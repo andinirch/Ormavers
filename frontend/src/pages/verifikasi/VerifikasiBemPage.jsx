@@ -54,6 +54,13 @@ function XIcon() {
   )
 }
 
+function formatVerificationDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+}
+
 function InfoIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, marginTop: '2px' }}>
@@ -80,6 +87,7 @@ export default function VerifikasiBemPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [ktmPreviewUrl, setKtmPreviewUrl] = useState(null)
   const [downloadingDoc, setDownloadingDoc] = useState(null)
 
   const [refreshIndex, setRefreshIndex] = useState(0)
@@ -90,7 +98,7 @@ export default function VerifikasiBemPage() {
       setLoading(true)
       const res = isMemberMode ? await listMemberRequests() : await listHmjRegistrations()
       if (cancelled) return
-      const list = res.data ?? []
+      const list = (res.data ?? []).filter((item) => item.id != null)
       setItems(list)
       if (list.length > 0) {
         setSelectedId((current) => (current && list.some((it) => it.id === current) ? current : list[0].id))
@@ -114,17 +122,54 @@ export default function VerifikasiBemPage() {
     let cancelled = false
     const fetchDetail = async () => {
       setDetailLoading(true)
-      const res = isMemberMode ? await getMemberRequestDetail(selectedId) : await getHmjRegistrationDetail(selectedId)
-      if (!cancelled) {
-        setSelectedDetail(res.data ?? null)
-        setRejectionReason('')
-        setRejectionError('')
-        setDetailLoading(false)
+      try {
+        const res = isMemberMode ? await getMemberRequestDetail(selectedId) : await getHmjRegistrationDetail(selectedId)
+        if (!cancelled) {
+          setSelectedDetail(res.data ?? null)
+          setRejectionReason('')
+          setRejectionError('')
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSelectedDetail(null)
+          const status = error.response?.status
+          const message = status === 401
+            ? 'Sesi login berakhir. Silakan login kembali.'
+            : status === 403
+              ? 'Akun BEM tidak aktif atau tidak memiliki akses ke pendaftaran ini.'
+              : status === 404
+                ? 'Data pendaftaran tidak ditemukan.'
+                : error.response?.data?.message ?? error.message ?? 'Gagal memuat detail pendaftar.'
+          setToastMessage(message)
+        }
+      } finally {
+        if (!cancelled) setDetailLoading(false)
       }
     }
     queueMicrotask(fetchDetail)
     return () => {
       cancelled = true
+    }
+  }, [selectedId, isMemberMode])
+
+  useEffect(() => {
+    if (!isMemberMode || !selectedId) return undefined
+
+    let cancelled = false
+    let objectUrl = null
+    getMemberKtm(selectedId)
+      .then((response) => {
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(response.data)
+        setKtmPreviewUrl(objectUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setKtmPreviewUrl(null)
+      })
+
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [selectedId, isMemberMode])
 
@@ -207,7 +252,7 @@ export default function VerifikasiBemPage() {
     }
   }
 
-  const pendingCount = items.filter((it) => it.status === 'menunggu').length
+  const pendingCount = items.length
 
   return (
     <div className="verification-page verification-bem-page">
@@ -273,7 +318,7 @@ export default function VerifikasiBemPage() {
                           <strong>{item.namaLengkap}</strong>
                         </span>
                         <span>{item.nim}</span>
-                        <span>{item.tanggal}</span>
+                        <span>{formatVerificationDate(item.tanggal)}</span>
                         <em style={{ textTransform: 'capitalize' }}>{item.status}</em>
                       </>
                     ) : (
@@ -285,7 +330,7 @@ export default function VerifikasiBemPage() {
                           </span>
                         </span>
                         <em>{item.jenis}</em>
-                        <span>{item.tanggal}</span>
+                        <span>{formatVerificationDate(item.tanggal)}</span>
                       </>
                     )}
                   </button>
@@ -335,23 +380,30 @@ export default function VerifikasiBemPage() {
                   <h3 style={{ margin: 0 }}>Foto KTM Mahasiswa</h3>
                   <small style={{ color: 'var(--v-muted)' }}>Verifikasi Identitas</small>
                 </div>
-                <div className="verification-ktm" style={{ cursor: 'pointer' }} onClick={() => setPreviewDoc({ title: `Foto KTM — ${selectedDetail.namaLengkap}`, type: 'image' })}>
-                  <div className="verification-ktm__image">
-                    <div>
-                      <small style={{ display: 'block', opacity: 0.85 }}>Kartu Tanda Mahasiswa Aktif</small>
-                      <strong>{selectedDetail.namaLengkap}</strong>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '6px' }}>
-                    <div>
-                      <strong>{selectedDetail.fileName}</strong>
-                      <small>{selectedDetail.fileDate} • {selectedDetail.fileSize}</small>
-                    </div>
-                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                       <button type="button" className="verification-download" aria-label="Unduh KTM" onClick={() => handleDownloadDocument('ktm', selectedDetail.fileName)} disabled={downloadingDoc === 'ktm'}><DownloadIcon /></button>
-                       <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon /> Perbesar</span>
+                 <div className="verification-ktm" style={{ cursor: 'pointer', rowGap: '4px' }} onClick={() => handlePreviewDocument('ktm', `Foto KTM — ${selectedDetail.namaLengkap}`, selectedDetail.fileName, 'image')}>
+                   <div className="verification-ktm__image" style={{ height: '175px', marginBottom: '0', background: 'transparent', overflow: 'hidden', position: 'relative' }}>
+                     {ktmPreviewUrl ? (
+                       <img src={ktmPreviewUrl} alt={`Foto KTM ${selectedDetail.namaLengkap}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
+                     ) : (
+                       <div>
+                         <small style={{ display: 'block', opacity: 0.85 }}>Foto KTM tidak tersedia</small>
+                         <strong>{selectedDetail.namaLengkap}</strong>
+                       </div>
+                     )}
+                     <span style={{ position: 'absolute', left: '14px', bottom: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 9px', color: '#fff', background: 'rgba(15, 23, 42, 0.62)', borderRadius: '6px', fontSize: '12px' }}>
+                       <span aria-hidden="true">▣</span>
+                       Kartu Tanda Mahasiswa Aktif
                      </span>
-                  </div>
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '2px', gap: '12px' }}>
+                     {selectedDetail.fileName && selectedDetail.fileName !== '.' ? (
+                       <div style={{ minWidth: 0 }}>
+                         <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedDetail.fileName}</strong>
+                         <small>{selectedDetail.fileDate} • {selectedDetail.fileSize}</small>
+                       </div>
+                     ) : <span />}
+                     <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', flexShrink: 0 }}><EyeIcon /> Perbesar</span>
+                   </div>
                 </div>
               </div>
 
@@ -441,7 +493,7 @@ export default function VerifikasiBemPage() {
                 <button
                   type="button"
                   className="verification-doc-row"
-                  onClick={() => setPreviewDoc({ title: 'Foto selfie dengan KTM', fileName: 'KTM-DIMAS-BAYU-2022510045.jpg', type: 'image' })}
+                   onClick={() => handlePreviewDocument('ktm', 'Foto selfie dengan KTM', selectedDetail.fileName, 'image')}
                 >
                   <span className="verification-file-icon is-image">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -552,9 +604,10 @@ export default function VerifikasiBemPage() {
       )}
 
       {previewDoc && (
-        <DocumentModal
-          title={previewDoc.title}
-          fileName={previewDoc.fileName}
+         <DocumentModal
+           title={previewDoc.title}
+           url={previewDoc.url}
+           fileName={previewDoc.fileName}
           type={previewDoc.type}
           onClose={() => setPreviewDoc(null)}
         />

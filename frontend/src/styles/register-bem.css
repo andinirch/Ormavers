@@ -10,17 +10,16 @@
 
 .rbem-header {
   position: relative;
-  min-height: 72px;
+  min-height: var(--orma-logo-band);
   display: flex;
   align-items: center;
   gap: 32px;
-  padding: 0 clamp(20px, 5vw, 76px);
+  padding: 0 var(--orma-logo-inset);
   background: #fff;
   border-bottom: 1px solid #e5edf8;
 }
 
 .rbem-brand { display: inline-flex; align-items: center; color: #0f172a; text-decoration: none; }
-.rbem-logo { width: 2.5rem; height: 2.5rem; display: block; object-fit: contain; }
 .rbem-nav { position: absolute; left: 50%; display: flex; align-items: center; gap: 8px; margin: 0; color: #64748b; font-size: 14px; font-weight: 600; transform: translateX(-50%); }
 .rbem-nav span { padding: 10px 15px; white-space: nowrap; }
 .rbem-nav__active { color: #fff !important; background: #2563eb; border-radius: 999px; }
@@ -76,7 +75,7 @@
   .rbem-grid { grid-template-columns: 1fr; }
   .rbem-card { padding: 28px 18px 32px; border-radius: 12px; }
   .rbem-card h1 { font-size: 28px; }
-  .rbem-header { padding-left: 16px; padding-right: 16px; }
+  .rbem-header { padding-left: var(--orma-logo-inset); padding-right: var(--orma-logo-inset); }
   .rbem-header__actions { margin-left: auto; }
   .rbem-profile { display: none; }
   .rbem-login { height: 35px; padding: 7px 12px; }

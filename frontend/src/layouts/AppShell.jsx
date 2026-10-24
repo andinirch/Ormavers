@@ -1,6 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import Footer from '../components/Footer.jsx'
-import PlatformLogo from '../components/PlatformLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import '../styles/status.css'
 
 function AppShell() {
@@ -8,9 +8,7 @@ function AppShell() {
     <div className="app-shell">
       <header className="app-header">
         <div className="app-header__inner">
-          <Link to="/" className="app-brand">
-            <PlatformLogo variant="topbar" />
-          </Link>
+          <OrmaLogo to="/" variant="topbar" className="app-brand" />
            <div className="app-header__actions">
              <Link to="/login" className="app-btn-outline">Masuk</Link>
              <span className="app-avatar" aria-hidden="true">

@@ -8,7 +8,6 @@ import {
 } from '../../services/verification/verificationApi.js'
 import {
   ConfirmationModal,
-  DocumentModal,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
 
@@ -19,10 +18,6 @@ function EyeIcon() {
       <circle cx="12" cy="12" r="3" />
     </svg>
   )
-}
-
-function DownloadIcon() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
 }
 
 function CheckIcon() {
@@ -40,6 +35,13 @@ function XIcon() {
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   )
+}
+
+function formatRequestDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
 }
 
 function ShieldUserIcon() {
@@ -62,8 +64,7 @@ export default function VerifikasiHmjPage() {
   const [rejectionError, setRejectionError] = useState('')
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
-  const [previewDoc, setPreviewDoc] = useState(null)
-  const [downloadingDoc, setDownloadingDoc] = useState(false)
+  const [ktmPreviewUrl, setKtmPreviewUrl] = useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -86,14 +87,24 @@ export default function VerifikasiHmjPage() {
   useEffect(() => {
     if (!selectedId) {
       queueMicrotask(() => setSelectedDetail(null))
-      return
+      return undefined
     }
     let cancelled = false
     const fetchDetail = async () => {
-      setDetailLoading(true)
+        setDetailLoading(true)
       const res = await getMemberRequestDetail(selectedId)
       if (!cancelled) {
         setSelectedDetail(res.data ?? null)
+        getMemberKtm(selectedId).then((response) => {
+          if (cancelled) return
+          const url = URL.createObjectURL(response.data)
+          setKtmPreviewUrl((previous) => {
+            if (previous) URL.revokeObjectURL(previous)
+            return url
+          })
+        }).catch(() => {
+          if (!cancelled) setKtmPreviewUrl(null)
+        })
         setRejectionReason('')
         setRejectionError('')
         setDetailLoading(false)
@@ -102,28 +113,12 @@ export default function VerifikasiHmjPage() {
     queueMicrotask(fetchDetail)
     return () => {
       cancelled = true
+      setKtmPreviewUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous)
+        return null
+      })
     }
   }, [selectedId])
-
-  const handleDownloadKtm = async () => {
-    if (!selectedId || downloadingDoc) return
-    setDownloadingDoc(true)
-    try {
-      const response = await getMemberKtm(selectedId)
-      const blobUrl = URL.createObjectURL(response.data)
-      const anchor = document.createElement('a')
-      anchor.href = blobUrl
-      anchor.download = selectedDetail?.fileName || 'KTM.pdf'
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      URL.revokeObjectURL(blobUrl)
-    } catch (error) {
-      setToastMessage(error.response?.data?.message ?? 'Gagal mengunduh KTM.')
-    } finally {
-      setDownloadingDoc(false)
-    }
-  }
 
   const handleApprove = () => {
     setConfirmDialog({
@@ -172,7 +167,7 @@ export default function VerifikasiHmjPage() {
   const pendingCount = items.filter((it) => it.status === 'menunggu').length
 
   return (
-    <div className="verification-page">
+    <div className="verification-page verification-hmj-page">
       <div className="verification-page__heading">
         <div className="verification-eyebrow">
           <span>Portal Verifikasi</span>
@@ -227,7 +222,7 @@ export default function VerifikasiHmjPage() {
                       <strong>{item.namaLengkap}</strong>
                     </span>
                     <span>{item.nim}</span>
-                    <span>{item.tanggal}</span>
+                       <span>{formatRequestDate(item.tanggal)}</span>
                     <em style={{ textTransform: 'capitalize' }}>{item.status}</em>
                   </button>
                 )
@@ -270,34 +265,35 @@ export default function VerifikasiHmjPage() {
                   <small style={{ color: 'var(--v-muted)', fontSize: '13px' }}>Verifikasi Identitas</small>
                 </div>
 
-                <div
-                  className="verification-ktm"
-                  style={{ cursor: 'pointer', padding: '14px', borderRadius: '14px' }}
-                  onClick={() => setPreviewDoc({ title: `Foto KTM — ${selectedDetail.namaLengkap}`, fileName: selectedDetail.fileName, type: 'image' })}
-                >
-                  <div className="verification-ktm__image" style={{ height: '145px' }}>
-                    <div>
-                      <small style={{ display: 'block', opacity: 0.85, fontSize: '12px' }}>Kartu Tanda Mahasiswa Aktif</small>
-                      <strong style={{ fontSize: '20px' }}>{selectedDetail.namaLengkap}</strong>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--v-blue)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <polyline points="9 12 11 14 15 10" />
-                      </svg>
-                      <div>
-                        <strong>{selectedDetail.fileName}</strong>
-                        <small>{selectedDetail.fileDate} • {selectedDetail.fileSize}</small>
-                      </div>
-                    </div>
-                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                       <button type="button" className="verification-download" aria-label="Unduh KTM" onClick={handleDownloadKtm} disabled={downloadingDoc}><DownloadIcon /></button>
-                       <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon /> Perbesar</span>
+                 <div
+                   className="verification-ktm"
+                   style={{ cursor: 'pointer', padding: '14px', borderRadius: '14px', rowGap: '4px' }}
+                   onClick={() => {
+                     if (ktmPreviewUrl) window.open(ktmPreviewUrl, '_blank', 'noopener,noreferrer')
+                   }}
+                 >
+                   <div className="verification-ktm__image" style={{ height: '175px', marginBottom: 0, background: 'transparent', overflow: 'hidden', position: 'relative' }}>
+                     {ktmPreviewUrl ? (
+                       <img src={ktmPreviewUrl} alt={`Foto KTM ${selectedDetail.namaLengkap}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
+                     ) : (
+                       <div>
+                         <small style={{ display: 'block', opacity: 0.85, fontSize: '12px' }}>Foto KTM tidak tersedia</small>
+                         <strong style={{ fontSize: '20px' }}>{selectedDetail.namaLengkap}</strong>
+                       </div>
+                     )}
+                     <span style={{ position: 'absolute', left: '14px', bottom: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 9px', color: '#fff', background: 'rgba(15, 23, 42, 0.62)', borderRadius: '6px', fontSize: '12px' }}>
+                       <span aria-hidden="true">▣</span>
+                       Kartu Tanda Mahasiswa Aktif
                      </span>
-                  </div>
-                </div>
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '2px', gap: '12px' }}>
+                     <div style={{ minWidth: 0 }}>
+                       <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedDetail.fileName}</strong>
+                       <small>{selectedDetail.fileSize}</small>
+                     </div>
+                     <span className="verification-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', flexShrink: 0 }}><EyeIcon /> Perbesar</span>
+                   </div>
+                 </div>
               </div>
 
               <div style={{ marginTop: '20px' }}>
@@ -361,14 +357,6 @@ export default function VerifikasiHmjPage() {
         />
       )}
 
-      {previewDoc && (
-        <DocumentModal
-          title={previewDoc.title}
-          fileName={previewDoc.fileName}
-          type={previewDoc.type}
-          onClose={() => setPreviewDoc(null)}
-        />
-      )}
 
       <Toast message={toastMessage} onClose={() => setToastMessage('')} />
     </div>

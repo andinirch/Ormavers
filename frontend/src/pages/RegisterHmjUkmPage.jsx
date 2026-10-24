@@ -6,7 +6,7 @@ import SelectInput from '../components/form/SelectInput.jsx'
 import RadioGroup from '../components/form/RadioGroup.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem } from '../services/orgApi.js'
 import { registerHmjUkm } from '../api/register.js'
@@ -79,9 +79,7 @@ function UploadField({ id, name, accept, onChange, fileName, error, kind, childr
 function Header() {
   return (
     <header className="rhmj-header">
-      <Link className="rhmj-brand" to="/">
-        <BrandLogo className="rhmj-logo" />
-      </Link>
+      <OrmaLogo to="/" className="rhmj-brand rhmj-logo" />
       <nav className="rhmj-nav" aria-label="Navigasi utama">
         <span className="rhmj-nav__active">Pendaftaran</span>
       </nav>
@@ -226,7 +224,7 @@ function RegisterHmjUkmPage() {
               <h2>Data penanggung jawab</h2>
               <TextInput id="namaPj" name="namaPj" label="Nama penanggung jawab" placeholder="Nama lengkap" value={values.namaPj} onChange={handleChange} required error={errors.namaPj} />
               <TextInput id="nim" name="nim" label="NIM" placeholder="Nomor Induk Mahasiswa" value={values.nim} onChange={handleChange} required error={errors.nim} />
-              <UploadField id="foto" name="foto" accept="image/jpeg,image/png" onChange={handleFileChange('foto')} required error={errors.foto} fileName={values.foto?.name} kind="photo">
+              <UploadField id="foto" name="foto" accept="image/jpeg" onChange={handleFileChange('foto')} required error={errors.foto} fileName={values.foto?.name} kind="photo">
                 <span className="rhmj-upload__icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M7.5 18.5h8.75a4.25 4.25 0 0 0 .54-8.47A5.5 5.5 0 0 0 6.1 8.9 3.75 3.75 0 0 0 7.5 18.5Z" />
@@ -234,7 +232,7 @@ function RegisterHmjUkmPage() {
                   </svg>
                 </span>
                 <strong>Unggah foto selfie memegang KTM</strong>
-                <small>Format file: JPG atau PNG</small>
+                <small>Format file: JPG/JPEG, maksimal 1 MB</small>
               </UploadField>
               <TextInput id="whatsapp" name="whatsapp" label="Nomor WhatsApp" type="tel" placeholder="Contoh: 0812xxxxxxxx" value={values.whatsapp} onChange={handleChange} required error={errors.whatsapp} />
               <TextInput id="username" name="username" label="Username" placeholder="Buat username akun" value={values.username} onChange={handleChange} required autoComplete="username" error={errors.username} />

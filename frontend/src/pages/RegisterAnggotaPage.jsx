@@ -5,7 +5,7 @@ import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
-import BrandLogo from '../components/BrandLogo.jsx'
+import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem, getVerifiedHmjUkm } from '../services/orgApi.js'
 import { registerAnggota } from '../api/register.js'
@@ -37,7 +37,7 @@ function UploadKtm({ fileName, error, onChange }) {
   return (
     <div className={`ranggota-upload-field ${error ? 'has-error' : ''}`}>
       <label className="ranggota-upload" htmlFor="fotoKtm">
-        <input id="fotoKtm" name="fotoKtm" type="file" accept="image/jpeg,image/png" onChange={onChange} required className="ranggota-upload__input" aria-invalid={Boolean(error)} aria-describedby={error ? 'fotoKtm-error' : undefined} />
+        <input id="fotoKtm" name="fotoKtm" type="file" accept="image/jpeg" onChange={onChange} required className="ranggota-upload__input" aria-invalid={Boolean(error)} aria-describedby={error ? 'fotoKtm-error' : undefined} />
         <span className="ranggota-upload__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
             <path d="M7.5 18.5h8.75a4.25 4.25 0 0 0 .54-8.47A5.5 5.5 0 0 0 6.1 8.9 3.75 3.75 0 0 0 7.5 18.5Z" />
@@ -45,7 +45,7 @@ function UploadKtm({ fileName, error, onChange }) {
           </svg>
         </span>
         <strong>Unggah foto Kartu Tanda Mahasiswa (KTM)</strong>
-        <small>Format file: JPG atau PNG</small>
+        <small>Format file: JPG/JPEG, maksimal 1 MB</small>
         {fileName && <span className="ranggota-upload__filename">{fileName}</span>}
       </label>
       {error && <p className="form-field__error" id="fotoKtm-error" role="alert">{error}</p>}
@@ -56,7 +56,7 @@ function UploadKtm({ fileName, error, onChange }) {
 function Header() {
   return (
     <header className="ranggota-header">
-      <Link className="ranggota-brand" to="/"><BrandLogo className="ranggota-logo" /></Link>
+      <OrmaLogo to="/" className="ranggota-brand ranggota-logo" />
       <nav className="ranggota-nav" aria-label="Navigasi utama"><span className="ranggota-nav__active">Pendaftaran</span></nav>
       <div className="ranggota-header__actions"><div className="ranggota-login-group"><Link className="ranggota-login" to="/login">Masuk</Link><span className="ranggota-login-note">Sudah punya akun?</span></div><span className="ranggota-profile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3" /><path d="M5.5 19c.8-3.1 3.2-5 6.5-5s5.7 1.9 6.5 5" /></svg></span></div>
     </header>
@@ -71,7 +71,7 @@ function RegisterAnggotaPage() {
   const [bemOptions, setBemOptions] = useState([])
   const [bemLoading, setBemLoading] = useState(true)
   const [bemUnavailable, setBemUnavailable] = useState(false)
-  const [hmjResult, setHmjResult] = useState({ forBem: null, options: [], unavailable: false })
+  const [hmjResult, setHmjResult] = useState({ forBem: null, options: [], unavailable: false, error: null })
 
   useEffect(() => {
     let active = true
@@ -88,18 +88,28 @@ function RegisterAnggotaPage() {
     const bemId = values.bem
     if (!bemId) return undefined
     let active = true
-    const selectedBem = bemOptions.find((option) => option.value === bemId)
-    getVerifiedHmjUkm(bemId, selectedBem).then((result) => {
+    getVerifiedHmjUkm(bemId).then((result) => {
       if (!active) return
-      setHmjResult({ forBem: bemId, options: result.data, unavailable: result.unavailable })
+      setHmjResult({ forBem: bemId, options: result.data, unavailable: result.unavailable, error: null })
+    }).catch((error) => {
+      if (!active) return
+      setHmjResult({
+        forBem: bemId,
+        options: [],
+        unavailable: false,
+        error: error.response?.data?.message ?? 'Daftar organisasi di bawah BEM gagal dimuat.',
+      })
     })
-    return () => { active = false }
-  }, [values.bem, bemOptions])
+    return () => {
+      active = false
+    }
+  }, [values.bem])
 
   const hmjReady = values.bem !== '' && hmjResult.forBem === values.bem
   const hmjOptions = hmjReady ? hmjResult.options : []
   const hmjUnavailable = hmjReady && hmjResult.unavailable
-  const hmjLoading = values.bem !== '' && !hmjReady
+  const hmjError = hmjReady ? hmjResult.error : null
+  const hmjLoading = values.bem !== '' && !hmjReady && !hmjError
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -182,8 +192,9 @@ function RegisterAnggotaPage() {
             <section className="ranggota-section">
               <div className="ranggota-section-heading"><h2>Pilih organisasi</h2><span>Afiliasi Kampus</span></div>
               <SelectInput id="bem" name="bem" label="BEM" value={values.bem} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required disabled={bemLoading || bemOptions.length === 0} error={errors.bem} />
-              {hmjUnavailable && <FormMessage variant="info">Pilihan HMJ/UKM di bawah BEM yang dipilih belum tersedia.</FormMessage>}
-              <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjPlaceholder} required disabled={!values.bem || hmjLoading || hmjOptions.length === 0} error={errors.hmjUkm} />
+               {hmjUnavailable && <FormMessage variant="info">Pilihan HMJ/UKM di bawah BEM yang dipilih belum tersedia.</FormMessage>}
+               {hmjError && <FormMessage variant="error">{hmjError}</FormMessage>}
+               <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjError ? 'Daftar organisasi gagal dimuat' : hmjPlaceholder} required disabled={!values.bem || hmjLoading || Boolean(hmjError) || hmjOptions.length === 0} error={errors.hmjUkm} />
               <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih BEM, lalu pilih sebagai anggota HMJ/UKM/BEM di bawah BEM tersebut. Hanya organisasi terverifikasi yang muncul.</p></div>
             </section>
             {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
