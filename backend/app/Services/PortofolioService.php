@@ -163,4 +163,49 @@ class PortofolioService
             'data' => $daftarPortofolio,
         ];
     }
+
+    /**
+     * Hapus data portofolio dan kembalikan seluruh daftar portofolio terurut tahun DESC.
+     */
+    public function hapusPortofolio(Pengguna $pengguna, int $idPortofolio): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $portofolio = Portofolio::where('id_portofolio', $idPortofolio)
+            ->where('id_organisasi', $organisasi->id_organisasi)
+            ->first();
+
+        if (! $portofolio) {
+            return [
+                'error'  => 'Portofolio tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if ($portofolio->dokumentasi) {
+            $parsedPath = parse_url($portofolio->dokumentasi, PHP_URL_PATH);
+            $relativeStoragePath = preg_replace('#^/storage/#', '', $parsedPath ?? $portofolio->dokumentasi);
+            if ($relativeStoragePath && Storage::disk('public')->exists($relativeStoragePath)) {
+                Storage::disk('public')->delete($relativeStoragePath);
+            }
+        }
+
+        $portofolio->delete();
+
+        $daftarPortofolio = Portofolio::where('id_organisasi', $organisasi->id_organisasi)
+            ->orderBy('tahun', 'desc')
+            ->orderBy('id_portofolio', 'desc')
+            ->get();
+
+        return [
+            'data' => $daftarPortofolio,
+        ];
+    }
 }
