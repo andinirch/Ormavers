@@ -300,10 +300,26 @@ class OrgMemberRequestService
                 'tanggal_verifikasi'      => now(),
             ]);
 
-            // 2. Update pengguna status_akun = ditolak
+            // 2. Update pengguna status_akun dengan mempertimbangkan multi-keanggotaan
             $anggota = Pengguna::find($locked->id_pengguna);
             if ($anggota) {
-                $anggota->update(['status_akun' => 'ditolak']);
+                $punyaAktifLain = Keanggotaan::where('id_pengguna', $locked->id_pengguna)
+                    ->where('id_keanggotaan', '!=', $locked->id_keanggotaan)
+                    ->where('status_keanggotaan', 'disetujui')
+                    ->exists();
+
+                $punyaMenungguLain = Keanggotaan::where('id_pengguna', $locked->id_pengguna)
+                    ->where('id_keanggotaan', '!=', $locked->id_keanggotaan)
+                    ->where('status_keanggotaan', 'menunggu')
+                    ->exists();
+
+                if ($punyaAktifLain) {
+                    $anggota->update(['status_akun' => 'aktif']);
+                } elseif ($punyaMenungguLain) {
+                    $anggota->update(['status_akun' => 'menunggu']);
+                } else {
+                    $anggota->update(['status_akun' => 'ditolak']);
+                }
             }
 
             // 3. Catat log aktivitas jenis 'verifikasi' memuat alasan

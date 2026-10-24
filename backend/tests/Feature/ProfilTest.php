@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Keanggotaan;
+use App\Models\Organisasi;
 use App\Models\Pengguna;
+use App\Models\Universitas;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -424,5 +427,97 @@ class ProfilTest extends TestCase
             auth()->forgetGuards();
             $this->json($method, $url)->assertStatus(401);
         }
+    }
+
+    public function test_profil_memuat_nim_dan_organisasi_diikuti_kosong(): void
+    {
+        [$user, , $headers] = $this->buatPengguna('anggota', [
+            'nim' => '20261001',
+        ]);
+
+        auth()->forgetGuards();
+
+        $response = $this->getJson('/api/profil', $headers);
+
+        $response->assertOk()
+            ->assertJsonPath('data.nim', '20261001')
+            ->assertJsonPath('data.organisasi_diikuti', []);
+    }
+
+    public function test_profil_memuat_daftar_organisasi_diikuti(): void
+    {
+        [$user, , $headers] = $this->buatPengguna('anggota', [
+            'nim' => '20261002',
+        ]);
+
+        $univ = Universitas::factory()->create();
+        $akunOrg = Pengguna::factory()->akunOrganisasi()->create();
+
+        $org1 = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $akunOrg->id_pengguna,
+            'nama_organisasi'    => 'BEM Fakultas Teknik',
+            'jenis_organisasi'   => 'bem',
+            'nomor_telepon'      => '081234567890',
+            'status_organisasi'  => 'aktif',
+        ]);
+
+        $k1 = Keanggotaan::create([
+            'id_pengguna'         => $user->id_pengguna,
+            'id_organisasi'       => $org1->id_organisasi,
+            'status_keanggotaan'  => 'disetujui',
+            'tanggal_pendaftaran' => now()->subDays(5),
+            'tanggal_verifikasi'  => now()->subDays(1),
+        ]);
+
+        auth()->forgetGuards();
+
+        $response = $this->getJson('/api/profil', $headers);
+
+        $response->assertOk()
+            ->assertJsonPath('data.nim', '20261002')
+            ->assertJsonCount(1, 'data.organisasi_diikuti')
+            ->assertJsonPath('data.organisasi_diikuti.0.id_keanggotaan', $k1->id_keanggotaan)
+            ->assertJsonPath('data.organisasi_diikuti.0.id_organisasi', $org1->id_organisasi)
+            ->assertJsonPath('data.organisasi_diikuti.0.nama_organisasi', 'BEM Fakultas Teknik')
+            ->assertJsonPath('data.organisasi_diikuti.0.jenis_organisasi', 'bem')
+            ->assertJsonPath('data.organisasi_diikuti.0.status_keanggotaan', 'disetujui');
+
+        $this->assertNotNull($response->json('data.organisasi_diikuti.0.tanggal_pendaftaran'));
+        $this->assertNotNull($response->json('data.organisasi_diikuti.0.tanggal_verifikasi'));
+    }
+
+    public function test_profil_tidak_memasukkan_keanggotaan_yang_belum_disetujui(): void
+    {
+        [$user, , $headers] = $this->buatPengguna('anggota', [
+            'nim' => '20261003',
+        ]);
+
+        $univ = Universitas::factory()->create();
+        $akunOrg = Pengguna::factory()->akunOrganisasi()->create();
+
+        $org = Organisasi::create([
+            'id_universitas'     => $univ->id_universitas,
+            'id_akun_organisasi' => $akunOrg->id_pengguna,
+            'nama_organisasi'    => 'HMJ Informatika',
+            'jenis_organisasi'   => 'hmj',
+            'nomor_telepon'      => '081234567890',
+            'status_organisasi'  => 'aktif',
+        ]);
+
+        Keanggotaan::create([
+            'id_pengguna'         => $user->id_pengguna,
+            'id_organisasi'       => $org->id_organisasi,
+            'status_keanggotaan'  => 'menunggu',
+            'tanggal_pendaftaran' => now(),
+        ]);
+
+        auth()->forgetGuards();
+
+        $response = $this->getJson('/api/profil', $headers);
+
+        $response->assertOk()
+            ->assertJsonPath('data.nim', '20261003')
+            ->assertJsonPath('data.organisasi_diikuti', []);
     }
 }

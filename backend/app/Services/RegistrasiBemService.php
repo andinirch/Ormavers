@@ -32,15 +32,18 @@ class RegistrasiBemService
 
         try {
             return DB::transaction(function () use ($data, $files, &$uploadedPaths) {
-                // 1. Cari atau buat otomatis data universitas dari input teks manual nama_instansi
-                $namaInstansi = trim($data['nama_instansi']);
-                
-                $universitas = Universitas::firstOrCreate(
-                    ['nama_universitas' => $namaInstansi],
-                    [
-                        'logo' => null, // Nilai default jika kolom logo bersifat nullable
-                    ]
-                );
+                // 1. Cari atau buat otomatis data universitas dari id_universitas atau nama_instansi
+                $errorKey = !empty($data['id_universitas']) ? 'id_universitas' : 'nama_instansi';
+
+                if (!empty($data['id_universitas'])) {
+                    $universitas = Universitas::findOrFail($data['id_universitas']);
+                } else {
+                    $namaInstansi = trim($data['nama_instansi'] ?? '');
+                    $universitas = Universitas::firstOrCreate(
+                        ['nama_universitas' => $namaInstansi],
+                        ['logo' => null]
+                    );
+                }
 
                 // 2. Cek BEM aktif/menunggu di universitas yang sama
                 $adaBem = PendaftaranOrganisasi::whereIn('status_pendaftaran', ['menunggu', 'disetujui'])
@@ -52,7 +55,7 @@ class RegistrasiBemService
 
                 if ($adaBem) {
                     throw ValidationException::withMessages([
-                        'nama_instansi' => ['BEM untuk universitas ini sudah terdaftar'],
+                        $errorKey => ['BEM untuk universitas ini sudah terdaftar'],
                     ]);
                 }
 

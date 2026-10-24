@@ -16,7 +16,7 @@ class ProfilService
      */
     public function getProfil(Pengguna $pengguna): array
     {
-        $pengguna->loadMissing('roles');
+        $pengguna->loadMissing(['roles', 'keanggotaan.organisasi']);
 
         $roleName = $pengguna->roles->first()?->name ?? $pengguna->peran;
 
@@ -25,16 +25,34 @@ class ProfilService
             $fotoUrl = Storage::disk('public')->url($pengguna->foto_profil);
         }
 
+        $organisasiDiikuti = $pengguna->keanggotaan
+            ? $pengguna->keanggotaan
+                ->filter(fn ($k) => in_array($k->status_keanggotaan, ['disetujui', 'aktif'], true))
+                ->map(fn ($k) => [
+                    'id_keanggotaan'      => $k->id_keanggotaan,
+                    'id_organisasi'       => $k->id_organisasi,
+                    'nama_organisasi'     => $k->organisasi?->nama_organisasi,
+                    'jenis_organisasi'    => $k->organisasi?->jenis_organisasi,
+                    'status_keanggotaan'  => $k->status_keanggotaan,
+                    'tanggal_pendaftaran' => $k->tanggal_pendaftaran?->toISOString(),
+                    'tanggal_verifikasi'  => $k->tanggal_verifikasi?->toISOString(),
+                ])
+                ->values()
+                ->all()
+            : [];
+
         return [
-            'id_pengguna'     => $pengguna->id_pengguna,
-            'nama'            => $pengguna->nama,
-            'username'        => $pengguna->username,
-            'role'            => $roleName,
-            'peran'           => $pengguna->peran,
-            'status_akun'     => $pengguna->status_akun,
-            'nomor_whatsapp'  => $pengguna->nomor_whatsapp,
-            'foto_profil_url' => $fotoUrl,
-            'dibuat_pada'     => $pengguna->dibuat_pada,
+            'id_pengguna'        => $pengguna->id_pengguna,
+            'nama'               => $pengguna->nama,
+            'username'           => $pengguna->username,
+            'nim'                => $pengguna->nim,
+            'role'               => $roleName,
+            'peran'              => $pengguna->peran,
+            'status_akun'        => $pengguna->status_akun,
+            'nomor_whatsapp'     => $pengguna->nomor_whatsapp,
+            'foto_profil_url'    => $fotoUrl,
+            'organisasi_diikuti' => $organisasiDiikuti,
+            'dibuat_pada'        => $pengguna->dibuat_pada,
         ];
     }
 

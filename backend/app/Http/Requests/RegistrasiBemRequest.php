@@ -18,8 +18,7 @@ class RegistrasiBemRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'nama_instansi'            => ['required', 'string', 'max:150'],
+        $rules = [
             'nama_organisasi'          => ['required', 'string', 'max:150'],
             'nomor_telepon_organisasi' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
             'nama'                     => ['required', 'string', 'max:150'],
@@ -31,11 +30,23 @@ class RegistrasiBemRequest extends FormRequest
             'sk_organisasi'            => ['required', 'file', 'mimes:pdf', 'max:2048'],
             'sk_kepengurusan'          => ['required', 'file', 'mimes:pdf', 'max:2048'],
         ];
+
+        if ($this->has('nama_instansi') && ! $this->has('id_universitas')) {
+            $rules['nama_instansi'] = ['required', 'string', 'max:150'];
+        } else {
+            $rules['id_universitas'] = ['required', 'integer', 'exists:universitas,id_universitas'];
+            $rules['nama_instansi']  = ['nullable', 'string', 'max:150'];
+        }
+
+        return $rules;
     }
 
     public function messages(): array
     {
         return [
+            'id_universitas.required'           => 'Universitas wajib dipilih',
+            'id_universitas.integer'            => 'ID universitas harus berupa angka',
+            'id_universitas.exists'             => 'Universitas tidak ditemukan',
             'nama_instansi.required'            => 'Nama instansi/kampus wajib diisi',
             'nama_instansi.string'              => 'Nama instansi/kampus harus berupa teks',
             'nama_instansi.max'                 => 'Nama instansi/kampus maksimal 150 karakter',
@@ -85,11 +96,20 @@ class RegistrasiBemRequest extends FormRequest
                 return;
             }
 
-            $namaInstansi = trim($this->input('nama_instansi'));
+            $idUniversitas = $this->input('id_universitas');
+            $namaInstansi = $this->input('nama_instansi');
             $namaOrganisasi = $this->input('nama_organisasi');
 
-            // Cari data universitas berdasarkan nama yang diketik user (case-insensitive)
-            $universitas = Universitas::whereRaw('LOWER(TRIM(nama_universitas)) = ?', [strtolower($namaInstansi)])->first();
+            $universitas = null;
+            $errorKey = 'id_universitas';
+
+            if ($idUniversitas) {
+                $universitas = Universitas::find($idUniversitas);
+                $errorKey = 'id_universitas';
+            } elseif ($namaInstansi) {
+                $universitas = Universitas::whereRaw('LOWER(TRIM(nama_universitas)) = ?', [strtolower(trim($namaInstansi))])->first();
+                $errorKey = 'nama_instansi';
+            }
 
             if ($universitas) {
                 // Satu BEM per universitas: tidak boleh ada BEM lain dengan status menunggu atau disetujui
@@ -101,7 +121,7 @@ class RegistrasiBemRequest extends FormRequest
                     ->exists();
 
                 if ($adaBem) {
-                    $validator->errors()->add('nama_instansi', 'BEM untuk universitas ini sudah terdaftar');
+                    $validator->errors()->add($errorKey, 'BEM untuk universitas ini sudah terdaftar');
                 }
 
                 // Nama organisasi unik dalam universitas yang sama

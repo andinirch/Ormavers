@@ -92,8 +92,8 @@ class Pengguna extends Authenticatable
         return $this->hasOne(Organisasi::class, 'id_akun_organisasi', 'id_pengguna');
     }
 
-    public function keanggotaan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function keanggotaan(): HasMany
     {
-        return $this->hasOne(Keanggotaan::class, 'id_pengguna', 'id_pengguna');
+        return $this->hasMany(Keanggotaan::class, 'id_pengguna', 'id_pengguna');
     }
 }

@@ -26,7 +26,7 @@ class StatusRegistrasiService
             return $this->formatStatusOrganisasi($pengguna, $organisasi);
         }
 
-        $keanggotaan = $pengguna->keanggotaan()->with('organisasi')->first();
+        $keanggotaan = $pengguna->keanggotaan()->with('organisasi')->latest('id_keanggotaan')->first();
 
         if ($keanggotaan) {
             return $this->formatStatusAnggota($pengguna, $keanggotaan);
@@ -86,7 +86,7 @@ class StatusRegistrasiService
      */
     public function formatStatusAnggota(Pengguna $pengguna, $keanggotaan = null): array
     {
-        $keanggotaan = $keanggotaan ?? $pengguna->keanggotaan()->with('organisasi')->first();
+        $keanggotaan = $keanggotaan ?? $pengguna->keanggotaan()->with('organisasi')->latest('id_keanggotaan')->first();
 
         $statusPendaftaran = $keanggotaan->status_keanggotaan;
         $alasanPenolakan   = ($statusPendaftaran === 'ditolak') ? $keanggotaan->alasan_penolakan : null;
