@@ -14,6 +14,7 @@ use App\Http\Controllers\UniversitasController;
 use App\Http\Controllers\VerifikasiBemController;
 use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProfilOrganisasiController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -119,6 +120,14 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
             ->whereNumber('id');
         Route::post('/{id}/reject', [OrgMemberRequestController::class, 'reject'])
             ->whereNumber('id');
+    });
+
+// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12)
+Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
+    ->prefix('organisasi')
+    ->group(function () {
+        Route::get('/deskripsi', [ProfilOrganisasiController::class, 'showDeskripsi']);
+        Route::match(['put', 'patch'], '/deskripsi', [ProfilOrganisasiController::class, 'updateDeskripsi']);
     });
 
 // Admin Panel — Manajemen Role & Permission & Ringkasan
