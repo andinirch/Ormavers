@@ -123,7 +123,7 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
             ->whereNumber('id');
     });
 
-// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12) & Tambah Portofolio (ORMV-1-13)
+// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12), Tambah Portofolio (ORMV-1-13), & Ubah Portofolio (ORMV-1-14)
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
     ->prefix('organisasi')
     ->group(function () {
@@ -131,7 +131,11 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
         Route::match(['put', 'patch'], '/deskripsi', [ProfilOrganisasiController::class, 'updateDeskripsi']);
 
         Route::get('/portofolio', [PortofolioController::class, 'index']);
+        Route::get('/portofolio/{id}', [PortofolioController::class, 'show'])
+            ->whereNumber('id');
         Route::post('/portofolio', [PortofolioController::class, 'store']);
+        Route::match(['put', 'patch'], '/portofolio/{id}', [PortofolioController::class, 'update'])
+            ->whereNumber('id');
     });
 
 // Admin Panel — Manajemen Role & Permission & Ringkasan

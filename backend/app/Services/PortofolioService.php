@@ -85,4 +85,82 @@ class PortofolioService
             'data' => $daftarPortofolio,
         ];
     }
+
+    /**
+     * Ambil detail portofolio tertentu milik organisasi pengguna.
+     */
+    public function getPortofolioById(Pengguna $pengguna, int $idPortofolio): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $portofolio = Portofolio::where('id_portofolio', $idPortofolio)
+            ->where('id_organisasi', $organisasi->id_organisasi)
+            ->first();
+
+        if (! $portofolio) {
+            return [
+                'error'  => 'Portofolio tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        return [
+            'data' => $portofolio,
+        ];
+    }
+
+    /**
+     * Perbarui data portofolio dan kembalikan seluruh daftar portofolio terurut tahun DESC.
+     */
+    public function updatePortofolio(Pengguna $pengguna, int $idPortofolio, array $data, ?UploadedFile $dokumentasiFile = null): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $portofolio = Portofolio::where('id_portofolio', $idPortofolio)
+            ->where('id_organisasi', $organisasi->id_organisasi)
+            ->first();
+
+        if (! $portofolio) {
+            return [
+                'error'  => 'Portofolio tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        $dokumentasi = $data['dokumentasi'] ?? $portofolio->dokumentasi;
+        if ($dokumentasiFile instanceof UploadedFile) {
+            $path = $dokumentasiFile->store('portofolio', 'public');
+            $dokumentasi = Storage::disk('public')->url($path);
+        }
+
+        $portofolio->update([
+            'judul'       => $data['judul'],
+            'tahun'       => (int) $data['tahun'],
+            'deskripsi'   => $data['deskripsi'],
+            'dokumentasi' => $dokumentasi,
+        ]);
+
+        $daftarPortofolio = Portofolio::where('id_organisasi', $organisasi->id_organisasi)
+            ->orderBy('tahun', 'desc')
+            ->orderBy('id_portofolio', 'desc')
+            ->get();
+
+        return [
+            'data' => $daftarPortofolio,
+        ];
+    }
 }
