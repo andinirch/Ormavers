@@ -672,4 +672,172 @@ class PortofolioTest extends TestCase
         $this->assertEquals(2024, $data[1]['tahun']);
         $this->assertEquals(2021, $data[2]['tahun']);
     }
+
+    public function test_hapus_portofolio_berhasil_dan_mengembalikan_daftar_terbaru(): void
+    {
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem', 'aktif', 'aktif');
+
+        $p1 = Portofolio::create([
+            'id_organisasi' => $org->id_organisasi,
+            'judul'         => 'Portofolio 2023',
+            'tahun'         => 2023,
+            'deskripsi'     => 'Deskripsi 2023',
+            'dokumentasi'   => 'https://example.com/2023.pdf',
+        ]);
+
+        $p2 = Portofolio::create([
+            'id_organisasi' => $org->id_organisasi,
+            'judul'         => 'Portofolio 2025',
+            'tahun'         => 2025,
+            'deskripsi'     => 'Deskripsi 2025',
+            'dokumentasi'   => 'https://example.com/2025.pdf',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/organisasi/portofolio/' . $p1->id_portofolio);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Portofolio berhasil dihapus',
+            ]);
+
+        $data = $response->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals($p2->id_portofolio, $data[0]['id_portofolio']);
+        $this->assertEquals('Portofolio 2025', $data[0]['judul']);
+
+        $this->assertDatabaseMissing('portofolio', [
+            'id_portofolio' => $p1->id_portofolio,
+        ]);
+        $this->assertDatabaseHas('portofolio', [
+            'id_portofolio' => $p2->id_portofolio,
+        ]);
+    }
+
+    public function test_hapus_portofolio_berhasil_menghapus_file_dokumentasi_fisik(): void
+    {
+        Storage::fake('public');
+
+        [$user, $org, $token] = $this->buatAkunOrganisasi('hmj', 'aktif', 'aktif');
+
+        $file = UploadedFile::fake()->create('laporan.pdf', 500, 'application/pdf');
+        $path = $file->store('portofolio', 'public');
+        $fileUrl = Storage::disk('public')->url($path);
+
+        Storage::disk('public')->assertExists($path);
+
+        $portofolio = Portofolio::create([
+            'id_organisasi' => $org->id_organisasi,
+            'judul'         => 'Portofolio Bersama File',
+            'tahun'         => 2024,
+            'deskripsi'     => 'Deskripsi dengan file fisik',
+            'dokumentasi'   => $fileUrl,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/organisasi/portofolio/' . $portofolio->id_portofolio);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Portofolio berhasil dihapus',
+            ]);
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertDatabaseMissing('portofolio', [
+            'id_portofolio' => $portofolio->id_portofolio,
+        ]);
+    }
+
+    public function test_hapus_portofolio_gagal_jika_bukan_milik_organisasi(): void
+    {
+        [$user1, $org1, $token1] = $this->buatAkunOrganisasi('bem', 'aktif', 'aktif');
+        [$user2, $org2, $token2] = $this->buatAkunOrganisasi('hmj', 'aktif', 'aktif');
+
+        $portofolioOrg2 = Portofolio::create([
+            'id_organisasi' => $org2->id_organisasi,
+            'judul'         => 'Portofolio Milik HMJ',
+            'tahun'         => 2024,
+            'deskripsi'     => 'Deskripsi HMJ',
+            'dokumentasi'   => 'https://example.com/hmj.pdf',
+        ]);
+
+        // Org 1 mencoba menghapus portofolio milik Org 2 (pencegahan IDOR -> harus 404)
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token1)
+            ->deleteJson('/api/organisasi/portofolio/' . $portofolioOrg2->id_portofolio);
+
+        $response->assertStatus(404)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Portofolio tidak ditemukan',
+            ]);
+
+        $this->assertDatabaseHas('portofolio', [
+            'id_portofolio' => $portofolioOrg2->id_portofolio,
+        ]);
+    }
+
+    public function test_hapus_portofolio_gagal_jika_id_tidak_ditemukan(): void
+    {
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem', 'aktif', 'aktif');
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/organisasi/portofolio/999999');
+
+        $response->assertStatus(404)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Portofolio tidak ditemukan',
+            ]);
+    }
+
+    public function test_hapus_portofolio_gagal_tanpa_token(): void
+    {
+        $response = $this->deleteJson('/api/organisasi/portofolio/1');
+
+        $response->assertStatus(401);
+    }
+
+    public function test_hapus_portofolio_gagal_jika_peran_bukan_akun_organisasi(): void
+    {
+        $anggota = Pengguna::factory()->create([
+            'peran'       => 'anggota',
+            'status_akun' => 'aktif',
+        ]);
+        $tokenAnggota = $anggota->createToken('auth_token', ['*'])->plainTextToken;
+
+        $responseAnggota = $this->withHeader('Authorization', 'Bearer ' . $tokenAnggota)
+            ->deleteJson('/api/organisasi/portofolio/1');
+
+        $responseAnggota->assertStatus(403);
+
+        $admin = Pengguna::factory()->administrator()->create([
+            'status_akun' => 'aktif',
+        ]);
+        $tokenAdmin = $admin->createToken('auth_token', ['*'])->plainTextToken;
+
+        $responseAdmin = $this->withHeader('Authorization', 'Bearer ' . $tokenAdmin)
+            ->deleteJson('/api/organisasi/portofolio/1');
+
+        $responseAdmin->assertStatus(403);
+    }
+
+    public function test_hapus_portofolio_gagal_jika_organisasi_belum_aktif(): void
+    {
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem', 'aktif', 'menunggu');
+
+        $portofolio = Portofolio::create([
+            'id_organisasi' => $org->id_organisasi,
+            'judul'         => 'Portofolio Org Menunggu',
+            'tahun'         => 2024,
+            'deskripsi'     => 'Deskripsi',
+            'dokumentasi'   => 'https://example.com/doc.pdf',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/organisasi/portofolio/' . $portofolio->id_portofolio);
+
+        $response->assertStatus(403);
+    }
 }

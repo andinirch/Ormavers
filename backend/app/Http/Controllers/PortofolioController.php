@@ -94,4 +94,22 @@ class PortofolioController extends Controller
             'data'    => $result['data'],
         ]);
     }
+
+    public function destroy(Request $request, int|string $id): JsonResponse
+    {
+        $result = $this->portofolioService->hapusPortofolio($request->user(), (int) $id);
+
+        if (isset($result['error'])) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'],
+            ], $result['status']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Portofolio berhasil dihapus',
+            'data'    => $result['data'],
+        ]);
+    }
 }
