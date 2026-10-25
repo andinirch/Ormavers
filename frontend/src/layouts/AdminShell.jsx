@@ -17,7 +17,8 @@ function AdminShell() {
   const profileName = user?.username ?? user?.nama ?? (sessionRole === 'super_admin' ? 'Super Admin' : sessionRole === 'administrator' ? 'Administrator' : 'Akun Organisasi')
   const isSuperAdmin = user?.peran === 'super_admin'
   const isAdministrator = user?.peran === 'administrator'
-  const canViewRoles = permissions?.includes('view roles') || isSuperAdmin
+  const can = (permission) => isSuperAdmin || permissions?.includes(permission)
+  const canViewRoles = can('view roles')
 
   const groups = [
     {

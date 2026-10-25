@@ -52,6 +52,7 @@ function LoginPage() {
       const result = await login(values)
       const loggedInUser = result?.data?.pengguna
       const loggedInRoles = (result?.data?.roles ?? []).map((role) => typeof role === 'string' ? role : role?.name)
+      const loggedInPermissions = result?.data?.permissions ?? []
       const redirect = searchParams.get('redirect')
       const isOrganizationOrMember = loggedInUser?.peran === 'akun_bem'
         || loggedInUser?.peran === 'akun_hmj_ukm'
@@ -76,7 +77,11 @@ function LoginPage() {
               : loggedInRoles.includes('akun_hmj_ukm')
                 ? '/verifikasi/hmj'
                 : loggedInRoles.includes('akun_bem') || loggedInUser?.peran === 'akun_organisasi'
-                  ? '/verifikasi/bem'
+                  ? loggedInPermissions.includes('verify hmj/ukm')
+                    ? '/verifikasi/bem?bagian=hmj'
+                    : loggedInPermissions.includes('verify members')
+                      ? '/verifikasi/bem?bagian=anggota'
+                      : '/verifikasi/profil'
                   : loggedInUser?.peran === 'anggota' || loggedInUser?.peran === 'member' || loggedInRoles.includes('anggota') || loggedInRoles.includes('member')
                     ? '/profil'
                     : '/')

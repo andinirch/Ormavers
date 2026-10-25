@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { useAdminData } from '../../services/useAdminData.jsx'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
 import { RoleForm } from '../../components/adminForms.jsx'
@@ -25,10 +26,13 @@ function roleLabel(name) {
 }
 
 function RolesPage() {
-  const { roles, deleteRole } = useAdminData()
+  const { roles, permissions, deleteRole } = useAdminData()
+  const { user, roles: sessionRoles, permissions: sessionPermissions } = useAuth()
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState(null)
   const [creating, setCreating] = useState(false)
+  const isSuperAdmin = user?.peran === 'super_admin' || sessionRoles.some((role) => (typeof role === 'string' ? role : role?.name) === 'super_admin')
+  const can = (permission) => isSuperAdmin || sessionPermissions.includes(permission)
   const filtered = useMemo(() => roles.filter((role) => `${role.name} ${role.permissions}`.toLowerCase().includes(query.toLowerCase())), [roles, query])
 
   return (
@@ -40,20 +44,20 @@ function RolesPage() {
             <h1>Role</h1>
             <p>Kelola role dan hak akses (permission) pengguna Ormavers.</p>
           </div>
-          <button className="admin-button" type="button" onClick={() => setCreating(true)}>
-            <AdminIcon name="plus" size={16} /> Tambah Role
-          </button>
+{can('create roles') && <button className="admin-button" type="button" onClick={() => setCreating(true)}>
+             <AdminIcon name="plus" size={16} /> Tambah Role
+           </button>}
         </div>
       </header>
       <div className="admin-summary-grid admin-role-summary">
-        <Stat label="TOTAL ROLE AKTIF" value="5" />
-        <Stat label="TOTAL HAK AKSES" value="28" />
-        <Stat label="ROLE KHUSUS SISTEM" value="1" />
+<Stat label="TOTAL ROLE AKTIF" value={roles.length} />
+         <Stat label="TOTAL HAK AKSES" value={permissions.length} />
+         <Stat label="ROLE KHUSUS SISTEM" value={roles.filter((role) => role.name === 'super_admin').length} />
       </div>
       <section className="admin-panel admin-role-panel">
         <div className="admin-panel-heading">
           <div>
-            <h2>Daftar Role <span className="admin-count-pill">5 role</span></h2>
+            <h2>Daftar Role <span className="admin-count-pill">{roles.length} role</span></h2>
             <p>Seluruh role yang terdaftar di sistem</p>
           </div>
            <div className="admin-role-tools">
@@ -109,18 +113,18 @@ function RolesPage() {
                         </span>
                       ) : (
                         <div className="admin-icon-actions">
-                          <button onClick={() => setEditing(role)} aria-label="Edit role">
-                            <AdminIcon name="edit" />
-                          </button>
-                          <button
-                            className="admin-role-delete-action"
+{can('edit roles') && <button onClick={() => setEditing(role)} aria-label="Edit role">
+                             <AdminIcon name="edit" />
+                           </button>}
+                           {can('delete roles') && <button
+                             className="admin-role-delete-action"
                             onClick={() => window.confirm(`Hapus role ${role.name}?`) && deleteRole(role.id)}
                             aria-label="Hapus role"
                             title="Hapus role"
                           >
                             <AdminIcon name="trash" />
-                          </button>
-                        </div>
+                           </button>}
+                         </div>
                       )}
                     </td>
                   </tr>

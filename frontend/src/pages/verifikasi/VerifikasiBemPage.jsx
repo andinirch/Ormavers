@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext.jsx'
 import {
   approveHmjRegistration,
   approveMemberRequest,
@@ -73,8 +74,13 @@ function InfoIcon() {
 
 export default function VerifikasiBemPage() {
   const [searchParams] = useSearchParams()
+  const { user, roles, permissions } = useAuth()
+  const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
+  const isSuperAdmin = user?.peran === 'super_admin' || roleNames.includes('super_admin')
   const bagian = searchParams.get('bagian') === 'anggota' ? 'anggota' : 'hmj'
   const isMemberMode = bagian === 'anggota'
+  const requiredPermission = isMemberMode ? 'verify members' : 'verify hmj/ukm'
+  const canAccess = isSuperAdmin || permissions.includes(requiredPermission)
 
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -95,6 +101,7 @@ export default function VerifikasiBemPage() {
   useEffect(() => {
     let cancelled = false
     const run = async () => {
+      if (!canAccess) return
       setLoading(true)
       const res = isMemberMode ? await listMemberRequests() : await listHmjRegistrations()
       if (cancelled) return
@@ -112,7 +119,7 @@ export default function VerifikasiBemPage() {
     return () => {
       cancelled = true
     }
-  }, [bagian, isMemberMode, refreshIndex])
+  }, [bagian, canAccess, isMemberMode, refreshIndex])
 
   useEffect(() => {
     if (!selectedId) {
@@ -253,6 +260,17 @@ export default function VerifikasiBemPage() {
   }
 
   const pendingCount = items.length
+
+  if (!canAccess) {
+    return (
+      <div className="verification-page verification-bem-page">
+        <div className="verification-empty">
+          <strong>Akses tidak tersedia</strong>
+          <span>Permission untuk halaman ini belum diberikan pada role kamu.</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="verification-page verification-bem-page">

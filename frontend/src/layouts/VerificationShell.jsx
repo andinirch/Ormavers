@@ -15,16 +15,16 @@ const navigationByRole = {
     { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
   ],
   'Akun Organisasi BEM': [
-    { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj' },
-    { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member' },
-    { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile' },
+    { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
+    { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
+    { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
-    { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member' },
-    { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile' },
+    { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
+    { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
-    { to: '/profil', label: 'Profil Saya', icon: 'profile' },
+    { to: '/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
 }
 
@@ -42,7 +42,7 @@ function Icon({ name, size = 20 }) {
 
 function VerificationShell() {
   const { pathname, search } = useLocation()
-  const { user, roles } = useAuth()
+  const { user, roles, permissions } = useAuth()
   const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
   const sessionRole = roleNames.includes('akun_hmj_ukm')
     ? 'akun_hmj_ukm'
@@ -57,6 +57,8 @@ function VerificationShell() {
         ? 'anggota'
         : 'bem'
   const activeContext = verificationContexts[contextKey]
+  const isSuperAdmin = roleNames.includes('super_admin') || user?.peran === 'super_admin'
+  const canUsePermission = (permission) => isSuperAdmin || !permission || permissions.includes(permission)
   const [organizationName, setOrganizationName] = useState(null)
 
   useEffect(() => {
@@ -74,7 +76,7 @@ function VerificationShell() {
 
   const profileName = user?.username ?? user?.nama ?? activeContext.organizationName
   const profileSubtitle = organizationName ?? activeContext.role
-  const navigation = navigationByRole[activeContext.role] ?? []
+  const navigation = (navigationByRole[activeContext.role] ?? []).filter((item) => canUsePermission(item.permission))
   const groups = [{
     label: 'MENU UTAMA',
     items: navigation.map((item) => ({
@@ -88,7 +90,12 @@ function VerificationShell() {
     })),
   }]
   const defaultPath = contextKey === 'administrator' ? 'administrator' : contextKey === 'hmj' ? 'hmj' : contextKey === 'anggota' ? 'profil' : 'bem'
-  const defaultLink = contextKey === 'anggota' ? '/profil' : `/verifikasi/${defaultPath}`
+  const bemDefaultPart = canUsePermission('verify hmj/ukm') ? 'hmj' : canUsePermission('verify members') ? 'anggota' : null
+  const defaultLink = contextKey === 'anggota'
+    ? '/profil'
+    : contextKey === 'bem' && bemDefaultPart
+      ? `/verifikasi/bem?bagian=${bemDefaultPart}`
+      : `/verifikasi/${defaultPath}`
 
   if (pathname === '/verifikasi' || pathname === '/verifikasi/') {
     return <Navigate to={defaultPath} replace />

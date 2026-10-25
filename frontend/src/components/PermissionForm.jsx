@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import AdminIcon from './admin/AdminIcon.jsx'
 
-function PermissionForm({ onClose }) {
-  const [name, setName] = useState('')
+function PermissionForm({ item, onClose, onSubmit }) {
+  const [name, setName] = useState(item?.name ?? '')
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -18,13 +19,22 @@ function PermissionForm({ onClose }) {
     }
   }, [onClose])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     if (!name.trim()) {
       setMessage('Nama permission wajib diisi.')
       return
     }
-    setMessage('API tambah permission belum tersedia. Permission belum disimpan.')
+    setSaving(true)
+    setMessage('')
+    try {
+      await onSubmit({ name: name.trim() })
+      onClose()
+    } catch (error) {
+      setMessage(error.response?.data?.message ?? 'Permission gagal disimpan.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -35,8 +45,8 @@ function PermissionForm({ onClose }) {
             <span className="admin-dialog-icon"><AdminIcon name="shield" /></span>
             <div>
               <span className="admin-permission-dialog-eyebrow">AKSES & KEAMANAN</span>
-              <h2>Tambah Permission</h2>
-              <p>Tambahkan hak akses baru untuk digunakan oleh role.</p>
+              <h2>{item ? 'Edit Permission' : 'Tambah Permission'}</h2>
+              <p>{item ? 'Perbarui nama permission yang tersedia.' : 'Tambahkan hak akses baru untuk digunakan oleh role.'}</p>
             </div>
           </div>
           <button type="button" className="admin-close" onClick={onClose} aria-label="Tutup">
@@ -51,7 +61,7 @@ function PermissionForm({ onClose }) {
         {message && <p className="admin-form-error" role="alert">{message}</p>}
         <footer className="admin-dialog-actions">
           <button type="button" className="admin-button admin-button--muted" onClick={onClose}>Batal</button>
-          <button type="submit" className="admin-button"><AdminIcon name="save" size={15} /> Simpan Permission</button>
+          <button type="submit" className="admin-button" disabled={saving}><AdminIcon name="save" size={15} /> {saving ? 'Menyimpan…' : item ? 'Simpan Perubahan' : 'Simpan Permission'}</button>
         </footer>
       </form>
     </div>

@@ -39,7 +39,7 @@ function formatLogin(value) {
 }
 
 function UsersPage() {
-  const { users, roles, organizations, deleteUser } = useAdminData()
+  const { users, roles, organizations, updateUser } = useAdminData()
   const source = ADMIN_USE_MOCKS ? mockUsers : users
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('')
@@ -81,16 +81,18 @@ function UsersPage() {
     setPage(1)
   }
 
-  const handleDeactivate = async (user) => {
+  const handleStatusChange = async (user) => {
     if (deactivatingId) return
-    const confirmed = window.confirm(`Nonaktifkan akun Administrator ${user.name}? Akun akan dinonaktifkan dan tidak dapat digunakan untuk login, bukan dihapus permanen.`)
+    const nextStatus = user.status === 'aktif' ? 'nonaktif' : 'aktif'
+    const actionLabel = nextStatus === 'aktif' ? 'mengaktifkan' : 'menonaktifkan'
+    const confirmed = window.confirm(`${actionLabel[0].toUpperCase()}${actionLabel.slice(1)} akun Administrator ${user.name}?`)
     if (!confirmed) return
     setActionError('')
     setDeactivatingId(user.id)
     try {
-      await deleteUser(user.id)
+      await updateUser(user.id, nextStatus)
     } catch (err) {
-      const message = err?.response?.data?.message || err?.message || `Gagal menonaktifkan akun Administrator ${user.name}.`
+      const message = err?.response?.data?.message || err?.message || `Gagal ${actionLabel} akun Administrator ${user.name}.`
       setActionError(message)
     } finally {
       setDeactivatingId(null)
@@ -205,7 +207,7 @@ function UsersPage() {
                 </tr>
               ) : (
                 visibleUsers.map((user) => {
-                  const canDeactivate = user.role === 'administrator' && user.status !== 'nonaktif'
+                  const canManageStatus = user.role === 'administrator' && user.status !== 'menunggu'
                   return (
                     <tr key={user.id}>
                       <td>
@@ -233,17 +235,17 @@ function UsersPage() {
                       </td>
                       <td>
                         <div className="admin-icon-actions">
-                          {canDeactivate && (
-                            <button
-                              className="admin-user-delete-action"
-                              aria-label="Nonaktifkan akun"
-                              title="Nonaktifkan akun"
-                              disabled={deactivatingId === user.id}
-                              onClick={() => handleDeactivate(user)}
-                            >
-                              <AdminIcon name="user-x" />
-                            </button>
-                          )}
+                           {canManageStatus && (
+                             <button
+                               className="admin-user-delete-action"
+                               aria-label={user.status === 'aktif' ? 'Nonaktifkan akun' : 'Aktifkan akun'}
+                               title={user.status === 'aktif' ? 'Nonaktifkan akun' : 'Aktifkan akun'}
+                               disabled={deactivatingId === user.id}
+                               onClick={() => handleStatusChange(user)}
+                             >
+                               <AdminIcon name={user.status === 'aktif' ? 'user-x' : 'check'} />
+                             </button>
+                           )}
                         </div>
                       </td>
                     </tr>

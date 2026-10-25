@@ -61,7 +61,8 @@ function App() {
           <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
         </Route>
         <Route element={<VerificationShell />}>
-          <Route element={<AccessGuard roles={['anggota', 'member']} />}>
+          <Route element={<AccessGuard roles={['anggota', 'member']} permission="view profile" />}>
+
             <Route path="/profil" element={<OrganizationProfilePage />} />
           </Route>
         </Route>
@@ -72,11 +73,15 @@ function App() {
           </Route>
           <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
             <Route path="bem" element={<VerifikasiBemPageNew />} />
-            <Route path="profil" element={<OrganizationProfilePage />} />
+            <Route element={<AccessGuard permission="view profile" />}>
+              <Route path="profil" element={<OrganizationProfilePage />} />
+            </Route>
           </Route>
           <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
             <Route path="hmj" element={<VerifikasiHmjPage />} />
-            <Route path="profil-hmj" element={<OrganizationProfilePage />} />
+            <Route element={<AccessGuard permission="view profile" />}>
+              <Route path="profil-hmj" element={<OrganizationProfilePage />} />
+            </Route>
           </Route>
         </Route>
       </Route>

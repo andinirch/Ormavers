@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../../context/AuthContext.jsx'
 import {
   approveMemberRequest,
   getMemberRequestDetail,
@@ -54,6 +55,9 @@ function ShieldUserIcon() {
 }
 
 export default function VerifikasiHmjPage() {
+  const { user, roles, permissions } = useAuth()
+  const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
+  const canAccess = user?.peran === 'super_admin' || roleNames.includes('super_admin') || permissions.includes('verify members')
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [selectedDetail, setSelectedDetail] = useState(null)
@@ -165,6 +169,17 @@ export default function VerifikasiHmjPage() {
   }
 
   const pendingCount = items.filter((it) => it.status === 'menunggu').length
+
+  if (!canAccess) {
+    return (
+      <div className="verification-page verification-hmj-page">
+        <div className="verification-empty">
+          <strong>Akses tidak tersedia</strong>
+          <span>Permission untuk halaman ini belum diberikan pada role kamu.</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="verification-page verification-hmj-page">

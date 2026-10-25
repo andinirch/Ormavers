@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AdminDataContext } from './AdminDataContext.jsx'
-import { getPermissions, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
-import { listAdministrators, storeAdministrator, deactivateAdministrator } from '../api/superadmin.js'
+import { getPermissions, createPermission, updatePermission, deletePermission, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
+import { listAdministrators, storeAdministrator, deactivateAdministrator, updateAdministratorStatus } from '../api/superadmin.js'
 
 const ROLE_BAWAAN = ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota']
 
@@ -70,6 +70,21 @@ export function AdminDataProvider({ children }) {
       await refresh()
       return result
     },
+    createPermission: async (data) => {
+      const result = await createPermission(data)
+      await refresh()
+      return result
+    },
+    updatePermission: async (id, data) => {
+      const result = await updatePermission(id, data)
+      await refresh()
+      return result
+    },
+    deletePermission: async (id) => {
+      const result = await deletePermission(id)
+      await refresh()
+      return result
+    },
     createUser: async (input) => {
       const result = await storeAdministrator({
         nama: input.name,
@@ -79,7 +94,11 @@ export function AdminDataProvider({ children }) {
       await refresh()
       return result
     },
-    updateUser: async () => {},
+    updateUser: async (id, status) => {
+      const result = await updateAdministratorStatus(id, status)
+      await refresh()
+      return result
+    },
     deleteUser: async (id) => {
       const result = await deactivateAdministrator(id)
       await refresh()

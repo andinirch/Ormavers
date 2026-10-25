@@ -27,16 +27,26 @@ const fixtures = {
 
 function resolveAssetUrl(url) {
   if (!url) return null
-  if (/^https?:\/\//i.test(url)) return url
   const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
-  const origin = new URL(apiUrl).origin
-  return `${origin}${url.startsWith('/') ? url : `/${url}`}`
+  const apiOrigin = new URL(apiUrl).origin
+
+  try {
+    const assetUrl = new URL(url, apiOrigin)
+    if (assetUrl.pathname.startsWith('/storage/')) {
+      return `${apiOrigin}${assetUrl.pathname}${assetUrl.search}${assetUrl.hash}`
+    }
+    return assetUrl.toString()
+  } catch {
+    return `${apiOrigin}${url.startsWith('/') ? url : `/${url}`}`
+  }
 }
 
 function roleKey(user, roles) {
-  const role = user?.peran || roles?.[0]?.name || roles?.[0]
-  if (role === 'akun_hmj_ukm') return 'hmj'
-  if (role === 'anggota' || role === 'member') return 'anggota'
+  const roleNames = roles?.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean) ?? []
+  if (roleNames.includes('akun_hmj_ukm')) return 'hmj'
+  if (roleNames.includes('akun_bem')) return 'bem'
+  if (user?.peran === 'anggota' || user?.peran === 'member' || roleNames.includes('anggota') || roleNames.includes('member')) return 'anggota'
+  if (user?.peran === 'akun_hmj_ukm') return 'hmj'
   return 'bem'
 }
 
@@ -50,6 +60,7 @@ function getInitials(name) {
     .slice(0, 2)
     .toUpperCase()
 }
+
 
 function Field({ label, value, name, onChange, readOnly = false, type = 'text', icon, placeholder }) {
   return (
@@ -143,17 +154,33 @@ function OrganizationProfilePage() {
   }
 
   const handlePhotoChange = async (event) => {
-    const file = event.target.files?.[0]
+    const input = event.target
+    const file = input.files?.[0]
     if (!file) return
+
+    const acceptedTypes = ['image/jpeg', 'image/png']
+    const maxBytes = 2 * 1024 * 1024
+    if (!acceptedTypes.includes(file.type)) {
+      await Swal.fire({ icon: 'warning', title: 'Format tidak didukung', text: 'Foto harus berformat JPG, JPEG, atau PNG.', confirmButtonColor: '#2563eb' })
+      input.value = ''
+      return
+    }
+    if (file.size > maxBytes) {
+      await Swal.fire({ icon: 'warning', title: 'Ukuran terlalu besar', text: 'Ukuran foto maksimal 2 MB.', confirmButtonColor: '#2563eb' })
+      input.value = ''
+      return
+    }
+
     setSaving(true)
     try {
-      const result = await uploadProfilePhoto(file)
-      const data = result?.data ?? result
-      setPhotoUrl(resolveAssetUrl(data?.foto_profil_url) ?? photoUrl)
-      setMessage('Foto profil berhasil diubah.')
+      await uploadProfilePhoto(file)
+      if (photoUrl?.startsWith('blob:')) URL.revokeObjectURL(photoUrl)
+      setPhotoUrl(URL.createObjectURL(file))
+      await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Foto profil berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (error) {
-      setMessage(error.response?.data?.message ?? 'Foto profil gagal diubah.')
+      await Swal.fire({ icon: 'error', title: 'Gagal mengunggah foto', text: error.response?.data?.message ?? error.response?.data?.errors?.foto?.[0] ?? 'Foto profil gagal diubah.', confirmButtonColor: '#2563eb' })
     } finally {
+      input.value = ''
       setSaving(false)
     }
   }
@@ -201,10 +228,10 @@ function OrganizationProfilePage() {
         <div className="profile-side">
           <section className="profile-card profile-summary"><div className="profile-avatar">{photoUrl ? <img src={photoUrl} alt="Foto profil" onError={() => setPhotoUrl(null)} /> : initials}</div><h2>{displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><label className="profile-button profile-button--outline"><CameraIcon /> Ubah foto profil<input className="profile-photo-input" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handlePhotoChange} disabled={saving} /></label><small>JPG/JPEG/PNG · Maks. 2 MB</small></section>
           <section className={`profile-card profile-organization${key === 'anggota' ? ' profile-organization--member' : ''}`}><header className="profile-organization__heading"><h2><OrganizationIcon /> Organisasi</h2></header>{key === 'anggota' ? (organizations.length > 0 ? <div className="profile-member-org-list">{organizations.map((item) => <div className="profile-member-org" key={item.id_organisasi ?? item.id}><MemberOrganizationIcon type={item.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{item.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{item.nama_organisasi}</strong></div></div>)}</div> : organizationDetail ? <div className="profile-member-org-list"><div className="profile-member-org"><MemberOrganizationIcon type={organizationDetail.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{organizationDetail.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{organizationDetail.nama_organisasi}</strong><small className="profile-membership-status">{registrationStatus === 'disetujui' ? 'Aktif' : registrationStatus === 'ditolak' ? 'Ditolak' : 'Menunggu verifikasi'}</small></div></div></div> : <p className="profile-empty-state">Data organisasi yang diikuti belum tersedia.</p>) : Object.entries(organization).map(([label, value]) => <div className="profile-detail" key={label}><small>{key === 'bem' ? bemOrganizationLabels[label] : key === 'hmj' ? organizationLabels[label] : label === 'parent' ? 'BEM induk' : label}</small><strong>{value}</strong></div>)}</section>
-          {key === 'anggota' && <section className="profile-card profile-other-organizations"><h2><span className="profile-other-organizations__title"><AdminIcon name="users" /> Organisasi lain yang diikuti</span></h2><button className="profile-button profile-button--outline" type="button" disabled title="Fitur ini menunggu integrasi data organisasi"><AdminIcon name="plus" /> Tambah HMJ/UKM</button></section>}
+          {key === 'anggota' && <section className="profile-card profile-other-organizations"><h2><span className="profile-other-organizations__title"><AdminIcon name="users" /> Organisasi lain yang diikuti</span></h2><button className="profile-button profile-button--outline" type="button" onClick={() => Swal.fire({ icon: 'info', title: 'Fitur belum tersedia', text: 'Penambahan organisasi lain menunggu integrasi layanan backend.', confirmButtonColor: '#2563eb' })}><AdminIcon name="plus" /> Tambah HMJ/UKM</button></section>}
         </div>
         <div className="profile-main">
-          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{fixture.personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} readOnly />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} /><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{fixture.personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} /><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
           <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordField label="Password lama" name="old" value={password.old} visible={passwordVisibility.old} placeholder="Masukkan password saat ini" onChange={(e) => setPassword({ ...password, old: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, old: !passwordVisibility.old })} /><PasswordField label="Password baru" name="next" value={password.next} visible={passwordVisibility.next} placeholder="Minimal 8 karakter" onChange={(e) => setPassword({ ...password, next: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, next: !passwordVisibility.next })} /><PasswordField label="Konfirmasi password baru" name="confirm" value={password.confirm} visible={passwordVisibility.confirm} placeholder="Ulangi password baru" onChange={(e) => setPassword({ ...password, confirm: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, confirm: !passwordVisibility.confirm })} /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
           {message && <p className="profile-message" role="status">{message}</p>}
         </div>
