@@ -13,17 +13,21 @@ import Sidebar from '../components/Sidebar.jsx'
 const navigationByRole = {
   Administrator: [
     { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
   ],
   'Akun Organisasi BEM': [
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
     { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
+    { to: '/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
     { to: '/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
 }
