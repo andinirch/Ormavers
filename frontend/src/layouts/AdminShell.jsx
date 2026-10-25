@@ -27,11 +27,13 @@ function AdminShell() {
         ...(isSuperAdmin ? [
           { to: '/superadmin', label: 'Dashboard', icon: 'grid', end: true },
           { to: '/superadmin/pengguna', label: 'Manajemen Administrator', icon: 'users' },
-          { to: '/admin-panel/activities', label: 'Log Aktivitas', icon: 'activity' },
-        ] : []),
-        ...(isAdministrator ? [
-          { to: '/admin/verifikasi-bem', label: 'Daftar Registrasi BEM', icon: 'user-check' },
-        ] : []),
+           { to: '/admin-panel/activities', label: 'Log Aktivitas', icon: 'activity' },
+           { to: isSuperAdmin ? '/superadmin/direktori' : '/admin/direktori', label: 'Direktori Organisasi', icon: 'grid' },
+         ] : []),
+         ...(isAdministrator ? [
+           { to: '/admin/verifikasi-bem', label: 'Daftar Registrasi BEM', icon: 'user-check' },
+           { to: isSuperAdmin ? '/superadmin/direktori' : '/admin/direktori', label: 'Direktori Organisasi', icon: 'grid' },
+         ] : []),
       ],
     },
     ...(canViewRoles ? [{
