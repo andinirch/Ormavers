@@ -16,6 +16,7 @@ use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
+use App\Http\Controllers\KontakController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -123,7 +124,7 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
             ->whereNumber('id');
     });
 
-// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12), Tambah Portofolio (ORMV-1-13), Ubah Portofolio (ORMV-1-14), & Hapus Portofolio (ORMV-1-15)
+// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12), Tambah Portofolio (ORMV-1-13), Ubah Portofolio (ORMV-1-14), & Hapus Portofolio (ORMV-1-15), Kelola Kontak (ORMV-1-16)
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
     ->prefix('organisasi')
     ->group(function () {
@@ -137,6 +138,13 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
         Route::match(['put', 'patch'], '/portofolio/{id}', [PortofolioController::class, 'update'])
             ->whereNumber('id');
         Route::delete('/portofolio/{id}', [PortofolioController::class, 'destroy'])
+            ->whereNumber('id');
+
+        Route::get('/kontak', [KontakController::class, 'index']);
+        Route::post('/kontak', [KontakController::class, 'store']);
+        Route::match(['put', 'patch'], '/kontak/{id}', [KontakController::class, 'update'])
+            ->whereNumber('id');
+        Route::delete('/kontak/{id}', [KontakController::class, 'destroy'])
             ->whereNumber('id');
     });
 

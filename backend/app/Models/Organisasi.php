@@ -76,4 +76,9 @@ class Organisasi extends Model
     {
         return $this->hasMany(Portofolio::class, 'id_organisasi', 'id_organisasi');
     }
+
+    public function kontak(): HasMany
+    {
+        return $this->hasMany(KontakOrganisasi::class, 'id_organisasi', 'id_organisasi');
+    }
 }
