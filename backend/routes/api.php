@@ -15,6 +15,7 @@ use App\Http\Controllers\VerifikasiBemController;
 use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
+use App\Http\Controllers\PortofolioController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -122,12 +123,15 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
             ->whereNumber('id');
     });
 
-// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12)
+// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12) & Tambah Portofolio (ORMV-1-13)
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
     ->prefix('organisasi')
     ->group(function () {
         Route::get('/deskripsi', [ProfilOrganisasiController::class, 'showDeskripsi']);
         Route::match(['put', 'patch'], '/deskripsi', [ProfilOrganisasiController::class, 'updateDeskripsi']);
+
+        Route::get('/portofolio', [PortofolioController::class, 'index']);
+        Route::post('/portofolio', [PortofolioController::class, 'store']);
     });
 
 // Admin Panel — Manajemen Role & Permission & Ringkasan
