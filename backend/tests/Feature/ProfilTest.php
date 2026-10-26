@@ -39,10 +39,22 @@ class ProfilTest extends TestCase
             $factory = $factory->{$state}();
         }
 
+        $profilAttrs = [];
+        foreach (['nomor_whatsapp', 'nim', 'foto_profil', 'foto_ktm'] as $key) {
+            if (array_key_exists($key, $attributes)) {
+                $profilAttrs[$key] = $attributes[$key];
+                unset($attributes[$key]);
+            }
+        }
+
         $user = $factory->create(array_merge([
             'status_akun' => 'aktif',
             'kata_sandi'  => 'PasswordLama1',
         ], $attributes));
+
+        \App\Models\ProfilAnggota::create(array_merge([
+            'id_pengguna' => $user->id_pengguna,
+        ], $profilAttrs));
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -124,8 +136,12 @@ class ProfilTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('pengguna', [
+            'id_pengguna' => $user->id_pengguna,
+            'nama'        => 'Nama Baru',
+        ]);
+
+        $this->assertDatabaseHas('profil_anggota', [
             'id_pengguna'    => $user->id_pengguna,
-            'nama'           => 'Nama Baru',
             'nomor_whatsapp' => '082222222222',
         ]);
     }

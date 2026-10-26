@@ -60,12 +60,17 @@ class OrgMemberRequestTest extends TestCase
         Storage::disk('local')->put($pathKtm, 'fake-ktm-binary');
 
         $user = Pengguna::factory()->menunggu()->create([
-            'peran'    => 'anggota',
-            'foto_ktm' => $pathKtm,
-            'nama'     => $attrs['nama'] ?? 'Calon Anggota',
-            'nim'      => $attrs['nim'] ?? 'NIM' . rand(1000, 9999),
+            'peran' => 'anggota',
+            'nama'  => $attrs['nama'] ?? 'Calon Anggota',
         ]);
         $user->syncRoles('anggota');
+
+        \App\Models\ProfilAnggota::create([
+            'id_pengguna'    => $user->id_pengguna,
+            'nim'            => $attrs['nim'] ?? 'NIM' . rand(1000, 9999),
+            'foto_ktm'       => $pathKtm,
+            'id_universitas' => $org->id_universitas,
+        ]);
 
         $keanggotaan = Keanggotaan::create([
             'id_pengguna'         => $user->id_pengguna,
@@ -231,9 +236,11 @@ class OrgMemberRequestTest extends TestCase
     {
         [$bemUser, $bemOrg, $bemToken] = $this->buatOrganisasi('bem', 'aktif');
         [$anggota, $keanggotaan] = $this->buatAnggota($bemOrg, ['nama' => 'Citra']);
+        $idKeanggotaan = $keanggotaan->id_keanggotaan;
+        $idPengguna = $anggota->id_pengguna;
 
         $res = $this->withHeader('Authorization', "Bearer {$bemToken}")
-            ->postJson("/api/org/member-requests/{$keanggotaan->id_keanggotaan}/reject", [
+            ->postJson("/api/org/member-requests/{$idKeanggotaan}/reject", [
                 'alasan' => 'Foto KTM buram dan tidak terbaca',
             ]);
 
@@ -241,22 +248,18 @@ class OrgMemberRequestTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Keanggotaan berhasil ditolak');
 
-        $keanggotaan->refresh();
-        $anggota->refresh();
+        // Record keanggotaan terhapus
+        $this->assertDatabaseMissing('keanggotaan', [
+            'id_keanggotaan' => $idKeanggotaan,
+        ]);
 
-        $this->assertEquals('ditolak', $keanggotaan->status_keanggotaan);
-        $this->assertEquals('Foto KTM buram dan tidak terbaca', $keanggotaan->alasan_penolakan);
-        $this->assertEquals('ditolak', $anggota->status_akun);
-
-        // Anggota cek status registrasi
-        $this->app['auth']->forgetGuards();
-        $tokenTerbatas = $anggota->createToken('auth_token', ['status-registrasi'])->plainTextToken;
-        $statusRes = $this->withHeader('Authorization', "Bearer {$tokenTerbatas}")
-            ->getJson('/api/registration/status');
-
-        $statusRes->assertStatus(200)
-            ->assertJsonPath('data.status_pendaftaran', 'ditolak')
-            ->assertJsonPath('data.alasan_penolakan', 'Foto KTM buram dan tidak terbaca');
+        // Akun pengguna & profil TETAP ADA dan AMAN
+        $this->assertDatabaseHas('pengguna', [
+            'id_pengguna' => $idPengguna,
+        ]);
+        $this->assertDatabaseHas('profil_anggota', [
+            'id_pengguna' => $idPengguna,
+        ]);
 
         // Cek log aktivitas
         $log = LogAktivitas::where('jenis_aktivitas', 'verifikasi')

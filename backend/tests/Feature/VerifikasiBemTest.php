@@ -39,6 +39,10 @@ class VerifikasiBemTest extends TestCase
         $pendaftar = Pengguna::factory()->akunOrganisasi()->menunggu()->create([
             'nama'           => $overrides['nama_penanggung_jawab'] ?? 'Budi Santoso',
             'username'       => 'bem_user_' . uniqid(),
+        ]);
+
+        \App\Models\ProfilAnggota::create([
+            'id_pengguna'    => $pendaftar->id_pengguna,
             'nim'            => $overrides['nim_penanggung_jawab'] ?? '2024001',
             'nomor_whatsapp' => $overrides['nomor_whatsapp'] ?? '081234567890',
             'foto_ktm'       => 'pendaftaran/ktm/ktm.jpg',
@@ -287,7 +291,10 @@ class VerifikasiBemTest extends TestCase
     {
         [$admin, $token] = $this->buatAdmin();
         $pendaftaran = $this->buatPendaftaranBem();
+        $idOrganisasi = $pendaftaran->id_organisasi;
         $pendaftar = $pendaftaran->organisasi->akun;
+        $idPengguna = $pendaftar->id_pengguna;
+        $namaOrg = $pendaftaran->organisasi->nama_organisasi;
 
         $response = $this->postJson("/api/admin/registrations/bem/{$pendaftaran->id_pendaftaran_organisasi}/reject", [
             'alasan' => 'Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.',
@@ -298,33 +305,31 @@ class VerifikasiBemTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Registrasi BEM berhasil ditolak',
+                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
             ]);
 
-        // 1. Pendaftaran terupdate dengan alasan, verifikator, & tanggal
-        $pendaftaranFresh = $pendaftaran->fresh();
-        $this->assertEquals('ditolak', $pendaftaranFresh->status_pendaftaran);
-        $this->assertEquals('Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.', $pendaftaranFresh->alasan_penolakan);
-        $this->assertEquals($admin->id_pengguna, $pendaftaranFresh->id_pengguna_verifikator);
-        $this->assertNotNull($pendaftaranFresh->tanggal_verifikasi);
-
-        // 2. Organisasi TETAP menunggu
-        $this->assertDatabaseHas('organisasi', [
-            'id_organisasi'     => $pendaftaran->id_organisasi,
-            'status_organisasi' => 'menunggu',
+        // 1. Data pendaftaran terhapus (hard delete)
+        $this->assertDatabaseMissing('pendaftaran_organisasi', [
+            'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
         ]);
 
-        // 3. Pengguna berstatus ditolak
-        $this->assertDatabaseHas('pengguna', [
-            'id_pengguna' => $pendaftar->id_pengguna,
-            'status_akun' => 'ditolak',
+        // 2. Data organisasi terhapus
+        $this->assertDatabaseMissing('organisasi', [
+            'id_organisasi' => $idOrganisasi,
+        ]);
+
+        // 3. Pengguna dan profil terhapus
+        $this->assertDatabaseMissing('pengguna', [
+            'id_pengguna' => $idPengguna,
+        ]);
+        $this->assertDatabaseMissing('profil_anggota', [
+            'id_pengguna' => $idPengguna,
         ]);
 
         // 4. Log verifikasi tercatat dengan pelaku verifikator
         $this->assertDatabaseHas('log_aktivitas', [
             'id_pengguna'     => $admin->id_pengguna,
             'jenis_aktivitas' => 'verifikasi',
-            'keterangan'      => "Menolak pendaftaran BEM {$pendaftaran->organisasi->nama_organisasi} dengan alasan: Dokumen SK Kepengurusan tidak sah dan sudah kedaluwarsa.",
         ]);
     }
 
@@ -340,32 +345,13 @@ class VerifikasiBemTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->assertStatus(200);
 
+        // Pengguna sudah di-hard-delete, sehingga kredensial tidak ditemukan (401)
         $loginResponse = $this->postJson('/api/auth/login', [
             'username' => $pendaftar->username,
             'password' => 'password',
         ]);
 
-        $loginResponse->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Login terbatas: hanya dapat melihat status registrasi',
-                'data'    => [
-                    'akses_terbatas' => true,
-                    'permissions'    => [],
-                ],
-            ]);
-
-        $tokenTerbatas = $loginResponse->json('data.token');
-        auth()->forgetGuards();
-
-        // Token terbatas tidak dapat mengakses rute biasa
-        $this->getJson('/api/auth/me', [
-            'Authorization' => 'Bearer ' . $tokenTerbatas,
-        ])->assertStatus(403)
-          ->assertJson([
-              'success' => false,
-              'message' => 'Silakan login ulang',
-          ]);
+        $loginResponse->assertStatus(401);
     }
 
     public function test_dokumen_dapat_diunduh_oleh_administrator(): void
@@ -565,17 +551,17 @@ class VerifikasiBemTest extends TestCase
                 'message' => 'Pendaftaran sudah diputuskan',
             ]);
 
-        // 3. Approve setelah reject → 409
+        // 3. Approve setelah reject → 404 (karena pendaftaran sudah di-hard-delete)
         $p2 = $this->buatPendaftaranBem();
         $this->postJson("/api/admin/registrations/bem/{$p2->id_pendaftaran_organisasi}/reject", [
             'alasan' => 'Ditolak',
         ], $headers)->assertStatus(200);
 
         $resApproveSetelahReject = $this->postJson("/api/admin/registrations/bem/{$p2->id_pendaftaran_organisasi}/approve", [], $headers);
-        $resApproveSetelahReject->assertStatus(409)
+        $resApproveSetelahReject->assertStatus(404)
             ->assertJson([
                 'success' => false,
-                'message' => 'Pendaftaran sudah diputuskan',
+                'message' => 'Pendaftaran BEM tidak ditemukan',
             ]);
     }
 

@@ -174,13 +174,15 @@ public function ubahStatusAdministrator(
      */
     public function formatPengguna(Pengguna $pengguna, bool $includeLogin = false): array
     {
+        $pengguna->loadMissing('profilAnggota');
+
         return [
             'id_pengguna' => $pengguna->id_pengguna,
             'nama'        => $pengguna->nama,
             'username'    => $pengguna->username,
             'peran'       => $pengguna->peran,
             'status_akun' => $pengguna->status_akun,
-            'foto_profil' => $pengguna->foto_profil,
+            'foto_profil' => $pengguna->profilAnggota?->foto_profil,
             ...($includeLogin ? ['login_terakhir' => $pengguna->login_terakhir] : []),
         ];
     }

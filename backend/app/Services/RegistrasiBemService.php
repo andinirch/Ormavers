@@ -6,6 +6,7 @@ use App\Models\Organisasi;
 use App\Models\PendaftaranOrganisasi;
 use App\Models\PendaftaranOrganisasiFile;
 use App\Models\Pengguna;
+use App\Models\ProfilAnggota;
 use App\Models\Universitas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -75,23 +76,30 @@ class RegistrasiBemService
                 $uploadedPaths[] = $files['sk_organisasi']->store('pendaftaran/sk_organisasi', 'local');
                 $uploadedPaths[] = $files['sk_kepengurusan']->store('pendaftaran/sk_kepengurusan', 'local');
 
-                // 5. Buat akun pengguna (peran & status akun ditetapkan oleh sistem)
+                // 5. Buat akun pengguna (kredensial login)
                 $pengguna = Pengguna::create([
-                    'nama'           => $data['nama'],
-                    'username'       => $data['username'],
-                    'kata_sandi'     => $data['password'],
-                    'peran'          => 'akun_organisasi',
-                    'status_akun'    => 'menunggu',
-                    'nim'            => $data['nim'],
-                    'nomor_whatsapp' => $data['nomor_whatsapp'],
-                    'foto_ktm'       => $uploadedPaths[0],
+                    'nama'        => $data['nama'],
+                    'username'    => $data['username'],
+                    'kata_sandi'  => $data['password'],
+                    'peran'       => 'akun_organisasi',
+                    'status_akun' => 'menunggu',
                 ]);
 
-                // 6. Buat organisasi (status awal menunggu)
+                // 5b. Buat profil anggota penanggung jawab
+                ProfilAnggota::create([
+                    'id_pengguna'    => $pengguna->id_pengguna,
+                    'nim'            => $data['nim'] ?? null,
+                    'nomor_whatsapp' => $data['nomor_whatsapp'] ?? null,
+                    'foto_ktm'       => $uploadedPaths[0],
+                    'id_universitas' => $universitas->id_universitas,
+                ]);
+
+                // 6. Buat organisasi (status awal menunggu, BEM -> id_organisasi_induk = null)
                 $organisasi = Organisasi::create([
                     'id_universitas'     => $universitas->id_universitas,
                     'id_organisasi_induk'=> null,
                     'id_akun_organisasi' => $pengguna->id_pengguna,
+                    'id_bidang'          => $data['id_bidang'] ?? null,
                     'nama_organisasi'    => $data['nama_organisasi'],
                     'jenis_organisasi'   => 'bem',
                     'nomor_telepon'      => $data['nomor_telepon_organisasi'],

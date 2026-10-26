@@ -6,6 +6,7 @@ use App\Models\Organisasi;
 use App\Models\PendaftaranOrganisasi;
 use App\Models\PendaftaranOrganisasiFile;
 use App\Models\Pengguna;
+use App\Models\ProfilAnggota;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -60,16 +61,22 @@ class RegistrasiHmjUkmService
                 $uploadedPaths[] = $files['sk_organisasi']->store('pendaftaran/sk_organisasi', 'local');
                 $uploadedPaths[] = $files['sk_kepengurusan']->store('pendaftaran/sk_kepengurusan', 'local');
 
-                // 4. Buat akun pengguna (peran akun_organisasi, status_akun menunggu)
+                // 4. Buat akun pengguna (kredensial login)
                 $pengguna = Pengguna::create([
-                    'nama'           => $data['nama'],
-                    'username'       => $data['username'],
-                    'kata_sandi'     => $data['password'],
-                    'peran'          => 'akun_organisasi',
-                    'status_akun'    => 'menunggu',
-                    'nim'            => $data['nim'],
-                    'nomor_whatsapp' => $data['nomor_whatsapp'],
+                    'nama'        => $data['nama'],
+                    'username'    => $data['username'],
+                    'kata_sandi'  => $data['password'],
+                    'peran'       => 'akun_organisasi',
+                    'status_akun' => 'menunggu',
+                ]);
+
+                // 4b. Buat profil anggota penanggung jawab
+                ProfilAnggota::create([
+                    'id_pengguna'    => $pengguna->id_pengguna,
+                    'nim'            => $data['nim'] ?? null,
+                    'nomor_whatsapp' => $data['nomor_whatsapp'] ?? null,
                     'foto_ktm'       => $uploadedPaths[0],
+                    'id_universitas' => $bemInduk->id_universitas,
                 ]);
 
                 // 5. Buat organisasi (jenis hmj atau ukm, id_organisasi_induk = BEM, id_universitas dari induk)
@@ -77,6 +84,7 @@ class RegistrasiHmjUkmService
                     'id_universitas'      => $bemInduk->id_universitas,
                     'id_organisasi_induk' => $bemInduk->id_organisasi,
                     'id_akun_organisasi'  => $pengguna->id_pengguna,
+                    'id_bidang'           => $data['id_bidang'] ?? null,
                     'nama_organisasi'     => $data['nama_organisasi'],
                     'jenis_organisasi'    => $data['jenis_organisasi'],
                     'nomor_telepon'       => $data['nomor_telepon_organisasi'],

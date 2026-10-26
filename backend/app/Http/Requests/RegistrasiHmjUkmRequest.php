@@ -18,6 +18,7 @@ class RegistrasiHmjUkmRequest extends FormRequest
     {
         return [
             'id_organisasi_induk'      => ['required', 'integer', 'exists:organisasi,id_organisasi'],
+            'id_bidang'                => ['nullable', 'integer', 'exists:bidang_organisasi,id_bidang'],
             'jenis_organisasi'         => ['required', 'string', 'in:hmj,ukm'],
             'nama_organisasi'          => ['required', 'string', 'max:150'],
             'nomor_telepon_organisasi' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
@@ -38,6 +39,7 @@ class RegistrasiHmjUkmRequest extends FormRequest
             'id_organisasi_induk.required'      => 'Organisasi induk BEM wajib dipilih',
             'id_organisasi_induk.integer'       => 'ID organisasi induk harus berupa angka',
             'id_organisasi_induk.exists'        => 'Organisasi induk tidak ditemukan',
+            'id_bidang.exists'                  => 'Bidang organisasi tidak ditemukan',
             'jenis_organisasi.required'         => 'Jenis organisasi wajib dipilih',
             'jenis_organisasi.in'               => 'Jenis organisasi harus hmj atau ukm',
             'nama_organisasi.required'          => 'Nama organisasi wajib diisi',

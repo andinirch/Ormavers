@@ -38,8 +38,7 @@ class Pengguna extends Authenticatable
     ];
 
     protected $fillable = [
-        'nama', 'username', 'kata_sandi', 'peran', 'status_akun', 'foto_profil',
-        'nim', 'nomor_whatsapp', 'foto_ktm',
+        'nama', 'username', 'kata_sandi', 'peran', 'status_akun',
     ];
 
     protected $hidden = ['kata_sandi'];
@@ -90,6 +89,39 @@ class Pengguna extends Authenticatable
     public function organisasi(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Organisasi::class, 'id_akun_organisasi', 'id_pengguna');
+    }
+
+    public function profilAnggota(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ProfilAnggota::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    public function getFotoProfilAttribute(): ?string
+    {
+        return $this->relationLoaded('profilAnggota')
+            ? $this->profilAnggota?->foto_profil
+            : $this->profilAnggota()->value('foto_profil');
+    }
+
+    public function getNimAttribute(): ?string
+    {
+        return $this->relationLoaded('profilAnggota')
+            ? $this->profilAnggota?->nim
+            : $this->profilAnggota()->value('nim');
+    }
+
+    public function getNomorWhatsappAttribute(): ?string
+    {
+        return $this->relationLoaded('profilAnggota')
+            ? $this->profilAnggota?->nomor_whatsapp
+            : $this->profilAnggota()->value('nomor_whatsapp');
+    }
+
+    public function getFotoKtmAttribute(): ?string
+    {
+        return $this->relationLoaded('profilAnggota')
+            ? $this->profilAnggota?->foto_ktm
+            : $this->profilAnggota()->value('foto_ktm');
     }
 
     public function keanggotaan(): HasMany

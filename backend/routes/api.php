@@ -17,9 +17,16 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
 use App\Http\Controllers\KontakController;
+use App\Http\Controllers\MasterDataController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
+Route::get('/master/universitas', [MasterDataController::class, 'universitas'])
+    ->middleware('throttle:60,1');
+
+Route::get('/master/bidang-organisasi', [MasterDataController::class, 'bidangOrganisasi'])
+    ->middleware('throttle:60,1');
+
 Route::get('/universitas', [UniversitasController::class, 'index'])
     ->middleware('throttle:60,1');
 

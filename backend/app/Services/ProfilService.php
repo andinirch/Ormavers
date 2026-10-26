@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Pengguna;
+use App\Models\ProfilAnggota;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -16,13 +17,14 @@ class ProfilService
      */
     public function getProfil(Pengguna $pengguna): array
     {
-        $pengguna->loadMissing(['roles', 'keanggotaan.organisasi']);
+        $pengguna->loadMissing(['roles', 'keanggotaan.organisasi', 'profilAnggota']);
 
         $roleName = $pengguna->roles->first()?->name ?? $pengguna->peran;
+        $profil   = $pengguna->profilAnggota;
 
         $fotoUrl = null;
-        if ($pengguna->foto_profil) {
-            $fotoUrl = Storage::disk('public')->url($pengguna->foto_profil);
+        if ($profil?->foto_profil) {
+            $fotoUrl = Storage::disk('public')->url($profil->foto_profil);
         }
 
         $organisasiDiikuti = $pengguna->keanggotaan
@@ -45,11 +47,11 @@ class ProfilService
             'id_pengguna'        => $pengguna->id_pengguna,
             'nama'               => $pengguna->nama,
             'username'           => $pengguna->username,
-            'nim'                => $pengguna->nim,
+            'nim'                => $profil?->nim,
             'role'               => $roleName,
             'peran'              => $pengguna->peran,
             'status_akun'        => $pengguna->status_akun,
-            'nomor_whatsapp'     => $pengguna->nomor_whatsapp,
+            'nomor_whatsapp'     => $profil?->nomor_whatsapp,
             'foto_profil_url'    => $fotoUrl,
             'organisasi_diikuti' => $organisasiDiikuti,
             'dibuat_pada'        => $pengguna->dibuat_pada,
@@ -62,9 +64,13 @@ class ProfilService
     public function updateProfil(Pengguna $pengguna, array $data): array
     {
         $pengguna->update([
-            'nama'           => $data['nama'],
-            'nomor_whatsapp' => $data['nomor_whatsapp'] ?? null,
+            'nama' => $data['nama'],
         ]);
+
+        ProfilAnggota::updateOrCreate(
+            ['id_pengguna' => $pengguna->id_pengguna],
+            ['nomor_whatsapp' => $data['nomor_whatsapp'] ?? null]
+        );
 
         return $this->getProfil($pengguna->fresh());
     }
@@ -98,17 +104,20 @@ class ProfilService
      */
     public function uploadFoto(Pengguna $pengguna, UploadedFile $file): array
     {
+        $profil = $pengguna->profilAnggota;
+
         // Hapus foto lama jika ada di disk public
-        if ($pengguna->foto_profil && Storage::disk('public')->exists($pengguna->foto_profil)) {
-            Storage::disk('public')->delete($pengguna->foto_profil);
+        if ($profil?->foto_profil && Storage::disk('public')->exists($profil->foto_profil)) {
+            Storage::disk('public')->delete($profil->foto_profil);
         }
 
         $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('foto-profil', $filename, 'public');
 
-        $pengguna->update([
-            'foto_profil' => $path,
-        ]);
+        ProfilAnggota::updateOrCreate(
+            ['id_pengguna' => $pengguna->id_pengguna],
+            ['foto_profil' => $path]
+        );
 
         return [
             'foto_profil_url' => Storage::disk('public')->url($path),

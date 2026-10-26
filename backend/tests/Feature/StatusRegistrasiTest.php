@@ -37,7 +37,12 @@ class StatusRegistrasiTest extends TestCase
         $pengguna = Pengguna::factory()->akunOrganisasi()->create([
             'username'    => 'bem_user_' . uniqid(),
             'status_akun' => $statusAkun,
-            'foto_ktm'    => 'pendaftaran/ktm/ktm.jpg',
+        ]);
+
+        \App\Models\ProfilAnggota::create([
+            'id_pengguna'    => $pengguna->id_pengguna,
+            'foto_ktm'       => 'pendaftaran/ktm/ktm.jpg',
+            'id_universitas' => $univ->id_universitas,
         ]);
 
         $organisasi = Organisasi::create([
