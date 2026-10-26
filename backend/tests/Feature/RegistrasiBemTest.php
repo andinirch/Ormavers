@@ -121,19 +121,27 @@ class RegistrasiBemTest extends TestCase
                 ],
             ]);
 
-        // 1. Pengguna terbentuk dengan peran, status, nim, whatsapp, dan foto_ktm
+        // 1. Pengguna terbentuk dengan peran dan status (kredensial login)
         $this->assertDatabaseHas('pengguna', [
-            'username'       => 'budi_bem',
-            'peran'          => 'akun_organisasi',
-            'status_akun'    => 'menunggu',
-            'nim'            => '2024001',
-            'nomor_whatsapp' => '081234567890',
+            'username'    => 'budi_bem',
+            'peran'       => 'akun_organisasi',
+            'status_akun' => 'menunggu',
         ]);
 
         $pengguna = Pengguna::where('username', 'budi_bem')->first();
         $this->assertNotNull($pengguna);
         $this->assertTrue(Hash::check('Password123', $pengguna->kata_sandi));
-        $this->assertNotNull($pengguna->foto_ktm);
+
+        // 1b. Profil anggota penanggung jawab terbentuk di profil_anggota
+        $this->assertDatabaseHas('profil_anggota', [
+            'id_pengguna'    => $pengguna->id_pengguna,
+            'nim'            => '2024001',
+            'nomor_whatsapp' => '081234567890',
+        ]);
+
+        $profil = \App\Models\ProfilAnggota::where('id_pengguna', $pengguna->id_pengguna)->first();
+        $this->assertNotNull($profil);
+        $this->assertNotNull($profil->foto_ktm);
 
         // 2. Organisasi terbentuk dengan status menunggu
         $this->assertDatabaseHas('organisasi', [

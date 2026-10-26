@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Organisasi;
 use App\Models\PendaftaranOrganisasi;
 use App\Models\Pengguna;
+use App\Models\ProfilAnggota;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class VerifikasiHmjUkmService
 {
@@ -80,7 +82,7 @@ class VerifikasiHmjUkmService
             ];
         }
 
-        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun', 'files'])
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun.profilAnggota', 'files'])
             ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
@@ -100,6 +102,7 @@ class VerifikasiHmjUkmService
 
         $organisasi = $pendaftaran->organisasi;
         $pendaftar  = $organisasi?->akun;
+        $profil     = $pendaftar?->profilAnggota;
 
         return [
             'pendaftaran' => [
@@ -114,8 +117,8 @@ class VerifikasiHmjUkmService
                 'alasan_penolakan'          => $pendaftaran->alasan_penolakan,
                 'penanggung_jawab'          => [
                     'nama'           => $pendaftar?->nama,
-                    'nim'            => $pendaftar?->nim,
-                    'nomor_whatsapp' => $pendaftar?->nomor_whatsapp,
+                    'nim'            => $profil?->nim,
+                    'nomor_whatsapp' => $profil?->nomor_whatsapp,
                     'username'       => $pendaftar?->username,
                     'status'         => $pendaftar?->status_akun,
                 ],
@@ -152,7 +155,7 @@ class VerifikasiHmjUkmService
             ];
         }
 
-        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun', 'files'])
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun.profilAnggota', 'files'])
             ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
@@ -172,7 +175,7 @@ class VerifikasiHmjUkmService
 
         $path = null;
         if ($jenis === 'ktm') {
-            $path = $pendaftaran->organisasi?->akun?->foto_ktm;
+            $path = $pendaftaran->organisasi?->akun?->profilAnggota?->foto_ktm;
         } elseif ($jenis === 'sk-organisasi') {
             $file = $pendaftaran->files->firstWhere('jenis_dokumen', 'sk_organisasi');
             $path = $file?->path_file;
@@ -324,7 +327,8 @@ class VerifikasiHmjUkmService
         }
 
         return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
-            $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            $pendaftaran = PendaftaranOrganisasi::with(['files', 'organisasi.akun.profilAnggota'])
+                ->where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
                 ->lockForUpdate()
                 ->first();
 
@@ -335,33 +339,61 @@ class VerifikasiHmjUkmService
                 ];
             }
 
-            $organisasi = Organisasi::where('id_organisasi', $pendaftaran->id_organisasi)->first();
+            $organisasi = $pendaftaran->organisasi;
+            $pengguna   = $organisasi?->akun;
+            $profil     = $pengguna?->profilAnggota;
+            $jenisLabel = strtoupper($organisasi?->jenis_organisasi ?? 'organisasi');
+            $namaOrg    = $organisasi?->nama_organisasi ?? '';
 
-            // 1. Update pendaftaran menjadi ditolak
-            $pendaftaran->update([
-                'status_pendaftaran'      => 'ditolak',
-                'alasan_penolakan'        => $alasan,
-                'id_pengguna_verifikator' => $idPelaku,
-                'tanggal_verifikasi'      => now(),
-            ]);
-
-            // 2. Akun pendaftar ditolak, organisasi tetap berstatus 'menunggu'
-            if ($organisasi && $organisasi->id_akun_organisasi) {
-                Pengguna::where('id_pengguna', $organisasi->id_akun_organisasi)
-                    ->update(['status_akun' => 'ditolak']);
+            // Kumpulkan semua path file yang harus dihapus dari storage
+            $filesToDelete = [];
+            foreach ($pendaftaran->files as $file) {
+                if ($file->path_file) {
+                    $filesToDelete[] = $file->path_file;
+                }
+            }
+            if ($profil?->foto_ktm) {
+                $filesToDelete[] = $profil->foto_ktm;
+            }
+            if ($profil?->foto_profil) {
+                $filesToDelete[] = $profil->foto_profil;
             }
 
-            // 3. Catat log aktivitas (pelaku log = id verifikator)
-            $jenisLabel = strtoupper($organisasi?->jenis_organisasi ?? 'organisasi');
-            $namaOrg = $organisasi?->nama_organisasi ?? '';
+            // 1. Catat log aktivitas SEBELUM hapus data
             $this->logAktivitasService->catat(
                 $idPelaku,
                 'verifikasi',
                 "Menolak pendaftaran {$jenisLabel} {$namaOrg} dengan alasan: {$alasan}"
             );
 
+            // 2. Hapus file-file pendaftaran
+            $pendaftaran->files()->delete();
+
+            // 3. Hapus pendaftaran organisasi
+            $pendaftaran->delete();
+
+            // 4. Hapus organisasi
+            if ($organisasi) {
+                $organisasi->delete();
+            }
+
+            // 5. Hapus profil anggota, log aktivitas pendaftar, & pengguna
+            if ($profil) {
+                $profil->delete();
+            }
+            if ($pengguna) {
+                \App\Models\LogAktivitas::where('id_pengguna', $pengguna->id_pengguna)->delete();
+                $pengguna->tokens()->delete();
+                $pengguna->delete();
+            }
+
+            // 6. Hapus berkas fisik dari storage
+            foreach ($filesToDelete as $filePath) {
+                Storage::disk('local')->delete($filePath);
+            }
+
             return [
-                'message' => 'Registrasi HMJ/UKM berhasil ditolak',
+                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
             ];
         });
     }

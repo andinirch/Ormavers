@@ -108,7 +108,7 @@ class UserAdminService
             return $pengguna;
         });
 
-        $pengguna->load(['roles', 'organisasi']);
+        $pengguna->load(['roles', 'organisasi', 'profilAnggota']);
 
         return [
             'id_pengguna' => $pengguna->id_pengguna,
@@ -117,7 +117,7 @@ class UserAdminService
             'role'        => $pengguna->roles->first()?->name ?? 'administrator',
             'peran'       => $pengguna->peran,
             'status_akun' => $pengguna->status_akun,
-            'foto_profil' => $pengguna->foto_profil,
+            'foto_profil' => $pengguna->profilAnggota?->foto_profil,
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Keanggotaan;
 use App\Models\Organisasi;
 use App\Models\Pengguna;
+use App\Models\ProfilAnggota;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -46,16 +47,22 @@ class RegistrasiAnggotaService
                 // 2. Simpan foto KTM di disk privat
                 $uploadedPath = $fotoKtm->store('pendaftaran/ktm', 'local');
 
-                // 3. Buat akun pengguna (peran = anggota, status_akun = menunggu, nomor_whatsapp = null)
+                // 3. Buat akun pengguna (kredensial login)
                 $pengguna = Pengguna::create([
-                    'nama'           => $data['nama'],
-                    'username'       => $data['username'],
-                    'kata_sandi'     => $data['password'],
-                    'peran'          => 'anggota',
-                    'status_akun'    => 'menunggu',
-                    'nim'            => $data['nim'],
+                    'nama'        => $data['nama'],
+                    'username'    => $data['username'],
+                    'kata_sandi'  => $data['password'],
+                    'peran'       => 'anggota',
+                    'status_akun' => 'menunggu',
+                ]);
+
+                // 3b. Buat profil anggota
+                ProfilAnggota::create([
+                    'id_pengguna'    => $pengguna->id_pengguna,
+                    'nim'            => $data['nim'] ?? null,
                     'nomor_whatsapp' => null,
                     'foto_ktm'       => $uploadedPath,
+                    'id_universitas' => $organisasi->id_universitas,
                 ]);
 
                 // 4. Buat record keanggotaan

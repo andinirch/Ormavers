@@ -45,7 +45,7 @@ class OrgMemberRequestService
 
         $paginated = Keanggotaan::where('id_organisasi', $organisasi->id_organisasi)
             ->where('status_keanggotaan', 'menunggu')
-            ->with('pengguna')
+            ->with('pengguna.profilAnggota')
             ->orderBy('tanggal_pendaftaran', 'asc')
             ->orderBy('id_keanggotaan', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -54,7 +54,7 @@ class OrgMemberRequestService
             return [
                 'id_keanggotaan'      => $k->id_keanggotaan,
                 'nama'                => $k->pengguna?->nama,
-                'nim'                 => $k->pengguna?->nim,
+                'nim'                 => $k->pengguna?->profilAnggota?->nim,
                 'tanggal_pendaftaran' => $k->tanggal_pendaftaran?->toISOString(),
             ];
         })->values()->all();
@@ -83,7 +83,7 @@ class OrgMemberRequestService
             ];
         }
 
-        $keanggotaan = Keanggotaan::with('pengguna')
+        $keanggotaan = Keanggotaan::with('pengguna.profilAnggota')
             ->where('id_keanggotaan', $id)
             ->first();
 
@@ -102,11 +102,12 @@ class OrgMemberRequestService
         }
 
         $pengguna = $keanggotaan->pengguna;
+        $profil   = $pengguna?->profilAnggota;
 
         return [
             'id_keanggotaan'      => $keanggotaan->id_keanggotaan,
             'nama'                => $pengguna?->nama,
-            'nim'                 => $pengguna?->nim,
+            'nim'                 => $profil?->nim,
             'username'            => $pengguna?->username,
             'status_keanggotaan'  => $keanggotaan->status_keanggotaan,
             'alasan_penolakan'    => $keanggotaan->alasan_penolakan,
@@ -131,7 +132,7 @@ class OrgMemberRequestService
             ];
         }
 
-        $keanggotaan = Keanggotaan::with('pengguna')
+        $keanggotaan = Keanggotaan::with('pengguna.profilAnggota')
             ->where('id_keanggotaan', $id)
             ->first();
 
@@ -149,7 +150,7 @@ class OrgMemberRequestService
             ];
         }
 
-        $path = $keanggotaan->pengguna?->foto_ktm;
+        $path = $keanggotaan->pengguna?->profilAnggota?->foto_ktm;
 
         if (! $path) {
             return [
@@ -292,44 +293,19 @@ class OrgMemberRequestService
                 ];
             }
 
-            // 1. Update keanggotaan
-            $locked->update([
-                'status_keanggotaan'      => 'ditolak',
-                'alasan_penolakan'        => $alasan,
-                'id_pengguna_verifikator' => $idPelaku,
-                'tanggal_verifikasi'      => now(),
-            ]);
-
-            // 2. Update pengguna status_akun dengan mempertimbangkan multi-keanggotaan
             $anggota = Pengguna::find($locked->id_pengguna);
-            if ($anggota) {
-                $punyaAktifLain = Keanggotaan::where('id_pengguna', $locked->id_pengguna)
-                    ->where('id_keanggotaan', '!=', $locked->id_keanggotaan)
-                    ->where('status_keanggotaan', 'disetujui')
-                    ->exists();
-
-                $punyaMenungguLain = Keanggotaan::where('id_pengguna', $locked->id_pengguna)
-                    ->where('id_keanggotaan', '!=', $locked->id_keanggotaan)
-                    ->where('status_keanggotaan', 'menunggu')
-                    ->exists();
-
-                if ($punyaAktifLain) {
-                    $anggota->update(['status_akun' => 'aktif']);
-                } elseif ($punyaMenungguLain) {
-                    $anggota->update(['status_akun' => 'menunggu']);
-                } else {
-                    $anggota->update(['status_akun' => 'ditolak']);
-                }
-            }
-
-            // 3. Catat log aktivitas jenis 'verifikasi' memuat alasan
             $namaAnggota = $anggota?->nama ?? '';
             $namaOrg = $organisasi->nama_organisasi;
+
+            // 1. Catat log aktivitas verifikasi sebelum penghapusan data
             $this->logAktivitasService->catat(
                 $idPelaku,
                 'verifikasi',
                 "Menolak keanggotaan {$namaAnggota} di {$namaOrg} dengan alasan: {$alasan}"
             );
+
+            // 2. HANYA hapus record di tabel keanggotaan (akun dan profil tetap aman)
+            $locked->delete();
 
             return [
                 'message' => 'Keanggotaan berhasil ditolak',

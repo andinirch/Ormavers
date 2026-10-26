@@ -47,6 +47,11 @@ class Organisasi extends Model
         return $this->belongsTo(Universitas::class, 'id_universitas', 'id_universitas');
     }
 
+    public function bidang(): BelongsTo
+    {
+        return $this->belongsTo(BidangOrganisasi::class, 'id_bidang', 'id_bidang');
+    }
+
     public function akun(): BelongsTo
     {
         return $this->belongsTo(Pengguna::class, 'id_akun_organisasi', 'id_pengguna');

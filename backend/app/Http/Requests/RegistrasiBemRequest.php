@@ -19,6 +19,7 @@ class RegistrasiBemRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
+            'id_bidang'                => ['nullable', 'integer', 'exists:bidang_organisasi,id_bidang'],
             'nama_organisasi'          => ['required', 'string', 'max:150'],
             'nomor_telepon_organisasi' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
             'nama'                     => ['required', 'string', 'max:150'],
@@ -44,6 +45,7 @@ class RegistrasiBemRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'id_bidang.exists'                  => 'Bidang organisasi tidak ditemukan',
             'id_universitas.required'           => 'Universitas wajib dipilih',
             'id_universitas.integer'            => 'ID universitas harus berupa angka',
             'id_universitas.exists'             => 'Universitas tidak ditemukan',

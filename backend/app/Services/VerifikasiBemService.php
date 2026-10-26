@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Organisasi;
 use App\Models\Pengguna;
 use App\Models\PendaftaranOrganisasi;
+use App\Models\ProfilAnggota;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class VerifikasiBemService
 {
@@ -47,7 +49,7 @@ class VerifikasiBemService
      */
     public function detailPendaftaran(int $id): array
     {
-        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.universitas', 'organisasi.akun', 'files'])
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.universitas', 'organisasi.akun.profilAnggota', 'files'])
             ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
@@ -60,6 +62,7 @@ class VerifikasiBemService
 
         $organisasi = $pendaftaran->organisasi;
         $pendaftar  = $organisasi?->akun;
+        $profil     = $pendaftar?->profilAnggota;
 
         return [
             'pendaftaran' => [
@@ -76,8 +79,8 @@ class VerifikasiBemService
                 'alasan_penolakan'          => $pendaftaran->alasan_penolakan,
                 'penanggung_jawab'          => [
                     'nama'           => $pendaftar?->nama,
-                    'nim'            => $pendaftar?->nim,
-                    'nomor_whatsapp' => $pendaftar?->nomor_whatsapp,
+                    'nim'            => $profil?->nim,
+                    'nomor_whatsapp' => $profil?->nomor_whatsapp,
                     'username'       => $pendaftar?->username,
                 ],
                 'dokumen' => [
@@ -105,7 +108,7 @@ class VerifikasiBemService
             ];
         }
 
-        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun', 'files'])
+        $pendaftaran = PendaftaranOrganisasi::with(['organisasi.akun.profilAnggota', 'files'])
             ->where('id_pendaftaran_organisasi', $id)
             ->first();
 
@@ -118,7 +121,7 @@ class VerifikasiBemService
 
         $path = null;
         if ($jenis === 'ktm') {
-            $path = $pendaftaran->organisasi?->akun?->foto_ktm;
+            $path = $pendaftaran->organisasi?->akun?->profilAnggota?->foto_ktm;
         } elseif ($jenis === 'sk-organisasi') {
             $file = $pendaftaran->files->firstWhere('jenis_dokumen', 'sk_organisasi');
             $path = $file?->path_file;
@@ -239,7 +242,8 @@ class VerifikasiBemService
         }
 
         return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
-            $pendaftaran = PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            $pendaftaran = PendaftaranOrganisasi::with(['files', 'organisasi.akun.profilAnggota'])
+                ->where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
                 ->lockForUpdate()
                 ->first();
 
@@ -250,32 +254,60 @@ class VerifikasiBemService
                 ];
             }
 
-            $organisasi = Organisasi::where('id_organisasi', $pendaftaran->id_organisasi)->first();
+            $organisasi = $pendaftaran->organisasi;
+            $pengguna   = $organisasi?->akun;
+            $profil     = $pengguna?->profilAnggota;
+            $namaOrg    = $organisasi?->nama_organisasi ?? 'BEM';
 
-            // 1. Update pendaftaran
-            $pendaftaran->update([
-                'status_pendaftaran'      => 'ditolak',
-                'alasan_penolakan'        => $alasan,
-                'id_pengguna_verifikator' => $idPelaku,
-                'tanggal_verifikasi'      => now(),
-            ]);
-
-            // 2. Update status akun pendaftar menjadi ditolak; organisasi tetap status 'menunggu'
-            if ($organisasi && $organisasi->id_akun_organisasi) {
-                Pengguna::where('id_pengguna', $organisasi->id_akun_organisasi)
-                    ->update(['status_akun' => 'ditolak']);
+            // Kumpulkan semua path file yang harus dihapus dari storage
+            $filesToDelete = [];
+            foreach ($pendaftaran->files as $file) {
+                if ($file->path_file) {
+                    $filesToDelete[] = $file->path_file;
+                }
+            }
+            if ($profil?->foto_ktm) {
+                $filesToDelete[] = $profil->foto_ktm;
+            }
+            if ($profil?->foto_profil) {
+                $filesToDelete[] = $profil->foto_profil;
             }
 
-            // 3. Catat log aktivitas (pelaku log = id verifikator)
-            $namaOrg = $organisasi?->nama_organisasi ?? 'BEM';
+            // 1. Catat log aktivitas SEBELUM hapus data agar konteks tercatat
             $this->logAktivitasService->catat(
                 $idPelaku,
                 'verifikasi',
                 "Menolak pendaftaran BEM {$namaOrg} dengan alasan: {$alasan}"
             );
 
+            // 2. Hapus relasi files
+            $pendaftaran->files()->delete();
+
+            // 3. Hapus pendaftaran organisasi
+            $pendaftaran->delete();
+
+            // 4. Hapus organisasi (kontak dan portofolio cascade jika ada)
+            if ($organisasi) {
+                $organisasi->delete();
+            }
+
+            // 5. Hapus profil anggota, log aktivitas pendaftar, & akun pengguna
+            if ($profil) {
+                $profil->delete();
+            }
+            if ($pengguna) {
+                \App\Models\LogAktivitas::where('id_pengguna', $pengguna->id_pengguna)->delete();
+                $pengguna->tokens()->delete();
+                $pengguna->delete();
+            }
+
+            // 6. Hapus file fisik dari disk storage
+            foreach ($filesToDelete as $filePath) {
+                Storage::disk('local')->delete($filePath);
+            }
+
             return [
-                'message' => 'Registrasi BEM berhasil ditolak',
+                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
             ];
         });
     }

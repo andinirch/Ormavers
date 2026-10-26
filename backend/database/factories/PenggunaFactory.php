@@ -20,7 +20,6 @@ class PenggunaFactory extends Factory
             'kata_sandi'  => 'password',
             'peran'       => 'anggota',
             'status_akun' => 'aktif',
-            'foto_profil' => null,
         ];
     }
 
