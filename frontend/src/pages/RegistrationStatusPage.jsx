@@ -1,27 +1,17 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import StatusCard from '../components/status/StatusCard.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import PreviewBanner from '../components/status/PreviewBanner.jsx'
 import { getMyRegistrationStatus, resubmitSk } from '../services/registrationStatusApi.js'
-import { getPreviewKey, getFixture, simulateResubmit } from '../services/registrationStatusFixture.js'
 
 function RegistrationStatusPage() {
   const { user } = useAuth()
-  const previewKey = getPreviewKey()
-  const isPreview = Boolean(previewKey)
-
-  const previewData = useMemo(
-    () => (isPreview ? getFixture(previewKey) : null),
-    [isPreview, previewKey],
-  )
-
-  const [data, setData] = useState(() => previewData)
-  const [loading, setLoading] = useState(() => !isPreview)
-  const [unavailable, setUnavailable] = useState(() => (isPreview ? !previewData : false))
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [unavailable, setUnavailable] = useState(false)
   const [loadError, setLoadError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState(null)
-  const displayedData = isPreview ? (data ?? previewData) : data
+  const displayedData = data
 
   const loadStatus = useCallback(async () => {
     setLoading(true)
@@ -41,24 +31,20 @@ function RegistrationStatusPage() {
   }, [])
 
   useEffect(() => {
-    if (isPreview) return undefined
     Promise.resolve().then(() => loadStatus()).catch(() => {})
-    return undefined
-  }, [isPreview, loadStatus])
+  }, [loadStatus])
 
   const handleApprovedLogin = useCallback(() => {
-    if (!isPreview && user?.username) {
+    if (user?.username) {
       localStorage.setItem(`ormavers:status-seen:${user.username}`, 'true')
     }
-  }, [isPreview, user])
+  }, [user])
 
   const handleResubmit = useCallback(async (file, documentType) => {
     setSubmitting(true)
     setSubmitResult(null)
     try {
-      const result = isPreview
-        ? await simulateResubmit(previewKey === 'ditolak-gagal')
-        : await resubmitSk(file, documentType)
+      const result = await resubmitSk(file, documentType)
 
       setSubmitResult(result)
 
@@ -72,11 +58,10 @@ function RegistrationStatusPage() {
     } finally {
       setSubmitting(false)
     }
-  }, [isPreview, previewKey, displayedData])
+  }, [displayedData])
 
   return (
     <>
-      {isPreview && <PreviewBanner />}
       <div className="status-page">
         <span className="status-page__pill">
           <span className="status-page__pill-dot" />

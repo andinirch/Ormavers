@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
@@ -9,25 +9,32 @@ import '../styles/profile.css'
 import Footer from '../components/Footer.jsx'
 import OrmaLogo from '../components/OrmaLogo.jsx'
 import Sidebar from '../components/Sidebar.jsx'
+import AdminIcon from '../components/admin/AdminIcon.jsx'
+import NotificationPanel from '../components/notifications/NotificationPanel.jsx'
+import useNotifications from '../components/notifications/useNotifications.js'
 
 const navigationByRole = {
   Administrator: [
     { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
   ],
   'Akun Organisasi BEM': [
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
+    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
+    { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
+    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
+    { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
-    { to: '/direktori', label: 'Direktori Organisasi', icon: 'grid', permission: 'view profile' },
+    { to: '/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
     { to: '/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
 }
@@ -64,6 +71,9 @@ function VerificationShell() {
   const isSuperAdmin = roleNames.includes('super_admin') || user?.peran === 'super_admin'
   const canUsePermission = (permission) => isSuperAdmin || !permission || permissions.includes(permission)
   const [organizationName, setOrganizationName] = useState(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const bellRef = useRef(null)
+  const notifications = useNotifications()
 
   useEffect(() => {
     if (contextKey !== 'bem' && contextKey !== 'hmj') return undefined
@@ -109,6 +119,7 @@ function VerificationShell() {
     <header className="verification-header">
        <OrmaLogo to={defaultLink} variant="verification" className="verification-brand" />
       <div className="verification-account">
+        <button ref={bellRef} type="button" className="verification-bell notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" size={20} />{notifications.unread > 0 && <i />}</button>
         <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
         <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
       </div>
@@ -120,6 +131,7 @@ function VerificationShell() {
       </div>
       <Footer variant="content" />
     </main>
+    <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} onReadAll={notifications.markAllRead} returnFocusRef={bellRef} />
   </div>
 }
 
