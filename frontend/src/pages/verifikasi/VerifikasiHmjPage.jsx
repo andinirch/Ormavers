@@ -155,10 +155,10 @@ export default function VerifikasiHmjPage() {
     try {
       if (confirmDialog.type === 'approve') {
         await approveMemberRequest(selectedId)
-        setToastMessage('Permintaan keanggotaan berhasil disetujui (mock).')
+        setToastMessage('Permintaan keanggotaan berhasil disetujui.')
       } else {
         await rejectMemberRequest(selectedId, rejectionReason.trim())
-        setToastMessage('Permintaan keanggotaan telah ditolak (mock).')
+        setToastMessage('Permintaan keanggotaan telah ditolak.')
       }
       setConfirmDialog(null)
       setRejectionReason('')

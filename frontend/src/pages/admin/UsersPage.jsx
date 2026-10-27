@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PageIntro } from './DashboardPage.jsx'
 import { useAdminData } from '../../services/useAdminData.jsx'
-import { ADMIN_USE_MOCKS, mockUsers } from '../../mocks/adminMockData.js'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
 import { UserForm } from '../../components/adminForms.jsx'
 import '../../styles/users-page.css'
@@ -40,7 +39,7 @@ function formatLogin(value) {
 
 function UsersPage() {
   const { users, roles, organizations, updateUser } = useAdminData()
-  const source = ADMIN_USE_MOCKS ? mockUsers : users
+  const source = users
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('')
   const [status, setStatus] = useState('')

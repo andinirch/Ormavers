@@ -1,29 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import '../styles/profile.css'
-
-const fixtures = {
-  bem: {
-    roleLabel: 'Akun Organisasi BEM', displayName: 'Akun BEM UMSURA', initials: 'BF', personalTitle: 'Data penanggung jawab organisasi',
-    personal: { name: 'Ahmad Fauzi Pratama', nim: '2022410012', whatsapp: '081298765432', username: 'bem_umsurabaya' },
-    organization: { name: 'BEM UMSURA', campus: 'Universitas Muhammadiyah Surabaya', phone: '081234567890' },
-  },
-  hmj: {
-    roleLabel: 'Akun Organisasi HMJ/UKM', displayName: 'Akun HMJ SI', initials: 'SI', personalTitle: 'Data penanggung jawab organisasi',
-    personal: { name: 'Dimas Bayu Anggoro', nim: '2022510045', whatsapp: '081298765432', username: 'hmj_si_umsurabaya' },
-    organization: { name: 'HMJ Sistem Informasi', campus: 'Universitas Muhammadiyah Surabaya', parent: 'BEM UMSURA', type: 'HMJ', phone: '081245678910' },
-  },
-  anggota: {
-    roleLabel: 'Anggota', displayName: 'Anindya Putri Kirana', initials: 'AP', personalTitle: 'Data diri anggota',
-    personal: { name: 'Anindya Putri Kirana', nim: '2023510088', username: 'anindya.kirana' },
-    affiliations: ['BEM UMG', 'Himpunan Mahasiswa Informatika (HMIF)'],
-    otherOrganizations: ['UKM Robotika Teknik', 'UKM Tapak Suci'],
-  },
-}
 
 function resolveAssetUrl(url) {
   if (!url) return null
@@ -103,8 +84,9 @@ function MemberOrganizationIcon({ type }) {
 function OrganizationProfilePage() {
   const { user, roles } = useAuth()
   const key = roleKey(user, roles)
-  const fixture = fixtures[key]
-  const [personal, setPersonal] = useState(fixture.personal)
+  const roleName = key === 'anggota' ? 'Anggota' : key === 'hmj' ? 'Akun Organisasi HMJ/UKM' : 'Akun Organisasi BEM'
+  const personalTitle = key === 'anggota' ? 'Data diri anggota' : 'Data penanggung jawab organisasi'
+  const [personal, setPersonal] = useState({ name: '', nim: '', whatsapp: '', username: '' })
   const [photoUrl, setPhotoUrl] = useState(null)
   const [organizationDetail, setOrganizationDetail] = useState(null)
   const [registrationStatus, setRegistrationStatus] = useState(null)
@@ -202,20 +184,18 @@ function OrganizationProfilePage() {
     return () => { active = false }
   }, [])
 
-  const roleName = useMemo(() => fixture.roleLabel, [fixture.roleLabel])
-  const displayName = key === 'anggota'
-    ? personal.name || 'Profil Anggota'
-    : organizationDetail?.nama_organisasi ? `Akun ${organizationDetail.nama_organisasi}` : fixture.displayName
-  const initials = getInitials(displayName) || fixture.initials
+  const displayName = personal.name || organizationDetail?.nama_organisasi || 'Profil Saya'
+  const initials = getInitials(displayName) || 'P'
   const organization = key === 'anggota' ? {
     name: organizationDetail?.nama_organisasi ?? null,
     campus: null,
     type: organizationDetail?.jenis_organisasi?.toUpperCase() ?? null,
   } : {
-    ...fixture.organization,
-    name: organizationDetail?.nama_organisasi ?? fixture.organization.name,
-    campus: organizationDetail?.nama_universitas ?? fixture.organization.campus,
-    type: organizationDetail?.jenis_organisasi?.toUpperCase() ?? fixture.organization.type,
+    name: organizationDetail?.nama_organisasi ?? null,
+    campus: organizationDetail?.nama_universitas ?? null,
+    parent: organizationDetail?.induk?.nama_organisasi ?? null,
+    type: organizationDetail?.jenis_organisasi?.toUpperCase() ?? null,
+    phone: organizationDetail?.nomor_telepon ?? null,
   }
   const organizationLabels = { name: 'Nama organisasi', campus: 'Kampus', parent: 'BEM induk', type: 'Jenis', phone: 'No. telepon' }
   const bemOrganizationLabels = { name: 'Nama organisasi', campus: 'Kampus', phone: 'No. telepon' }
@@ -228,10 +208,10 @@ function OrganizationProfilePage() {
         <div className="profile-side">
           <section className="profile-card profile-summary"><div className="profile-avatar">{photoUrl ? <img src={photoUrl} alt="Foto profil" onError={() => setPhotoUrl(null)} /> : initials}</div><h2>{displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><label className="profile-button profile-button--outline"><CameraIcon /> Ubah foto profil<input className="profile-photo-input" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handlePhotoChange} disabled={saving} /></label><small>JPG/JPEG/PNG · Maks. 2 MB</small></section>
           <section className={`profile-card profile-organization${key === 'anggota' ? ' profile-organization--member' : ''}`}><header className="profile-organization__heading"><h2><OrganizationIcon /> Organisasi</h2></header>{key === 'anggota' ? (organizations.length > 0 ? <div className="profile-member-org-list">{organizations.map((item) => <div className="profile-member-org" key={item.id_organisasi ?? item.id}><MemberOrganizationIcon type={item.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{item.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{item.nama_organisasi}</strong></div></div>)}</div> : organizationDetail ? <div className="profile-member-org-list"><div className="profile-member-org"><MemberOrganizationIcon type={organizationDetail.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{organizationDetail.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{organizationDetail.nama_organisasi}</strong><small className="profile-membership-status">{registrationStatus === 'disetujui' ? 'Aktif' : registrationStatus === 'ditolak' ? 'Ditolak' : 'Menunggu verifikasi'}</small></div></div></div> : <p className="profile-empty-state">Data organisasi yang diikuti belum tersedia.</p>) : Object.entries(organization).map(([label, value]) => <div className="profile-detail" key={label}><small>{key === 'bem' ? bemOrganizationLabels[label] : key === 'hmj' ? organizationLabels[label] : label === 'parent' ? 'BEM induk' : label}</small><strong>{value}</strong></div>)}</section>
-          {key === 'anggota' && <section className="profile-card profile-other-organizations"><h2><span className="profile-other-organizations__title"><AdminIcon name="users" /> Organisasi lain yang diikuti</span></h2><button className="profile-button profile-button--outline" type="button" onClick={() => Swal.fire({ icon: 'info', title: 'Fitur belum tersedia', text: 'Penambahan organisasi lain menunggu integrasi layanan backend.', confirmButtonColor: '#2563eb' })}><AdminIcon name="plus" /> Tambah HMJ/UKM</button></section>}
+
         </div>
         <div className="profile-main">
-          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{fixture.personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} /><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} /><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
           <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordField label="Password lama" name="old" value={password.old} visible={passwordVisibility.old} placeholder="Masukkan password saat ini" onChange={(e) => setPassword({ ...password, old: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, old: !passwordVisibility.old })} /><PasswordField label="Password baru" name="next" value={password.next} visible={passwordVisibility.next} placeholder="Minimal 8 karakter" onChange={(e) => setPassword({ ...password, next: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, next: !passwordVisibility.next })} /><PasswordField label="Konfirmasi password baru" name="confirm" value={password.confirm} visible={passwordVisibility.confirm} placeholder="Ulangi password baru" onChange={(e) => setPassword({ ...password, confirm: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, confirm: !passwordVisibility.confirm })} /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
           {message && <p className="profile-message" role="status">{message}</p>}
         </div>

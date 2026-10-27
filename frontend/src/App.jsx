@@ -15,6 +15,10 @@ import PermissionsPage from './pages/admin/PermissionsPage.jsx'
 import ProfilePage from './pages/admin/ProfilePage.jsx'
 import OrganizationProfilePage from './pages/OrganizationProfilePage.jsx'
 import DirectoryPage from './pages/DirectoryPage.jsx'
+import OrganizationListPage from './pages/OrganizationListPage.jsx'
+import OrganizationDetailPage from './pages/OrganizationDetailPage.jsx'
+import OrganizationManagementPage from './pages/OrganizationManagementPage.jsx'
+import OrganizationPortfolioPage from './pages/OrganizationPortfolioPage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
 import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
 import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
@@ -42,11 +46,12 @@ function App() {
             <Route path="/admin" element={<Navigate to="/admin/verifikasi-bem" replace />} />
             <Route path="/admin/verifikasi-bem" element={<VerifikasiAdministratorPage />} />
             <Route path="/admin/direktori" element={<DirectoryPage />} />
+            <Route path="/admin/direktori/universitas/:universityId" element={<OrganizationListPage />} />
+            <Route path="/admin/direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="/admin/profil" element={<ProfilePage />} />
           </Route>
           <Route element={<AccessGuard roles={['super_admin']} />}>
             <Route path="/superadmin" element={<DashboardPage />} />
-            <Route path="/superadmin/direktori" element={<DirectoryPage />} />
             <Route path="/superadmin/pengguna" element={<UsersPage />} />
             <Route path="/admin-panel/activities" element={<ActivityLogPage />} />
           </Route>
@@ -66,6 +71,8 @@ function App() {
         <Route element={<VerificationShell />}>
           <Route element={<AccessGuard roles={['anggota', 'member']} permission="view profile" />}>
             <Route path="direktori" element={<DirectoryPage />} />
+            <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
+            <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="/profil" element={<OrganizationProfilePage />} />
           </Route>
         </Route>
@@ -75,14 +82,22 @@ function App() {
             <Route path="administrator" element={<Navigate to="/admin/verifikasi-bem" replace />} />
           </Route>
           <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
+            <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
+            <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
             <Route path="direktori" element={<DirectoryPage />} />
+            <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
+            <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="bem" element={<VerifikasiBemPageNew />} />
             <Route element={<AccessGuard permission="view profile" />}>
               <Route path="profil" element={<OrganizationProfilePage />} />
             </Route>
           </Route>
           <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
+            <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
+            <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
             <Route path="direktori" element={<DirectoryPage />} />
+            <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
+            <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
             <Route path="hmj" element={<VerifikasiHmjPage />} />
             <Route element={<AccessGuard permission="view profile" />}>
               <Route path="profil-hmj" element={<OrganizationProfilePage />} />

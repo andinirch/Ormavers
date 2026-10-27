@@ -126,3 +126,4 @@
 @media(min-width:701px) and (max-width:1100px){.verification-bem-page .verification-layout{grid-template-columns:1fr;gap:20px}}
 @media(max-width:1100px){.verification-bem-page{margin-inline:8px}}
 @media(max-width:700px){.verification-bem-page{margin-inline:0}}
+.verification-content .verification-hmj-page{padding-inline:0}.verification-content .verification-bem-page{margin-inline:auto}
