@@ -50,9 +50,14 @@ class VerifikasiHmjUkmTest extends TestCase
         $pendaftar = Pengguna::factory()->akunOrganisasi()->menunggu()->create([
             'nama'           => $overrides['nama_penanggung_jawab'] ?? 'Ketua HMJ',
             'username'       => 'ketua_hmj_' . uniqid(),
+        ]);
+
+        \App\Models\ProfilAnggota::create([
+            'id_pengguna'    => $pendaftar->id_pengguna,
             'nim'            => '123456',
             'nomor_whatsapp' => '081234567890',
             'foto_ktm'       => 'pendaftaran/ktm/ktm.jpg',
+            'id_universitas' => $bemInduk->id_universitas,
         ]);
         $roleHmj = \Spatie\Permission\Models\Role::findOrCreate('akun_hmj_ukm', 'web');
         $pendaftar->syncRoles($roleHmj);
@@ -215,63 +220,44 @@ class VerifikasiHmjUkmTest extends TestCase
     {
         [$userBem, $bem, $tokenBem] = $this->buatBem();
         [$pendaftar, $org, $pend] = $this->buatPendaftaranHmj($bem);
+        $idPend = $pend->id_pendaftaran_organisasi;
+        $idOrg = $org->id_organisasi;
+        $idPengguna = $pendaftar->id_pengguna;
 
         $response = $this->withHeader('Authorization', "Bearer {$tokenBem}")
-            ->postJson("/api/org/registrations/hmj-ukm/{$pend->id_pendaftaran_organisasi}/reject", [
+            ->postJson("/api/org/registrations/hmj-ukm/{$idPend}/reject", [
                 'alasan' => 'Berkas SK kepengurusan tidak ada cap stempel resmi.',
             ]);
 
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Registrasi HMJ/UKM berhasil ditolak',
+                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
             ]);
 
-        $pend->refresh();
-        $this->assertEquals('ditolak', $pend->status_pendaftaran);
-        $this->assertEquals('Berkas SK kepengurusan tidak ada cap stempel resmi.', $pend->alasan_penolakan);
-        $this->assertEquals($userBem->id_pengguna, $pend->id_pengguna_verifikator);
+        // 1. Data pendaftaran terhapus secara permanen (hard delete)
+        $this->assertDatabaseMissing('pendaftaran_organisasi', [
+            'id_pendaftaran_organisasi' => $idPend,
+        ]);
 
-        // Akun pendaftar ditolak
-        $pendaftar->refresh();
-        $this->assertEquals('ditolak', $pendaftar->status_akun);
+        // 2. Data organisasi terhapus
+        $this->assertDatabaseMissing('organisasi', [
+            'id_organisasi' => $idOrg,
+        ]);
 
-        // Organisasi TETAP menunggu
-        $org->refresh();
-        $this->assertEquals('menunggu', $org->status_organisasi);
+        // 3. Akun dan profil pengguna terhapus
+        $this->assertDatabaseMissing('pengguna', [
+            'id_pengguna' => $idPengguna,
+        ]);
+        $this->assertDatabaseMissing('profil_anggota', [
+            'id_pengguna' => $idPengguna,
+        ]);
 
-        // Pendaftar dapat melihat alasan penolakan di status registrasi
-        auth()->forgetGuards();
-        $tokenPendaftar = $pendaftar->createToken('auth_token', ['status-registrasi'])->plainTextToken;
-        $statusRes = $this->withHeader('Authorization', "Bearer {$tokenPendaftar}")
-            ->getJson('/api/registration/status');
-
-        $statusRes->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'data'    => [
-                    'status_pendaftaran' => 'ditolak',
-                    'alasan_penolakan'   => 'Berkas SK kepengurusan tidak ada cap stempel resmi.',
-                    'bisa_unggah_ulang'  => true,
-                ],
-            ]);
-
-        // Pendaftar unggah ulang SK (resubmit-sk)
-        $resubmitRes = $this->withHeader('Authorization', "Bearer {$tokenPendaftar}")
-            ->postJson('/api/registration/resubmit-sk', [
-                'sk_organisasi' => UploadedFile::fake()->createWithContent('sk_baru.pdf', '%PDF-1.4' . str_repeat("\x00", 100)),
-            ]);
-
-        $resubmitRes->assertStatus(200);
-
-        // Setelah diunggah ulang, registrasi kembali berstatus menunggu dan muncul lagi di daftar BEM induk!
-        auth()->forgetGuards();
-        $listRes = $this->withHeader('Authorization', "Bearer {$tokenBem}")
-            ->getJson('/api/org/registrations/hmj-ukm');
-
-        $list = $listRes->json('data.pendaftaran');
-        $this->assertCount(1, $list);
-        $this->assertEquals($pend->id_pendaftaran_organisasi, $list[0]['id_pendaftaran_organisasi']);
+        // 4. Log verifikasi tercatat
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna'     => $userBem->id_pengguna,
+            'jenis_aktivitas' => 'verifikasi',
+        ]);
     }
 
     // -------------------------------------------------------------------------

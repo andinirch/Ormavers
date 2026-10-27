@@ -102,13 +102,15 @@ class AuthService
      */
     public function dataPengguna(Pengguna $pengguna): array
     {
+        $pengguna->loadMissing('profilAnggota');
+
         return [
             'id_pengguna' => $pengguna->id_pengguna,
             'nama'        => $pengguna->nama,
             'username'    => $pengguna->username,
             'peran'       => $pengguna->peran,
             'status_akun' => $pengguna->status_akun,
-            'foto_profil' => $pengguna->foto_profil,
+            'foto_profil' => $pengguna->profilAnggota?->foto_profil,
         ];
     }
 
