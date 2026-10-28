@@ -20,6 +20,7 @@ use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\DirektoriOrganisasiController;
+use App\Http\Controllers\PencarianProfilOrganisasiController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -76,6 +77,11 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
         Route::get('/universitas/{id_universitas}/organisasi', [DirektoriOrganisasiController::class, 'organisasi'])
             ->whereNumber('id_universitas');
     });
+
+    // Cari & Filter Organisasi (ORMV-1-19) dan Lihat Profil Organisasi (ORMV-1-20)
+    Route::get('/organisasi/cari', [PencarianProfilOrganisasiController::class, 'cari']);
+    Route::get('/organisasi/{id_organisasi}', [PencarianProfilOrganisasiController::class, 'show'])
+        ->whereNumber('id_organisasi');
 });
 
 // Super Admin
