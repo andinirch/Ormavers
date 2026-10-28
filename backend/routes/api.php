@@ -20,24 +20,25 @@ use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\DirektoriOrganisasiController;
+use App\Http\Controllers\PencarianProfilOrganisasiController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
 Route::get('/master/universitas', [MasterDataController::class, 'universitas'])
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:300,1');
 
 Route::get('/master/bidang-organisasi', [MasterDataController::class, 'bidangOrganisasi'])
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:300,1');
 
 Route::get('/universitas', [UniversitasController::class, 'index'])
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:300,1');
 
 Route::get('/public/bem', [PublicOrganisasiController::class, 'bem'])
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:300,1');
 
 Route::get('/public/bem/{id}/organisasi', [PublicOrganisasiController::class, 'organisasiDiBawahBem'])
     ->whereNumber('id')
-    ->middleware('throttle:60,1');
+    ->middleware('throttle:300,1');
 
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
@@ -76,6 +77,11 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
         Route::get('/universitas/{id_universitas}/organisasi', [DirektoriOrganisasiController::class, 'organisasi'])
             ->whereNumber('id_universitas');
     });
+
+    // Cari & Filter Organisasi (ORMV-1-19) dan Lihat Profil Organisasi (ORMV-1-20)
+    Route::get('/organisasi/cari', [PencarianProfilOrganisasiController::class, 'cari']);
+    Route::get('/organisasi/{id_organisasi}', [PencarianProfilOrganisasiController::class, 'show'])
+        ->whereNumber('id_organisasi');
 });
 
 // Super Admin
