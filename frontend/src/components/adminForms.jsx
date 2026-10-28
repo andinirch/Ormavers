@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAdminData } from '../services/useAdminData.jsx'
 import AdminIcon from './admin/AdminIcon.jsx'
+import PasswordInput from './form/PasswordInput.jsx'
 
 const ROLE_BAWAAN = ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota']
 const PERMISSION_MODULES = [
@@ -105,88 +106,62 @@ function RoleForm({ item, onClose }) {
   )
 }
 
-function UserForm({ item, onClose }) {
-  const { roles, organizations, createUser, updateUser } = useAdminData()
-  const [form, setForm] = useState({
-    name: item?.name || '',
-    username: '',
-    password: '',
-    roleId: roles.find((role) => role.name === item?.role)?.id || item?.roleId || roles[0]?.id || '',
-    organizationId: item?.organizationId || '',
-  })
-  const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+function UserForm({ onClose }) {
+   const { createUser } = useAdminData()
+   const [form, setForm] = useState({
+      name: '',
+      username: '',
+      password: '',
+    })
+   const [error, setError] = useState('')
+   const [submitting, setSubmitting] = useState(false)
 
-  const change = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+   const change = (key, value) => setForm((current) => ({ ...current, [key]: value }))
 
-  const submit = async (event) => {
-    event.preventDefault()
-    if (submitting) return
-    setError('')
-    setSubmitting(true)
-    try {
-      if (item) {
-        await updateUser(item.id, form)
-      } else {
-        await createUser({ name: form.name, username: form.username, password: form.password })
-      }
-      onClose()
-    } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Gagal menyimpan data pengguna.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+   const submit = async (event) => {
+     event.preventDefault()
+     if (submitting) return
+     setError('')
+     setSubmitting(true)
+     try {
+       await createUser({ name: form.name, username: form.username, password: form.password })
+       onClose()
+     } catch (err) {
+       setError(err?.response?.data?.message || err?.message || 'Gagal menyimpan data pengguna.')
+     } finally {
+       setSubmitting(false)
+     }
+   }
 
-  const organizationName = organizations.find((organization) => organization.id === form.organizationId)?.name || item?.organizationName || item?.organization || '—'
-
-  return (
+   return (
     <div className="admin-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && !submitting && onClose()}>
       <form className="admin-dialog" onSubmit={submit}>
-        <div className="admin-dialog-heading">
-          <h2>{item ? 'Edit Pengguna' : 'Tambah Administrator'}</h2>
-          <button type="button" className="admin-close" onClick={onClose} disabled={submitting}>
-            <AdminIcon name="close" />
-          </button>
-        </div>
-        {error && <p className="admin-form-error" style={{ margin: '0 1.5rem 0.75rem' }}>{error}</p>}
-        <label>
-          Pengguna
-          <input value={form.name} placeholder={!item ? 'Masukkan nama Administrator' : undefined} disabled={submitting} onChange={(event) => change('name', event.target.value)} required />
-        </label>
-        {!item && (
-          <>
-            <label>
-              Username
-              <input value={form.username} placeholder="Masukkan username" disabled={submitting} onChange={(event) => change('username', event.target.value)} required />
-            </label>
-            <label>
-              Password
-              <input type="password" value={form.password} placeholder="Masukkan password" disabled={submitting} onChange={(event) => change('password', event.target.value)} required />
-            </label>
-          </>
-        )}
-        {item && (
+         <div className="admin-dialog-heading">
+           <h2>Tambah Administrator</h2>
+           <button type="button" className="admin-close" onClick={onClose} disabled={submitting}>
+             <AdminIcon name="close" />
+           </button>
+         </div>
+         {error && <p className="admin-form-error" style={{ margin: '0 1.5rem 0.75rem' }}>{error}</p>}
+         <label>
+           Pengguna
+           <input value={form.name} placeholder="Masukkan nama Administrator" disabled={submitting} onChange={(event) => change('name', event.target.value)} required />
+         </label>
           <label>
-            Role
-            <span className="admin-user-role-control">
-              <select className="admin-user-role-select" value={form.roleId} disabled={submitting} onChange={(event) => change('roleId', event.target.value)}>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
-              <AdminIcon name="chevron-down" size={16} />
-            </span>
+            Username
+            <input value={form.username} placeholder="Masukkan username" disabled={submitting} onChange={(event) => change('username', event.target.value)} required />
           </label>
-        )}
-        {item && (
-          <label>
-            Nama Organisasi
-            <input value={organizationName} readOnly />
-          </label>
-        )}
+          <PasswordInput
+            id="admin-password"
+            label="Password"
+            name="password"
+            value={form.password}
+            onChange={(event) => change('password', event.target.value)}
+            placeholder="Masukkan password"
+            disabled={submitting}
+            required
+          />
+
         <div className="admin-dialog-actions">
           <button type="button" className="admin-button admin-button--muted" onClick={onClose} disabled={submitting}>
             Batal

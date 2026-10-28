@@ -89,7 +89,11 @@ function OrganizationDetailPage() {
                 <AdminIcon name="info" size={18} />
                 <h2>Deskripsi</h2>
               </header>
-              <p className="organization-detail-empty">Deskripsi organisasi belum tersedia.</p>
+              {organization.deskripsi ? (
+                <p>{organization.deskripsi}</p>
+              ) : (
+                <p className="organization-detail-empty">Deskripsi organisasi belum tersedia.</p>
+              )}
             </section>
             <section className="organization-detail-card">
               <header className="organization-detail-card__head">

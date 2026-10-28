@@ -147,7 +147,7 @@ function LoginPage() {
                 id="username"
                 name="username"
                 label="Username"
-                placeholder="Masukkan username atau email"
+                placeholder="Masukkan username"
                 value={values.username}
                 onChange={handleChange}
                 required
