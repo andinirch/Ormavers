@@ -16,3 +16,4 @@ export const updateOrganizationPortfolio = (id, data) => {
   return api.put(`/organisasi/portofolio/${id}`, data).then(responseData)
 }
 export const deleteOrganizationPortfolio = (id) => api.delete(`/organisasi/portofolio/${id}`).then(responseData)
+export const getBidangOrganisasi = () => api.get('/master/bidang-organisasi').then(responseData)

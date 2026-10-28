@@ -96,6 +96,8 @@
 }
 
 .form-field__label {
+  display: flex;
+  align-items: center;
   font-weight: 500;
   font-size: 14px;
   color: var(--text-h);
@@ -104,6 +106,8 @@
 .form-field__required {
   color: var(--danger);
   margin-left: 3px;
+  line-height: 1;
+  display: inline;
 }
 
 .form-field__hint {

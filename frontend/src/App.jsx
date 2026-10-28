@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import AppShell from './layouts/AppShell.jsx'
 import RegistrationStatusPage from './pages/RegistrationStatusPage.jsx'
 import AuthLayout from './components/AuthLayout.jsx'
@@ -28,7 +29,8 @@ import AccessGuard from './context/AccessGuard.jsx'
 
 function App() {
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       <Route element={<AppShell />}>
         <Route path="/status-registrasi" element={<RegistrationStatusPage />} />
       </Route>
@@ -105,8 +107,8 @@ function App() {
           </Route>
         </Route>
       </Route>
-    </Routes>
-
+      </Routes>
+    </ErrorBoundary>
   )
 }
 export default App

@@ -4,6 +4,7 @@ import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '.
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
+import PasswordInput from '../components/form/PasswordInput.jsx'
 import '../styles/profile.css'
 
 function resolveAssetUrl(url) {
@@ -55,14 +56,6 @@ function Field({ label, value, name, onChange, readOnly = false, type = 'text', 
   )
 }
 
-function PasswordField({ label, name, value, visible, placeholder, onChange, onToggle }) {
-  return <Field label={label} name={name} value={value} type={visible ? 'text' : 'password'} placeholder={placeholder} onChange={onChange} icon={<button className="profile-field__toggle" type="button" onClick={onToggle} aria-label={visible ? `Sembunyikan ${label}` : `Tampilkan ${label}`}><EyeIcon visible={visible} /></button>} />
-}
-
-function EyeIcon({ visible }) {
-  return <svg className="profile-field__icon" viewBox="0 0 24 24" aria-hidden="true">{visible ? <><path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></> : <><path d="m3 3 18 18M10.6 6.3A10.6 10.6 0 0 1 12 6c6.1 0 9.5 6 9.5 6a16.7 16.7 0 0 1-3.1 3.6M6.2 6.3C3.8 8 2.5 12 2.5 12s3.4 6 9.5 6c1.1 0 2.1-.2 3-.5" /></>}</svg>
-}
-
 function CameraIcon() {
   return <svg className="profile-button__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5h3l1.5-2h5L16 7.5h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" /><circle cx="12" cy="13.5" r="3.25" /></svg>
 }
@@ -75,6 +68,14 @@ function OrganizationIcon() {
   return <svg className="profile-organization__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V6h12v14M9 6V3h6v3M9 10h2M13 10h2M9 14h2M13 14h2" /></svg>
 }
 
+function SkeletonCard({ height = '200px', className = '' }) {
+  return (
+    <div className={`profile-card profile-skeleton ${className}`} style={{ height }}>
+      <div className="skeleton-shimmer" />
+    </div>
+  )
+}
+
 function MemberOrganizationIcon({ type }) {
   return type === 'bem'
     ? <svg className="profile-member-org__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V6h12v14M9 6V3h6v3M9 10h2M13 10h2M9 14h2M13 14h2" /></svg>
@@ -82,7 +83,7 @@ function MemberOrganizationIcon({ type }) {
 }
 
 function OrganizationProfilePage() {
-  const { user, roles } = useAuth()
+  const { user, roles, refreshUser } = useAuth()
   const key = roleKey(user, roles)
   const roleName = key === 'anggota' ? 'Anggota' : key === 'hmj' ? 'Akun Organisasi HMJ/UKM' : 'Akun Organisasi BEM'
   const personalTitle = key === 'anggota' ? 'Data diri anggota' : 'Data penanggung jawab organisasi'
@@ -92,9 +93,9 @@ function OrganizationProfilePage() {
   const [registrationStatus, setRegistrationStatus] = useState(null)
   const [organizations, setOrganizations] = useState([])
   const [password, setPassword] = useState({ old: '', next: '', confirm: '' })
-  const [passwordVisibility, setPasswordVisibility] = useState({ old: false, next: false, confirm: false })
   const [message, setMessage] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [orgLoading, setOrgLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const updatePersonal = (event) => setPersonal((current) => ({ ...current, [event.target.name]: event.target.value }))
   const savePersonal = async (event) => {
@@ -105,6 +106,7 @@ function OrganizationProfilePage() {
       const result = await updateProfile({ nama: personal.name, nomor_whatsapp: personal.whatsapp || null })
       const data = result?.data ?? result
       setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, whatsapp: data?.nomor_whatsapp ?? current.whatsapp }))
+      await refreshUser()
        await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data profil berhasil diperbarui.', confirmButtonColor: '#2563eb' })
     } catch (error) {
        await Swal.fire({ icon: 'error', title: 'Gagal menyimpan', text: error.response?.data?.message ?? 'Data profil gagal diperbarui.', confirmButtonColor: '#2563eb' })
@@ -129,7 +131,13 @@ function OrganizationProfilePage() {
       setPassword({ old: '', next: '', confirm: '' })
        await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Password berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (error) {
-       await Swal.fire({ icon: 'error', title: 'Gagal mengubah password', text: error.response?.data?.message ?? error.response?.data?.errors?.password_lama?.[0] ?? 'Password gagal diubah.', confirmButtonColor: '#2563eb' })
+      const errors = error.response?.data?.errors ?? {}
+      const errorMessage = error.response?.data?.message 
+        ?? errors.password_lama?.[0]
+        ?? errors.password_baru?.[0]
+        ?? errors.konfirmasi_password?.[0]
+        ?? 'Password gagal diubah. Silakan coba lagi.'
+       await Swal.fire({ icon: 'error', title: 'Gagal mengubah password', text: errorMessage, confirmButtonColor: '#2563eb' })
     } finally {
       setSaving(false)
     }
@@ -168,19 +176,37 @@ function OrganizationProfilePage() {
   }
   useEffect(() => {
     let active = true
-    Promise.all([getProfile(), getMyRegistrationStatus()]).then(([result, statusResult]) => {
+    
+    // Load profile data (fast)
+    getProfile().then((result) => {
       if (!active) return
       const data = result?.data ?? result
-       setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, nim: data?.nim ?? '', whatsapp: data?.nomor_whatsapp ?? current.whatsapp, username: data?.username ?? current.username }))
-       setPhotoUrl(resolveAssetUrl(data?.foto_profil_url))
-       if (Array.isArray(data?.organisasi_diikuti)) setOrganizations(data.organisasi_diikuti)
-       if (statusResult?.data?.organisasiDetail) setOrganizationDetail(statusResult.data.organisasiDetail)
-       setRegistrationStatus(statusResult?.data?.status ?? null)
+      setPersonal((current) => ({ 
+        ...current, 
+        name: data?.nama ?? current.name, 
+        nim: data?.nim ?? '', 
+        whatsapp: data?.nomor_whatsapp ?? current.whatsapp, 
+        username: data?.username ?? current.username 
+      }))
+      setPhotoUrl(resolveAssetUrl(data?.foto_profil_url))
+      if (Array.isArray(data?.organisasi_diikuti)) setOrganizations(data.organisasi_diikuti)
     }).catch(() => {
-      if (active) setMessage('Data profil gagal dimuat. Menggunakan data tampilan sementara.')
+      if (active) setMessage('Data profil gagal dimuat.')
     }).finally(() => {
-      if (active) setLoading(false)
+      if (active) setProfileLoading(false)
     })
+    
+    // Load organization data (mungkin lambat)
+    getMyRegistrationStatus().then((statusResult) => {
+      if (!active) return
+      if (statusResult?.data?.organisasiDetail) setOrganizationDetail(statusResult.data.organisasiDetail)
+      setRegistrationStatus(statusResult?.data?.status ?? null)
+    }).catch(() => {
+      // Silent fail untuk org data
+    }).finally(() => {
+      if (active) setOrgLoading(false)
+    })
+    
     return () => { active = false }
   }, [])
 
@@ -203,7 +229,15 @@ function OrganizationProfilePage() {
   const content = (
     <main className="admin-page profile-page">
       <div className="profile-page__heading"><h1>Profil Saya</h1><p>Kelola data diri, password, dan foto profil</p></div>
-      {loading && <p className="profile-message" role="status">Memuat data profil...</p>}
+      {(profileLoading || orgLoading) && (
+        <div className="profile-layout">
+          <div className="profile-side">
+            <SkeletonCard height="280px" />
+            {orgLoading && <SkeletonCard height="250px" />}
+          </div>
+        </div>
+      )}
+      {!profileLoading && (
       <div className="profile-layout">
         <div className="profile-side">
           <section className="profile-card profile-summary"><div className="profile-avatar">{photoUrl ? <img src={photoUrl} alt="Foto profil" onError={() => setPhotoUrl(null)} /> : initials}</div><h2>{displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><label className="profile-button profile-button--outline"><CameraIcon /> Ubah foto profil<input className="profile-photo-input" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handlePhotoChange} disabled={saving} /></label><small>JPG/JPEG/PNG · Maks. 2 MB</small></section>
@@ -211,13 +245,14 @@ function OrganizationProfilePage() {
 
         </div>
         <div className="profile-main">
-          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} /><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
-          <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordField label="Password lama" name="old" value={password.old} visible={passwordVisibility.old} placeholder="Masukkan password saat ini" onChange={(e) => setPassword({ ...password, old: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, old: !passwordVisibility.old })} /><PasswordField label="Password baru" name="next" value={password.next} visible={passwordVisibility.next} placeholder="Minimal 8 karakter" onChange={(e) => setPassword({ ...password, next: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, next: !passwordVisibility.next })} /><PasswordField label="Konfirmasi password baru" name="confirm" value={password.confirm} visible={passwordVisibility.confirm} placeholder="Ulangi password baru" onChange={(e) => setPassword({ ...password, confirm: e.target.value })} onToggle={() => setPasswordVisibility({ ...passwordVisibility, confirm: !passwordVisibility.confirm })} /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
-          {message && <p className="profile-message" role="status">{message}</p>}
-        </div>
-      </div>
-    </main>
-  )
+          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} readOnly /><small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '-0.5rem', display: 'block' }}>🔒 Fitur dalam pengembangan</small><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordInput id="old-password" label="Password lama" name="old" value={password.old} onChange={(e) => setPassword({ ...password, old: e.target.value })} placeholder="Masukkan password saat ini" required /><PasswordInput id="new-password" label="Password baru" name="next" value={password.next} onChange={(e) => setPassword({ ...password, next: e.target.value })} placeholder="Minimal 8 karakter" required /><PasswordInput id="confirm-password" label="Konfirmasi password baru" name="confirm" value={password.confirm} onChange={(e) => setPassword({ ...password, confirm: e.target.value })} placeholder="Ulangi password baru" required /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
+           {message && <p className="profile-message" role="status">{message}</p>}
+         </div>
+       </div>
+      )}
+     </main>
+   )
 
   return content
 }
