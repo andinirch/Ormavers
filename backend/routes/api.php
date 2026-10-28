@@ -19,6 +19,7 @@ use App\Http\Controllers\PortofolioController;
 use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\DirektoriOrganisasiController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -68,6 +69,13 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
     Route::put('/profil', [\App\Http\Controllers\ProfilController::class, 'update']);
     Route::put('/profil/kata-sandi', [\App\Http\Controllers\ProfilController::class, 'updatePassword']);
     Route::post('/profil/foto', [\App\Http\Controllers\ProfilController::class, 'uploadFoto']);
+
+    // Direktori Organisasi (ORMV-1-18)
+    Route::prefix('direktori')->group(function () {
+        Route::get('/universitas', [DirektoriOrganisasiController::class, 'universitas']);
+        Route::get('/universitas/{id_universitas}/organisasi', [DirektoriOrganisasiController::class, 'organisasi'])
+            ->whereNumber('id_universitas');
+    });
 });
 
 // Super Admin
