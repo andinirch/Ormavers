@@ -31,8 +31,8 @@
 .rhmj-section h2 { margin: 0 0 3px; color: #0f172a; font-size: 18px; line-height: 1.3; }
 .rhmj-form hr { width: 100%; margin: 28px 0; border: 0; border-top: 1px solid #e8e9f2; }
 .rhmj-page .form-field { gap: 7px; min-width: 0; }
-.rhmj-page .form-field__label, .rhmj-page .form-fieldset legend { color: #0f172a; font-size: 13px; font-weight: 500; }
-.rhmj-page .form-field__required { color: #2563eb; }
+.rhmj-page .form-field__label, .rhmj-page .form-fieldset legend { display: flex; align-items: center; color: #0f172a; font-size: 13px; font-weight: 500; }
+.rhmj-page .form-field__required { color: #2563eb; margin-left: 3px; line-height: 1; }
 .rhmj-page .form-input { width: 100%; height: 47px; box-sizing: border-box; padding: 0 14px; color: #0f172a; background: #fff; border: 1px solid #b8c1d9; border-radius: 9px; font: inherit; font-size: 14px; }
 .rhmj-page .form-input:focus { border-color: #2563eb; outline: 2px solid #dbeafe; }
 .rhmj-page .form-input:disabled { color: #64748b; background: #fff; opacity: 1; }

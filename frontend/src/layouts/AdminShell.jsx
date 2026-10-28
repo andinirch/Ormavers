@@ -25,13 +25,15 @@ function AdminShell() {
   const can = (permission) => isSuperAdmin || permissions?.includes(permission)
   const canViewRoles = can('view roles')
 
+  const logoTo = isSuperAdmin ? '/superadmin' : isAdministrator ? '/admin/verifikasi-bem' : '/admin'
+
   const groups = [
     {
       label: 'MENU UTAMA',
       items: [
         ...(isSuperAdmin ? [
           { to: '/superadmin', label: 'Dashboard', icon: 'grid', end: true },
-          { to: '/superadmin/pengguna', label: 'Manajemen Administrator', icon: 'users' },
+          { to: '/superadmin/pengguna', label: 'Manajemen Pengguna', icon: 'users' },
            { to: '/admin-panel/activities', label: 'Log Aktivitas', icon: 'activity' },
          ] : []),
          ...(isAdministrator ? [
@@ -60,6 +62,6 @@ function AdminShell() {
       document.body.style.overflow = ''
     }
   }, [open])
-  return <AdminDataProvider><div className="admin-shell"><Sidebar groups={groups} open={open} onClose={() => setOpen(false)} logoTo="/admin" ariaLabel="Navigasi admin" /><div className="admin-main"><header className="admin-topbar"><button className="admin-menu-button" type="button" aria-label="Buka menu" onClick={() => setOpen(true)}><AdminIcon name="menu" /></button><div className="admin-context"><PlatformLogo variant="topbar" /><span>PTMA Jawa Timur&nbsp; / &nbsp;<strong>Pusat Tata Kelola</strong></span></div><div className="admin-top-account"><button ref={bellRef} type="button" className="admin-notification notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" />{notifications.unread > 0 && <i />}</button><span className="admin-top-divider" /><span className="admin-account-copy"><strong>{profileName}</strong><small>{profileSubtitle}</small></span><span className="admin-avatar"><AdminIcon name="profile-bold" size={20} strokeWidth={2.2} /></span></div></header><Outlet /><Footer variant="content" /></div><NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} onReadAll={notifications.markAllRead} returnFocusRef={bellRef} /></div></AdminDataProvider>
+  return <AdminDataProvider><div className="admin-shell"><Sidebar groups={groups} open={open} onClose={() => setOpen(false)} logoTo={logoTo} ariaLabel="Navigasi admin" /><div className="admin-main"><header className="admin-topbar"><button className="admin-menu-button" type="button" aria-label="Buka menu" onClick={() => setOpen(true)}><AdminIcon name="menu" /></button><div className="admin-context"><PlatformLogo variant="topbar" /><span>PTMA Jawa Timur&nbsp; / &nbsp;<strong>Pusat Tata Kelola</strong></span></div><div className="admin-top-account"><button ref={bellRef} type="button" className="admin-notification notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" />{notifications.unread > 0 && <i />}</button><span className="admin-top-divider" /><span className="admin-account-copy"><strong>{profileName}</strong><small>{profileSubtitle}</small></span><span className="admin-avatar"><AdminIcon name="profile-bold" size={20} strokeWidth={2.2} /></span></div></header><Outlet /><Footer variant="content" /></div><NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} onReadAll={notifications.markAllRead} returnFocusRef={bellRef} /></div></AdminDataProvider>
 }
 export default AdminShell

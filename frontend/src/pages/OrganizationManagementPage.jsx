@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import Swal from 'sweetalert2'
 import { getProfile } from '../api/profile.js'
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
-import { getOrganizationDescription, updateOrganizationDescription, listOrganizationContacts, createOrganizationContact, updateOrganizationContact, deleteOrganizationContact } from '../api/organizationManagement.js'
+import { getOrganizationDescription, updateOrganizationDescription, listOrganizationContacts, createOrganizationContact, updateOrganizationContact, deleteOrganizationContact, listOrganizationPortfolios, getBidangOrganisasi } from '../api/organizationManagement.js'
+import { getUniversitas } from '../services/orgApi.js'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/organization-management.css'
@@ -18,6 +19,9 @@ function OrganizationManagementPage() {
   const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
   const isHmjUkm = roleNames.includes('akun_hmj_ukm') || user?.peran === 'akun_hmj_ukm'
   const [description, setDescription] = useState('')
+  const [portfolioCount, setPortfolioCount] = useState(0)
+  const [universityLogo, setUniversityLogo] = useState(null)
+  const [bidangOptions, setBidangOptions] = useState([])
   const [profile, setProfile] = useState({ name: '', photoUrl: null })
   const [organizationName, setOrganizationName] = useState('')
   const [contacts, setContacts] = useState([])
@@ -39,6 +43,18 @@ function OrganizationManagementPage() {
       setContacts(contactsResult.data?.kontak ?? contactsResult.data ?? [])
       setProfile({ name: profileResult.data?.nama ?? '', photoUrl: profileResult.data?.foto_profil_url ?? null })
       setOrganizationName(statusResult.data?.organisasiDetail?.nama_organisasi ?? '')
+      const detail = statusResult.data?.organisasiDetail
+      const [portfolioResult, bidangResult, universitasResult] = await Promise.allSettled([
+        listOrganizationPortfolios(),
+        getBidangOrganisasi(),
+        getUniversitas(),
+      ])
+      setPortfolioCount(portfolioResult.status === 'fulfilled' ? (portfolioResult.value.data ?? []).length : 0)
+      setBidangOptions(bidangResult.status === 'fulfilled' ? (bidangResult.value.data ?? []) : [])
+      const matchedUniversity = universitasResult.status === 'fulfilled'
+        ? universitasResult.value.find((item) => item.label === detail?.nama_universitas)
+        : null
+      setUniversityLogo(matchedUniversity?.logo ?? null)
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Data profil organisasi gagal dimuat.')
     } finally {
@@ -96,16 +112,35 @@ function OrganizationManagementPage() {
   const removeContact = async (jenis) => {
     const item = contacts.find((contactItem) => contactItem.jenis === jenis)
     if (!item) return
+    
+    // Validasi ID kontak exist sebelum delete
+    if (!item.id_kontak) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Kesalahan',
+        text: 'ID kontak tidak ditemukan. Silakan refresh halaman dan coba lagi.',
+        confirmButtonColor: '#2563eb'
+      })
+      return
+    }
+    
     const confirmed = await Swal.fire({ icon: 'warning', title: 'Hapus kontak?', text: 'Kontak yang dihapus tidak dapat dipulihkan.', showCancelButton: true, confirmButtonText: 'Hapus', cancelButtonText: 'Batal', confirmButtonColor: '#dc2626' })
     if (!confirmed.isConfirmed) return
     try {
-      await deleteOrganizationContact(item.id_kontak ?? item.id)
+      await deleteOrganizationContact(item.id_kontak)
       setContacts((current) => current.filter((contactItem) => contactItem.jenis !== jenis))
     } catch (requestError) {
       await Swal.fire({ icon: 'error', title: 'Gagal menghapus', text: requestError.response?.data?.message ?? 'Kontak gagal dihapus.', confirmButtonColor: '#2563eb' })
     }
   }
 
+
+  const completenessItems = [
+    { label: 'Deskripsi organisasi', done: description.trim() !== '' },
+    { label: 'Kontak organisasi', done: contacts.some((item) => item.tautan?.trim()) },
+    { label: 'Portofolio', done: portfolioCount > 0 },
+  ]
+  const completenessPercent = Math.round((completenessItems.filter((item) => item.done).length / completenessItems.length) * 100)
 
   return <main className="organization-management-page">
     <header className="organization-management-heading"><a className="organization-management-back" href="/verifikasi/direktori" aria-label="Kembali ke direktori"><BackIcon /></a><div><span className="directory-eyebrow">KELOLA PROFIL ORGANISASI</span><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
@@ -121,8 +156,12 @@ function OrganizationManagementPage() {
               <AdminIcon name="university" size={20} />
             </header>
             <div className="organization-logo-card__preview">
-              <span className="organization-logo-card__badge"><AdminIcon name="graduation-cap" size={28} /></span>
-              <p>Logo universitas belum tersedia</p>
+              {universityLogo
+                ? <img className="organization-logo-card__image" src={universityLogo} alt="Logo universitas" />
+                : <>
+                    <span className="organization-logo-card__badge"><AdminIcon name="graduation-cap" size={28} /></span>
+                    <p>Logo universitas belum tersedia</p>
+                  </>}
             </div>
             <button type="button" className="organization-logo-card__upload" disabled>
               <AdminIcon name="upload-cloud" size={18} /> Ubah logo universitas
@@ -133,9 +172,17 @@ function OrganizationManagementPage() {
         <section className="organization-management-card organization-completeness-card">
           <header className="organization-completeness-card__header">
             <h2>Kelengkapan Profil</h2>
+            <strong>{completenessPercent}%</strong>
           </header>
-          <div className="organization-completeness-card__bar" aria-hidden="true"><span style={{ width: 0 }} /></div>
-          <p className="organization-completeness-card__empty">Data kelengkapan profil belum tersedia.</p>
+          <div className="organization-completeness-card__bar" role="progressbar" aria-valuenow={completenessPercent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${completenessPercent}%` }} /></div>
+          <ul className="organization-completeness-card__list">
+            {completenessItems.map((item) => (
+              <li key={item.label} className={item.done ? 'is-done' : ''}>
+                <AdminIcon name={item.done ? 'check-circle' : 'info'} size={16} /> {item.label}
+              </li>
+            ))}
+          </ul>
+          <small className="organization-completeness-card__note">Indikator berdasarkan deskripsi, kontak, dan portofolio.</small>
         </section>
       </aside>
       <div className="organization-management-content">
@@ -160,8 +207,9 @@ function OrganizationManagementPage() {
             <label className="organization-identity-field">
               <span>Bidang organisasi</span>
               <div className="organization-identity-input-wrap">
-                <select disabled>
-                  <option>Contoh : Kesenian (menunggu backend)</option>
+                <select disabled defaultValue="">
+                  <option value="">Pilih bidang organisasi</option>
+                  {bidangOptions.map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
                 </select>
               </div>
             </label>

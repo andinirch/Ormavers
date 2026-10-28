@@ -41,6 +41,16 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const refreshUser = async () => {
+    try {
+      const result = await me()
+      applySession(result)
+    } catch {
+      // Silent fail - user tetap login dengan data lama
+      // Token masih valid, jadi tidak perlu logout
+    }
+  }
+
   useEffect(() => {
     const handleUnauthorized = () => {
       clearToken()
@@ -60,7 +70,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
   }, [])
 
-  return <AuthContext.Provider value={{ ...session, isAuthenticated: Boolean(getToken()), login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ ...session, isAuthenticated: Boolean(getToken()), login, logout, refreshUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

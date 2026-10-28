@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
+import ImageWithFallback from '../components/ImageWithFallback.jsx'
 import { listOrganizationPortfolios, createOrganizationPortfolio, updateOrganizationPortfolio, deleteOrganizationPortfolio } from '../api/organizationManagement.js'
 import '../styles/organization-portfolio.css'
 
@@ -26,11 +27,36 @@ function errorMessage(error, fallback) {
 }
 
 function Thumbnail({ url, title }) {
-  const [failed, setFailed] = useState(false)
-  const isImage = url && IMAGE_PATTERN.test(url) && !failed
+  const isImage = url && IMAGE_PATTERN.test(url)
+  
+  // Fallback component untuk gambar yang gagal load
+  const fallbackComponent = (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#f3f4f6',
+      color: '#9ca3af'
+    }}>
+      <AdminIcon name="image" size={24} />
+    </div>
+  )
+  
   return <div className="organization-portfolio-thumb">
     {isImage
-      ? <><img src={url} alt={title} onError={() => setFailed(true)} /><em><AdminIcon name="image" size={11} /> Foto</em></>
+      ? (
+        <>
+          <ImageWithFallback 
+            src={url} 
+            alt={title} 
+            fallback={fallbackComponent}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+          <em><AdminIcon name="image" size={11} /> Foto</em>
+        </>
+      )
       : <span><AdminIcon name="image" size={24} /></span>}
   </div>
 }
