@@ -17,6 +17,8 @@ class UpdateProfilRequest extends FormRequest
     {
         return [
             'nama'           => ['required', 'string', 'max:150'],
+            'username'       => ['required', 'string', 'max:100'], // <-- Tambahkan ini
+            'nim'            => ['nullable', 'string', 'max:50'],  // <-- Tambahkan ini
             'nomor_whatsapp' => ['nullable', 'string', 'regex:/^08[0-9]{8,13}$/'],
         ];
     }
@@ -27,6 +29,11 @@ class UpdateProfilRequest extends FormRequest
             'nama.required'        => 'Nama wajib diisi',
             'nama.string'          => 'Nama harus berupa teks',
             'nama.max'             => 'Nama maksimal 150 karakter',
+            'username.required'    => 'Username wajib diisi',
+            'username.string'      => 'Username harus berupa teks',
+            'username.max'         => 'Username maksimal 100 karakter',
+            'nim.string'           => 'NIM harus berupa teks',
+            'nim.max'              => 'NIM maksimal 50 karakter',
             'nomor_whatsapp.regex' => 'Nomor WhatsApp harus diawali 08 dan terdiri dari 10-15 digit angka',
         ];
     }
