@@ -16,6 +16,7 @@ use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
+use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
 use Illuminate\Support\Facades\Route;
@@ -131,10 +132,13 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:akun_bem|akun_hmj_ukm'])
             ->whereNumber('id');
     });
 
-// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12), Tambah Portofolio (ORMV-1-13), Ubah Portofolio (ORMV-1-14), & Hapus Portofolio (ORMV-1-15), Kelola Kontak (ORMV-1-16)
+// Akun Organisasi — Ubah Deskripsi Organisasi (ORMV-1-12), Tambah Portofolio (ORMV-1-13), Ubah Portofolio (ORMV-1-14), & Hapus Portofolio (ORMV-1-15), Kelola Kontak (ORMV-1-16), Kelola Identitas Organisasi (ORMV-1-17)
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
     ->prefix('organisasi')
     ->group(function () {
+        Route::get('/identitas', [IdentitasOrganisasiController::class, 'show']);
+        Route::match(['post', 'put'], '/identitas', [IdentitasOrganisasiController::class, 'update']);
+
         Route::get('/deskripsi', [ProfilOrganisasiController::class, 'showDeskripsi']);
         Route::match(['put', 'patch'], '/deskripsi', [ProfilOrganisasiController::class, 'updateDeskripsi']);
 
