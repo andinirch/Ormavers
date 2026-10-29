@@ -246,6 +246,9 @@ class OrgMemberRequestService
     /**
      * Tolak pendaftaran anggota.
      */
+    /**
+     * Tolak pendaftaran anggota.
+     */
     public function reject(int $id, string $alasan, Pengguna $user, int $idPelaku): array
     {
         $organisasi = $this->getOrganisasiAktif($user);
@@ -297,15 +300,20 @@ class OrgMemberRequestService
             $namaAnggota = $anggota?->nama ?? '';
             $namaOrg = $organisasi->nama_organisasi;
 
-            // 1. Catat log aktivitas verifikasi sebelum penghapusan data
+            // 1. Catat log aktivitas verifikasi
             $this->logAktivitasService->catat(
                 $idPelaku,
                 'verifikasi',
                 "Menolak keanggotaan {$namaAnggota} di {$namaOrg} dengan alasan: {$alasan}"
             );
 
-            // 2. HANYA hapus record di tabel keanggotaan (akun dan profil tetap aman)
-            $locked->delete();
+            // 2. Ubah status keanggotaan menjadi 'ditolak' dan simpan alasannya
+            $locked->update([
+                'status_keanggotaan'      => 'ditolak',
+                'alasan_penolakan'        => $alasan,
+                'id_pengguna_verifikator' => $idPelaku,
+                'tanggal_verifikasi'      => now(),
+            ]);
 
             return [
                 'message' => 'Keanggotaan berhasil ditolak',
