@@ -292,109 +292,76 @@ class VerifikasiHmjUkmService
      * @return array
      */
     public function tolak(int $id, string $alasan, Pengguna $userBem, int $idPelaku): array
-    {
-        $bem = $this->getBemAktif($userBem);
-        if (! $bem) {
-            return [
-                'error'  => 'Akun BEM tidak aktif',
-                'status' => 403,
-            ];
-        }
+{
+    $bem = $this->getBemAktif($userBem);
+    if (!$bem) {
+        return [
+            'error' => 'Akun BEM tidak aktif',
+            'status' => 403,
+        ];
+    }
 
-        $pendaftaran = PendaftaranOrganisasi::with('organisasi')
-            ->where('id_pendaftaran_organisasi', $id)
+    $pendaftaran = PendaftaranOrganisasi::with('organisasi')
+        ->where('id_pendaftaran_organisasi', $id)
+        ->first();
+
+    if (!$pendaftaran || !in_array($pendaftaran->organisasi?->jenis_organisasi, ['hmj', 'ukm'], true)) {
+        return [
+            'error' => 'Pendaftaran tidak ditemukan',
+            'status' => 404,
+        ];
+    }
+
+    if ($pendaftaran->organisasi->id_organisasi_induk !== $bem->id_organisasi) {
+        return [
+            'error' => 'Registrasi ini bukan milik BEM Anda',
+            'status' => 403,
+        ];
+    }
+
+    if ($pendaftaran->status_pendaftaran !== 'menunggu') {
+        return [
+            'error' => 'Pendaftaran sudah diputuskan',
+            'status' => 409,
+        ];
+    }
+
+    return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
+        $pendaftaranLocked = PendaftaranOrganisasi::with('organisasi')
+            ->where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            ->lockForUpdate()
             ->first();
 
-        if (! $pendaftaran || ! in_array($pendaftaran->organisasi?->jenis_organisasi, ['hmj', 'ukm'], true)) {
+        if (!$pendaftaranLocked || $pendaftaranLocked->status_pendaftaran !== 'menunggu') {
             return [
-                'error'  => 'Pendaftaran tidak ditemukan',
-                'status' => 404,
-            ];
-        }
-
-        if ($pendaftaran->organisasi->id_organisasi_induk !== $bem->id_organisasi) {
-            return [
-                'error'  => 'Registrasi ini bukan milik BEM Anda',
-                'status' => 403,
-            ];
-        }
-
-        if ($pendaftaran->status_pendaftaran !== 'menunggu') {
-            return [
-                'error'  => 'Pendaftaran sudah diputuskan',
+                'error' => 'Pendaftaran sudah diputuskan',
                 'status' => 409,
             ];
         }
 
-        return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
-            $pendaftaran = PendaftaranOrganisasi::with(['files', 'organisasi.akun.profilAnggota'])
-                ->where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
-                ->lockForUpdate()
-                ->first();
+        $organisasi = $pendaftaranLocked->organisasi;
+        $jenisLabel = strtoupper($organisasi?->jenis_organisasi ?? 'organisasi');
+        $namaOrg = $organisasi?->nama_organisasi ?? '';
 
-            if ($pendaftaran->status_pendaftaran !== 'menunggu') {
-                return [
-                    'error'  => 'Pendaftaran sudah diputuskan',
-                    'status' => 409,
-                ];
-            }
+        // 1. Catat log aktivitas penolakan
+        $this->logAktivitasService->catat(
+            $idPelaku,
+            'verifikasi',
+            "Menolak pendaftaran {$jenisLabel} {$namaOrg} dengan alasan: {$alasan}"
+        );
 
-            $organisasi = $pendaftaran->organisasi;
-            $pengguna   = $organisasi?->akun;
-            $profil     = $pengguna?->profilAnggota;
-            $jenisLabel = strtoupper($organisasi?->jenis_organisasi ?? 'organisasi');
-            $namaOrg    = $organisasi?->nama_organisasi ?? '';
+        // 2. Update status pendaftaran menjadi 'ditolak' dan simpan alasannya
+        PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
+            ->update([
+                'status_pendaftaran'      => 'ditolak',
+                'alasan_penolakan'        => $alasan,
+                'id_pengguna_verifikator' => $idPelaku,
+                'tanggal_verifikasi'      => now(),
+            ]);
 
-            // Kumpulkan semua path file yang harus dihapus dari storage
-            $filesToDelete = [];
-            foreach ($pendaftaran->files as $file) {
-                if ($file->path_file) {
-                    $filesToDelete[] = $file->path_file;
-                }
-            }
-            if ($profil?->foto_ktm) {
-                $filesToDelete[] = $profil->foto_ktm;
-            }
-            if ($profil?->foto_profil) {
-                $filesToDelete[] = $profil->foto_profil;
-            }
-
-            // 1. Catat log aktivitas SEBELUM hapus data
-            $this->logAktivitasService->catat(
-                $idPelaku,
-                'verifikasi',
-                "Menolak pendaftaran {$jenisLabel} {$namaOrg} dengan alasan: {$alasan}"
-            );
-
-            // 2. Hapus file-file pendaftaran
-            $pendaftaran->files()->delete();
-
-            // 3. Hapus pendaftaran organisasi
-            $pendaftaran->delete();
-
-            // 4. Hapus organisasi
-            if ($organisasi) {
-                $organisasi->delete();
-            }
-
-            // 5. Hapus profil anggota, log aktivitas pendaftar, & pengguna
-            if ($profil) {
-                $profil->delete();
-            }
-            if ($pengguna) {
-                \App\Models\LogAktivitas::where('id_pengguna', $pengguna->id_pengguna)->delete();
-                $pengguna->tokens()->delete();
-                $pengguna->delete();
-            }
-
-            // 6. Hapus berkas fisik dari storage
-            foreach ($filesToDelete as $filePath) {
-                Storage::disk('local')->delete($filePath);
-            }
-
-            return [
-                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
-            ];
-        });
-    }
+        return [
+            'message' => "Pendaftaran {$jenisLabel} berhasil ditolak",
+        ];
+    });
+}
 }
