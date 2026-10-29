@@ -170,8 +170,11 @@ export default function VerifikasiBemPage() {
         objectUrl = URL.createObjectURL(response.data)
         setKtmPreviewUrl(objectUrl)
       })
-      .catch(() => {
-        if (!cancelled) setKtmPreviewUrl(null)
+      .catch((error) => {
+        if (!cancelled) {
+          setKtmPreviewUrl(null)
+          setToastMessage(error.response?.data?.message ?? 'Foto KTM gagal dimuat.')
+        }
       })
 
     return () => {
@@ -387,11 +390,19 @@ export default function VerifikasiBemPage() {
                   <span>Nama Lengkap</span>
                   <strong>{selectedDetail.namaLengkap}</strong>
                 </div>
-                <div>
-                  <span>NIM</span>
-                  <strong>{selectedDetail.nim}</strong>
-                </div>
-              </div>
+                 <div>
+                   <span>NIM</span>
+                   <strong>{selectedDetail.nim || '—'}</strong>
+                 </div>
+                 <div>
+                   <span>Username</span>
+                   <strong>{selectedDetail.username || '—'}</strong>
+                 </div>
+                 <div>
+                   <span>Status keanggotaan</span>
+                   <strong>{selectedDetail.status || '—'}</strong>
+                 </div>
+               </div>
 
               <div className="verification-documents">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -494,11 +505,19 @@ export default function VerifikasiBemPage() {
                   <span>NIM</span>
                   <strong>{selectedDetail.nim}</strong>
                 </div>
-                <div>
-                  <span>No. WhatsApp</span>
-                  <strong>{selectedDetail.whatsapp}</strong>
-                </div>
-              </div>
+                 <div>
+                   <span>No. WhatsApp</span>
+                   <strong>{selectedDetail.whatsapp || '—'}</strong>
+                 </div>
+                 <div>
+                   <span>Username</span>
+                   <strong>{selectedDetail.username || '—'}</strong>
+                 </div>
+                 <div>
+                   <span>Status akun</span>
+                   <strong>{selectedDetail.statusAkun || '—'}</strong>
+                 </div>
+               </div>
 
               <div className="verification-documents">
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -521,8 +540,8 @@ export default function VerifikasiBemPage() {
                     </svg>
                   </span>
                   <span>
-                    <strong>Foto selfie dengan KTM</strong>
-                    <small>KTM-DIMAS-BAYU-2022510045.jpg</small>
+                     <strong>Foto selfie dengan KTM</strong>
+                     <small>{selectedDetail.dokumen?.find((document) => document.jenis === 'ktm')?.file || 'Dokumen foto KTM'}</small>
                   </span>
                   <span className="verification-link" aria-label="Lihat foto selfie dengan KTM">
                     <EyeIcon />

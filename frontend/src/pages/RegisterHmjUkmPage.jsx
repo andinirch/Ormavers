@@ -65,7 +65,7 @@ function UploadField({ id, name, accept, onChange, fileName, error, kind, childr
           aria-describedby={error ? `${id}-error` : undefined}
         />
         {children}
-        {fileName && <span className="rhmj-upload__filename">{fileName}</span>}
+        {fileName && <span className="rhmj-upload__filename" title={fileName}>{fileName}</span>}
       </label>
       {error && (
         <p className="form-field__error" id={`${id}-error`} role="alert">

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
-import { getOrganizationDirectory } from '../services/orgApi.js'
+import { getBidangOrganisasi } from '../api/organizationManagement.js'
+import { getDirectoryOrganizations } from '../services/orgApi.js'
 import '../styles/organization-directory.css'
 
 function BackIcon() {
@@ -28,17 +29,21 @@ function OrganizationListPage() {
   const [organizations, setOrganizations] = useState([])
   const [type, setType] = useState('')
   const [field, setField] = useState('')
+  const [fields, setFields] = useState([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    getOrganizationDirectory(universityId)
-      .then((result) => {
+    Promise.all([getDirectoryOrganizations(universityId), getBidangOrganisasi()])
+      .then(([result, fieldResult]) => {
         if (!active) return
+        const fieldData = fieldResult?.data
+        const fieldItems = Array.isArray(fieldData) ? fieldData : fieldData?.bidang ?? fieldData?.data ?? []
         setUniversity(result.university)
         setOrganizations(result.organizations)
+        setFields(Array.isArray(fieldItems) ? fieldItems : [])
       })
       .catch((requestError) => {
         if (active) setError(requestError.response?.data?.message ?? 'Daftar organisasi gagal dimuat.')
@@ -52,15 +57,17 @@ function OrganizationListPage() {
 
   const resetFilters = () => {
     setQuery('')
-    setType('')
+     setType('')
+     setField('')
   }
 
   const filteredOrganizations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     return organizations.filter((organization) => {
-      const matchesQuery = !normalizedQuery || organization.name.toLowerCase().includes(normalizedQuery)
-      const matchesType = !type || organization.type === type
-      return matchesQuery && matchesType
+       const matchesQuery = !normalizedQuery || (organization.name ?? organization.label ?? '').toLowerCase().includes(normalizedQuery)
+       const matchesType = !type || String(organization.type ?? organization.organization_type).toUpperCase() === type
+       const matchesField = !field || String(organization.field_id ?? '') === String(field)
+       return matchesQuery && matchesType && matchesField
     })
   }, [organizations, query, type])
 
@@ -97,8 +104,9 @@ function OrganizationListPage() {
         </label>
         <label>
           <span>Bidang</span>
-          <select value={field} onChange={(event) => setField(event.target.value)} disabled>
+          <select value={field} onChange={(event) => setField(event.target.value)}>
             <option value="">Semua bidang</option>
+            {fields.map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
           </select>
         </label>
       </section>
@@ -120,11 +128,13 @@ function OrganizationListPage() {
         <section className="organization-directory-grid" aria-label="Daftar organisasi">
           {filteredOrganizations.map((organization) => (
             <article className="organization-directory-card" key={organization.id}>
-              <div className="organization-directory-card__icon" aria-hidden="true">{organization.type === 'BEM' ? '▦' : organization.type === 'UKM' ? '⚑' : '⌘'}</div>
+               <div className="organization-directory-card__icon" aria-hidden="true">
+                 <AdminIcon name={organization.type === 'BEM' ? 'building' : 'users'} size={22} />
+               </div>
               <span className="organization-directory-card__type">{organization.type}</span>
               <span className="organization-directory-card__verified">Terverifikasi</span>
-              <h2>{organization.name}</h2>
-              <p>{organization.type === 'BEM' ? 'Badan Eksekutif Mahasiswa' : organization.type === 'UKM' ? 'Unit Kegiatan Mahasiswa' : 'Himpunan Mahasiswa Jurusan'}</p>
+               <h2>{organization.name ?? organization.label ?? 'Organisasi'}</h2>
+               <p className="organization-directory-card__field">{organization.field_name || 'Bidang belum tersedia'}</p>
               <Link className="organization-directory-card__profile-link" to={organizationPath(organization.id)}>Lihat profil <span aria-hidden="true">→</span></Link>
             </article>
           ))}

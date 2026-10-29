@@ -1,20 +1,102 @@
-import api, { responseData } from '../api/api.js'
+import api, { assetUrl, responseData } from '../api/api.js'
 import { getFromCache, setInCache } from './cacheService.js'
 
 // Cache TTLs (dalam milliseconds)
 const CACHE_TTL_UNIVERSITAS = 10 * 60 * 1000 // 10 menit
 const CACHE_TTL_BEM = 10 * 60 * 1000 // 10 menit
 const CACHE_TTL_HMJ_UKM = 5 * 60 * 1000 // 5 menit (lebih sering update)
+const CACHE_TTL_DIRECTORY_COUNTS = 5 * 60 * 1000
 
 function normalizeOrganizationOption(option) {
   const organizationId = option.id_organisasi ?? option.organization_id ?? option.value
   return {
     ...option,
+    id: organizationId,
     value: organizationId,
     label: option.nama_organisasi ?? option.label,
+    name: option.nama_organisasi ?? option.label,
     organization_id: organizationId,
     university_id: option.id_universitas ?? option.university_id,
-    organization_type: option.jenis_organisasi ?? option.organization_type ?? option.type,
+    field_id: option.id_bidang ?? option.field_id,
+    field_name: option.nama_bidang ?? option.field_name,
+    logo: assetUrl(option.logo),
+    organization_type: String(option.jenis_organisasi ?? option.organization_type ?? option.type ?? '').toUpperCase(),
+  }
+}
+
+export async function getDirectoryUniversities() {
+  const cached = getFromCache('directory_universities', CACHE_TTL_UNIVERSITAS)
+  if (cached) return cached
+
+  const result = await api.get('/direktori/universitas').then(responseData)
+  const items = Array.isArray(result?.data) ? result.data : result?.data?.universitas ?? []
+  const data = items.map((item) => ({
+    value: item.id_universitas,
+    label: item.nama_universitas,
+    logo: item.logo ? `${assetUrl(item.logo)}${item.logo.includes('?') ? '&' : '?'}v=${Date.now()}` : '',
+    isDefaultLogo: item.is_default_logo,
+  }))
+  setInCache('directory_universities', data)
+  return data
+}
+
+export async function getDirectoryOrganizations(universityId) {
+  const result = await api.get(`/direktori/universitas/${universityId}/organisasi`).then(responseData)
+  const payload = result?.data ?? {}
+  return {
+    university: payload.universitas ? {
+      value: payload.universitas.id_universitas,
+      label: payload.universitas.nama_universitas,
+    } : null,
+    organizations: (payload.organisasi ?? []).map(normalizeOrganizationOption),
+  }
+}
+
+export async function getDirectoryOrganizationCounts(universities) {
+  const counts = await Promise.all(universities.map(async (university) => {
+    const cacheKey = `directory_count_${university.value}`
+    const cached = getFromCache(cacheKey, CACHE_TTL_DIRECTORY_COUNTS)
+    if (cached !== null) return [university.value, cached]
+
+    const result = await getDirectoryOrganizations(university.value)
+    const count = result.organizations.length
+    setInCache(cacheKey, count)
+    return [university.value, count]
+  }))
+
+  return new Map(counts)
+}
+
+export async function searchOrganizations(params = {}) {
+  const searchParams = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== '' && value != null),
+  )
+  const result = await api.get('/organisasi/cari', { params: searchParams }).then(responseData)
+  return Array.isArray(result?.data) ? result.data.map(normalizeOrganizationOption) : []
+}
+
+export async function getOrganizationDetail(organizationId) {
+  const result = await api.get(`/organisasi/${organizationId}`).then(responseData)
+  const item = result?.data
+  if (!item) return null
+
+  return {
+    ...item,
+    id: item.id_organisasi,
+    name: item.nama_organisasi,
+    type: String(item.jenis_organisasi ?? '').toUpperCase(),
+    deskripsi: item.deskripsi ?? '',
+    logo: item.logo ? `${assetUrl(item.logo)}${item.logo.includes('?') ? '&' : '?'}v=${Date.now()}` : '',
+    portfolio: (item.portofolio ?? []).map((portfolio) => ({
+      ...portfolio,
+      dokumentasi: assetUrl(portfolio.dokumentasi),
+    })),
+    contacts: item.kontak ?? [],
+    university: item.universitas ? {
+      value: item.universitas.id_universitas,
+      label: item.universitas.nama_universitas,
+      logo: assetUrl(item.universitas.logo),
+    } : null,
   }
 }
 

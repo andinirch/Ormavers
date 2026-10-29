@@ -2,12 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import ImageWithFallback from '../components/ImageWithFallback.jsx'
+import { assetUrl } from '../api/api.js'
+
+function normalizePortfolioItems(items) {
+  return items.map((item) => ({ ...item, dokumentasi: assetUrl(item.dokumentasi) }))
+}
 import { listOrganizationPortfolios, createOrganizationPortfolio, updateOrganizationPortfolio, deleteOrganizationPortfolio } from '../api/organizationManagement.js'
 import '../styles/organization-portfolio.css'
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const EMPTY_FORM = { judul: '', tahun: '', deskripsi: '' }
-const IMAGE_PATTERN = /\.(jpe?g|png|gif|webp)(\?|#|$)/i
 
 function BackIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
@@ -27,7 +31,8 @@ function errorMessage(error, fallback) {
 }
 
 function Thumbnail({ url, title }) {
-  const isImage = url && IMAGE_PATTERN.test(url)
+  const imageUrl = assetUrl(url)
+  const isImage = Boolean(imageUrl)
   
   // Fallback component untuk gambar yang gagal load
   const fallbackComponent = (
@@ -49,8 +54,8 @@ function Thumbnail({ url, title }) {
       ? (
         <>
           <ImageWithFallback 
-            src={url} 
-            alt={title} 
+             src={imageUrl}
+             alt={title}
             fallback={fallbackComponent}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
@@ -77,7 +82,7 @@ function OrganizationPortfolioPage() {
     setLoading(true)
     setError('')
     try {
-      setItems(toList(await listOrganizationPortfolios()))
+      setItems(normalizePortfolioItems(toList(await listOrganizationPortfolios())))
     } catch (requestError) {
       setError(errorMessage(requestError, 'Portofolio gagal dimuat.'))
     } finally {
@@ -145,7 +150,7 @@ function OrganizationPortfolioPage() {
         ? await updateOrganizationPortfolio(editing.id_portofolio, payload)
         : await createOrganizationPortfolio(payload)
       const list = toList(result)
-      if (list.length) setItems(list); else await loadData()
+      if (list.length) setItems(normalizePortfolioItems(list)); else await loadData()
       resetForm()
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: result?.message ?? 'Portofolio berhasil disimpan.', confirmButtonColor: '#2563eb' })
     } catch (requestError) {

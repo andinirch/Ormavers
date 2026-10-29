@@ -29,4 +29,24 @@ api.interceptors.response.use(
 )
 
 export const responseData = (response) => response.data
+
+export function assetUrl(value) {
+  if (!value) return ''
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+  const origin = apiUrl.replace(/\/api\/?$/, '')
+  if (/^(blob:|data:)/i.test(value)) return value
+  if (/^https?:/i.test(value)) {
+    try {
+      const parsed = new URL(value)
+      if (['localhost', '127.0.0.1'].includes(parsed.hostname)) {
+        return `${origin}${parsed.pathname}${parsed.search}${parsed.hash}`
+      }
+    } catch {
+      return value
+    }
+    return value
+  }
+  return `${origin}/${String(value).replace(/^\//, '')}`
+}
+
 export default api

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
+
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
@@ -103,13 +104,20 @@ function OrganizationProfilePage() {
     setSaving(true)
     setMessage(null)
     try {
-      const result = await updateProfile({ nama: personal.name, nomor_whatsapp: personal.whatsapp || null })
+      // Backend mewajibkan username, tetapi hanya menyimpan nama dan nomor_whatsapp.
+      const result = await updateProfile({
+        nama: personal.name,
+        username: personal.username,
+        nomor_whatsapp: personal.whatsapp || null,
+      })
       const data = result?.data ?? result
       setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, whatsapp: data?.nomor_whatsapp ?? current.whatsapp }))
       await refreshUser()
-       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data profil berhasil diperbarui.', confirmButtonColor: '#2563eb' })
+      await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data profil berhasil diperbarui.', confirmButtonColor: '#2563eb' })
     } catch (error) {
-       await Swal.fire({ icon: 'error', title: 'Gagal menyimpan', text: error.response?.data?.message ?? 'Data profil gagal diperbarui.', confirmButtonColor: '#2563eb' })
+      const errors = error.response?.data?.errors
+      const detail = errors ? Object.values(errors).flat().join('\n') : null
+      await Swal.fire({ icon: 'error', title: 'Gagal menyimpan', text: detail ?? error.response?.data?.message ?? 'Data profil gagal diperbarui.', confirmButtonColor: '#2563eb' })
     } finally {
       setSaving(false)
     }
@@ -168,7 +176,7 @@ function OrganizationProfilePage() {
       setPhotoUrl(URL.createObjectURL(file))
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Foto profil berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (error) {
-      await Swal.fire({ icon: 'error', title: 'Gagal mengunggah foto', text: error.response?.data?.message ?? error.response?.data?.errors?.foto?.[0] ?? 'Foto profil gagal diubah.', confirmButtonColor: '#2563eb' })
+      await Swal.fire({ icon: 'error', title: 'Gagal mengunggah foto', text: error.response?.data?.message ?? error.response?.data?.errors?.foto?.[0] ?? error.message ?? 'Foto profil gagal diubah.', confirmButtonColor: '#2563eb' })
     } finally {
       input.value = ''
       setSaving(false)
@@ -198,8 +206,8 @@ function OrganizationProfilePage() {
     
     // Load organization data (mungkin lambat)
     getMyRegistrationStatus().then((statusResult) => {
-      if (!active) return
-      if (statusResult?.data?.organisasiDetail) setOrganizationDetail(statusResult.data.organisasiDetail)
+       if (!active) return
+       if (statusResult?.data?.organisasiDetail) setOrganizationDetail(statusResult.data.organisasiDetail)
       setRegistrationStatus(statusResult?.data?.status ?? null)
     }).catch(() => {
       // Silent fail untuk org data
@@ -245,7 +253,7 @@ function OrganizationProfilePage() {
 
         </div>
         <div className="profile-main">
-          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} readOnly /><small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '-0.5rem', display: 'block' }}>🔒 Fitur dalam pengembangan</small><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} readOnly /><small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '-0.5rem', display: 'block' }}>NIM dan username dikelola oleh admin</small><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
           <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordInput id="old-password" label="Password lama" name="old" value={password.old} onChange={(e) => setPassword({ ...password, old: e.target.value })} placeholder="Masukkan password saat ini" required /><PasswordInput id="new-password" label="Password baru" name="next" value={password.next} onChange={(e) => setPassword({ ...password, next: e.target.value })} placeholder="Minimal 8 karakter" required /><PasswordInput id="confirm-password" label="Konfirmasi password baru" name="confirm" value={password.confirm} onChange={(e) => setPassword({ ...password, confirm: e.target.value })} placeholder="Ulangi password baru" required /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
            {message && <p className="profile-message" role="status">{message}</p>}
          </div>

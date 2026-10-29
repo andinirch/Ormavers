@@ -49,7 +49,7 @@
 .rhmj-upload-field { display: flex; flex-direction: column; gap: 6px; }
 .rhmj-upload { min-height: 142px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; box-sizing: border-box; padding: 16px; color: #0f172a; background: #f5f6ff; border: 1px solid #b8c1d9; border-radius: 9px; text-align: center; cursor: pointer; }
 .rhmj-upload--photo { min-height: 142px; border-style: solid; }
-.rhmj-upload--document { min-height: 124px; }
+.rhmj-upload--document { min-width: 0; min-height: 124px; overflow: hidden; }
 .rhmj-upload__input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .rhmj-upload__icon { display: grid; place-items: center; width: 33px; height: 33px; color: #2563eb; background: #fff; border-radius: 50%; font-size: 18px; line-height: 1; }
 .rhmj-upload__icon svg { width: 16px; height: 16px; display: block; }
@@ -57,8 +57,8 @@
 .rhmj-upload--document .rhmj-upload__icon svg { width: 16px; height: 16px; }
 .rhmj-upload strong { font-size: 13px; font-weight: 600; }
 .rhmj-upload small { color: #334155; font-size: 12px; }
-.rhmj-upload__filename { max-width: 100%; overflow: hidden; color: #2563eb; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.rhmj-doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rhmj-upload__filename { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; padding: 0 8px; color: #2563eb; font-size: 11px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.rhmj-doc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
 .rhmj-page .password-wrapper { position: relative; }
 .rhmj-page .password-wrapper .form-input { padding-right: 44px; }
 .rhmj-page .password-toggle { position: absolute; top: 50%; right: 10px; display: grid; width: 24px; height: 24px; padding: 3px; color: #0f172a; background: transparent; border: 0; transform: translateY(-50%); cursor: pointer; }

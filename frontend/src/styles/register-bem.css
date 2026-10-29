@@ -44,6 +44,7 @@
 .rbem-page .form-field__label { display: flex; align-items: center; color: #334155; font-size: 13px; font-weight: 700; }
 .rbem-page .form-field__required { color: #2563eb; margin-left: 3px; line-height: 1; }
 .rbem-page .form-input { width: 100%; height: 47px; box-sizing: border-box; padding: 0 14px; color: #0f172a; background: #fff; border: 1px solid #dbe4f0; border-radius: 9px; font: inherit; font-size: 14px; }
+.rbem-page select.form-input { appearance: none; -webkit-appearance: none; padding-right: 44px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; }
 .rbem-page .form-input:focus { border-color: #60a5fa; outline: 3px solid #dbeafe; }
 .rbem-page .form-input::placeholder { color: #94a3b8; }
 .rbem-page .form-field__hint { margin: 0; color: #64748b; font-size: 12px; }

@@ -9,9 +9,11 @@ const LIMITED_ACCESS_KEY = 'ormavers_limited_access'
 export function AuthProvider({ children }) {
   const [session, setSession] = useState({ user: null, roles: [], permissions: [], aksesTerbatas: false, loading: true })
 
-  const applySession = (data) => {
+  const applySession = (data, preserveLimitedAccess = false) => {
     const next = data?.data ?? data
-    const aksesTerbatas = Boolean(next?.akses_terbatas)
+    const aksesTerbatas = next?.akses_terbatas == null
+      ? preserveLimitedAccess
+      : Boolean(next.akses_terbatas)
     setSession({
       user: next?.pengguna ?? null,
       roles: next?.roles ?? [],
@@ -44,7 +46,7 @@ export function AuthProvider({ children }) {
   const refreshUser = async () => {
     try {
       const result = await me()
-      applySession(result)
+      applySession(result, Boolean(localStorage.getItem(LIMITED_ACCESS_KEY)))
     } catch {
       // Silent fail - user tetap login dengan data lama
       // Token masih valid, jadi tidak perlu logout
@@ -62,11 +64,10 @@ export function AuthProvider({ children }) {
       queueMicrotask(() => setSession((current) => ({ ...current, loading: false })))
       return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
     }
-    if (localStorage.getItem(LIMITED_ACCESS_KEY) === 'true') {
-      queueMicrotask(() => setSession((current) => ({ ...current, aksesTerbatas: true, loading: false })))
-      return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
-    }
-    me().then((result) => applySession(result)).catch(() => handleUnauthorized())
+    const limitedAccess = localStorage.getItem(LIMITED_ACCESS_KEY) === 'true'
+    me()
+      .then((result) => applySession(result, limitedAccess))
+      .catch(() => handleUnauthorized())
     return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
   }, [])
 

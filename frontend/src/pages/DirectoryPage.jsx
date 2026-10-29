@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getUniversitas, getUniversityOrganizationCounts, getVerifiedBem } from '../services/orgApi.js'
+import { getDirectoryOrganizationCounts, getDirectoryUniversities } from '../services/orgApi.js'
 import { DirectorySkeleton } from '../components/skeletons'
 import { showError, showRateLimitError } from '../utils/alerts.js'
 import '../styles/directory.css'
@@ -25,20 +25,12 @@ function DirectoryPage() {
     setError('')
 
     try {
-      // Fetch universitas dan BEM sekali saja (avoid duplicate calls)
-      const [universitasData, bemData] = await Promise.all([
-        getUniversitas(),
-        getVerifiedBem()
-      ])
-
-      // Pass bemData ke getUniversityOrganizationCounts untuk avoid duplicate
-      const counts = await getUniversityOrganizationCounts(universitasData, bemData)
-      const enrichedItems = universitasData.map((item) => ({
+      const items = await getDirectoryUniversities()
+      const counts = await getDirectoryOrganizationCounts(items)
+      setUniversities(items.map((item) => ({
         ...item,
         organizationCount: counts.get(item.value) ?? 0,
-      }))
-
-      setUniversities(enrichedItems)
+      })))
       setLoading(false)
     } catch (requestError) {
       setLoading(false)
@@ -106,10 +98,9 @@ function DirectoryPage() {
                   <div className="directory-university__copy">
                     <h2>{university.label}</h2>
                   </div>
-                  <span className="directory-university__count">
-                    <svg className="directory-university__count-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 19a6 6 0 0 1 12 0" /><path d="M16 6a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5" /></svg>
-                    {university.organizationCount} organisasi
-                  </span>
+                <span className="directory-university__count">
+                  {university.organizationCount} organisasi
+                </span>
                 </Link>
               ))}
             </section>

@@ -106,8 +106,11 @@ export default function VerifikasiHmjPage() {
             if (previous) URL.revokeObjectURL(previous)
             return url
           })
-        }).catch(() => {
-          if (!cancelled) setKtmPreviewUrl(null)
+        }).catch((error) => {
+          if (!cancelled) {
+            setKtmPreviewUrl(null)
+            setToastMessage(error.response?.data?.message ?? 'Foto KTM gagal dimuat.')
+          }
         })
         setRejectionReason('')
         setRejectionError('')
