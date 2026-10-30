@@ -96,4 +96,58 @@ class RegistrasiAnggotaService
             throw $e;
         }
     }
+
+    public function ajukanUlang(int $idKeanggotaan, array $data, ?UploadedFile $fotoKtm, Pengguna $user): array
+    {
+        $keanggotaan = Keanggotaan::with('pengguna.profilAnggota')
+            ->where('id_keanggotaan', $idKeanggotaan)
+            ->first();
+
+        if (! $keanggotaan || $keanggotaan->id_pengguna !== $user->id_pengguna) {
+            return [
+                'error'  => 'Data keanggotaan tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if ($keanggotaan->status_keanggotaan !== 'ditolak') {
+            return [
+                'error'  => 'Pendaftaran hanya dapat diajukan ulang jika berstatus ditolak',
+                'status' => 400,
+            ];
+        }
+
+        return DB::transaction(function () use ($keanggotaan, $data, $fotoKtm) {
+            $profil = $keanggotaan->pengguna?->profilAnggota;
+            $uploadedPath = null;
+
+            if ($fotoKtm) {
+                if ($profil?->foto_ktm && Storage::disk('local')->exists($profil->foto_ktm)) {
+                    Storage::disk('local')->delete($profil->foto_ktm);
+                }
+                $uploadedPath = $fotoKtm->store('pendaftaran/ktm', 'local');
+                if ($profil) {
+                    $profil->update(['foto_ktm' => $uploadedPath]);
+                }
+            }
+
+            $keanggotaan->update([
+                'status_keanggotaan'      => 'menunggu',
+                'alasan_penolakan'        => null,
+                'id_pengguna_verifikator' => null,
+                'tanggal_verifikasi'      => null,
+                'tanggal_pendaftaran'     => now(),
+            ]);
+
+            $this->logAktivitasService->catat(
+                $keanggotaan->id_pengguna,
+                'pendaftaran',
+                "Mengajukan ulang pendaftaran anggota"
+            );
+
+            return [
+                'message' => 'Pendaftaran berhasil diajukan ulang',
+            ];
+        });
+    }
 }
