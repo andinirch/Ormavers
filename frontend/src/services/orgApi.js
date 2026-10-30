@@ -111,7 +111,7 @@ export async function getOrganizationDetail(organizationId) {
 
 export async function getUniversitas() {
   // Try cache first
-  const cached = getFromCache('universitas', CACHE_TTL_UNIVERSITAS)
+  const cached = getFromCache('universitas_v2', CACHE_TTL_UNIVERSITAS)
   if (cached) {
     console.log('[orgApi] Using cached universitas data')
     return cached
@@ -119,8 +119,8 @@ export async function getUniversitas() {
 
   // Fetch dari API
   console.log('[orgApi] Fetching universitas from API')
-  const result = await api.get('/universitas').then(responseData)
-  const items = result?.data?.universitas ?? result?.universitas ?? []
+  const result = await api.get('/master/universitas').then(responseData)
+  const items = Array.isArray(result?.data) ? result.data : []
   const data = items.map((item) => ({
     value: item.id_universitas,
     label: item.nama_universitas,
@@ -128,7 +128,7 @@ export async function getUniversitas() {
   }))
 
   // Save to cache
-  setInCache('universitas', data)
+  setInCache('universitas_v2', data)
   return data
 }
 

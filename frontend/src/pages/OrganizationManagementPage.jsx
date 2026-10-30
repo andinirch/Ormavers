@@ -212,12 +212,68 @@ function OrganizationManagementPage() {
       }
       setIdentity(normalizedIdentity)
       setIdentityDraft(normalizedIdentity)
+      setUniversityLogo(normalizedIdentity.logo_universitas || universityLogo)
+      setUniversityLogoPreview(null)
       clearCache('directory_universities')
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Logo organisasi berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (requestError) {
       const validationErrors = requestError.response?.data?.errors
       const detail = validationErrors ? Object.values(validationErrors).flat().join('\\n') : requestError.response?.data?.message
       await Swal.fire({ icon: 'error', title: 'Gagal mengunggah foto', text: detail ?? 'Foto profil gagal diubah.', confirmButtonColor: '#2563eb' })
+    } finally {
+      input.value = ''
+      setSaving(false)
+    }
+  }
+
+  const handleUniversityLogoChange = async (event) => {
+    const input = event.target
+    const file = input.files?.[0]
+    if (!file) return
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      await Swal.fire({ icon: 'warning', title: 'Format tidak didukung', text: 'Logo universitas harus berformat JPG, JPEG, atau PNG.', confirmButtonColor: '#2563eb' })
+      input.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      await Swal.fire({ icon: 'warning', title: 'Ukuran terlalu besar', text: 'Ukuran logo universitas maksimal 2 MB.', confirmButtonColor: '#2563eb' })
+      input.value = ''
+      return
+    }
+
+    if (!identityDraft?.id_bidang || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
+      await Swal.fire({ icon: 'warning', title: 'Lengkapi identitas organisasi', text: 'Bidang, alamat, dan periode SK wajib diisi sebelum mengunggah logo universitas.', confirmButtonColor: '#2563eb' })
+      input.value = ''
+      return
+    }
+
+    setSaving(true)
+    try {
+      const payload = new FormData()
+      payload.append('id_bidang', identityDraft.id_bidang)
+      payload.append('alamat', identityDraft.alamat)
+      payload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk)
+      payload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk)
+      payload.append('logo_universitas', file)
+      const result = await updateOrganizationIdentity(payload)
+      const responseIdentity = result.data ?? result
+      const nextIdentity = {
+        ...responseIdentity,
+        logo: assetUrl(responseIdentity.logo),
+        logo_universitas: assetUrl(responseIdentity.logo_universitas),
+      }
+      setIdentity(nextIdentity)
+      setIdentityDraft(nextIdentity)
+      setUniversityLogo(nextIdentity.logo_universitas || universityLogo)
+      setUniversityLogoPreview(null)
+      setUniversityLogoFile(null)
+      clearCache('directory_universities')
+      await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Logo universitas berhasil diubah.', confirmButtonColor: '#2563eb' })
+    } catch (requestError) {
+      const validationErrors = requestError.response?.data?.errors
+      const detail = validationErrors ? Object.values(validationErrors).flat().join('\n') : requestError.response?.data?.message
+      await Swal.fire({ icon: 'error', title: 'Gagal mengunggah logo universitas', text: detail ?? 'Logo universitas gagal diubah.', confirmButtonColor: '#2563eb' })
     } finally {
       input.value = ''
       setSaving(false)
@@ -248,6 +304,7 @@ function OrganizationManagementPage() {
       setIdentity(nextIdentity)
       setIdentityDraft(nextIdentity)
       setUniversityLogo(nextIdentity.logo_universitas || universityLogo)
+      setUniversityLogoPreview(null)
       clearCache('directory_universities')
       setIdentityLogoFile(null)
       setUniversityLogoFile(null)
@@ -293,12 +350,7 @@ function OrganizationManagementPage() {
              {!isHmjUkm && (
                <label className="organization-logo-card__upload">
                  <AdminIcon name="upload-cloud" size={18} /> Ubah logo universitas
-                 <input className="profile-photo-input" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" disabled={saving} onClick={() => setEditingIdentity(true)}
-                 onChange={(event) => {
-                   const file = event.target.files?.[0] ?? null
-                   setUniversityLogoFile(file)
-                   if (file) setUniversityLogoPreview(URL.createObjectURL(file))
-                 }} />
+                  <input type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" disabled={saving} onChange={handleUniversityLogoChange} />
                </label>
              )}
              <small className="organization-logo-card__note">JPG atau PNG (Format transparan dianjurkan)</small>
