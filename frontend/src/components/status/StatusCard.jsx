@@ -34,6 +34,7 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
     jenisPendaftar,
     namaDokumenDitolak,
     jenisDokumenDitolak,
+    bisaUnggahUlang,
   } = data
   const isOrganisasi = jenisPendaftar === 'organisasi'
   const isDitolak = status === 'ditolak'
@@ -83,6 +84,31 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
         <>
           <RejectionReason reason={alasanPenolakan} />
 
+          {bisaUnggahUlang && !isOrganisasi && (
+            <>
+              {submitResult?.ok && (
+                <div className="status-info-box status-info-box--amber" style={{ marginBottom: '1rem' }} role="status" aria-live="polite">
+                  <span className="status-info-box__icon" aria-hidden="true">{'\u2705'}</span>
+                  <div className="status-info-box__content">
+                    <strong>Foto KTM terkirim</strong>
+                    Registrasi kamu kembali berstatus Menunggu untuk diverifikasi ulang.
+                  </div>
+                </div>
+              )}
+              {submitResult?.error && (
+                <p className="upload-error" role="alert" aria-live="assertive">{submitResult.error}</p>
+              )}
+              {!submitResult?.ok && (
+                <SkResubmitForm
+                  mode="foto"
+                  onSubmit={onResubmit}
+                  submitting={submitting}
+                  documentName="Foto KTM"
+                />
+              )}
+            </>
+          )}
+
           {isOrganisasi && (
             <>
               {submitResult?.ok && (
@@ -97,12 +123,7 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
               {submitResult?.error && (
                 <p className="upload-error" role="alert" aria-live="assertive">{submitResult.error}</p>
               )}
-              {submitResult?.unavailable && (
-                <p className="status-unavailable" style={{ padding: '0.5rem 0', textAlign: 'left' }}>
-                  Pengiriman dokumen belum dapat diproses. Integrasi backend belum tersedia.
-                </p>
-              )}
-              {!submitResult?.ok && (
+              {bisaUnggahUlang && !submitResult?.ok && (
                 <SkResubmitForm
                   onSubmit={onResubmit}
                   submitting={submitting}

@@ -4,11 +4,6 @@ const config = {
   ditolak: { label: 'Ditolak', className: 'status-pill--ditolak' },
 }
 
-const fallbackConfig = {
-  label: 'Status tidak diketahui',
-  className: 'status-pill--unknown',
-}
-
 function StatusIcon({ status }) {
   if (status === 'menunggu') {
     return (
@@ -37,10 +32,11 @@ function StatusIcon({ status }) {
 }
 
 function StatusPill({ status }) {
-  const c = config[status] ?? fallbackConfig
+  const c = config[status]
+  if (!c) return null
   return (
     <span className={`status-pill ${c.className}`}>
-      {config[status] ? <StatusIcon status={status} /> : <span className="status-pill__fallback-icon" aria-hidden="true">?</span>}
+      <StatusIcon status={status} />
       {c.label}
     </span>
   )

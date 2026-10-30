@@ -9,6 +9,7 @@ import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem, getVerifiedHmjUkm } from '../services/orgApi.js'
 import { registerAnggota } from '../api/register.js'
+import { simpanStatusAwal } from '../services/statusAwal.js'
 import {
   requiredError,
   validatePhotoFile,
@@ -70,15 +71,13 @@ function RegisterAnggotaPage() {
   const [status, setStatus] = useState('idle')
   const [bemOptions, setBemOptions] = useState([])
   const [bemLoading, setBemLoading] = useState(true)
-  const [bemUnavailable, setBemUnavailable] = useState(false)
-  const [hmjResult, setHmjResult] = useState({ forBem: null, options: [], unavailable: false, error: null })
+  const [hmjResult, setHmjResult] = useState({ forBem: null, options: [], error: null })
 
   useEffect(() => {
     let active = true
     getVerifiedBem().then((result) => {
       if (!active) return
       setBemOptions(result.data)
-      setBemUnavailable(result.unavailable)
       setBemLoading(false)
     })
     return () => { active = false }
@@ -90,13 +89,12 @@ function RegisterAnggotaPage() {
     let active = true
     getVerifiedHmjUkm(bemId).then((result) => {
       if (!active) return
-      setHmjResult({ forBem: bemId, options: result.data, unavailable: result.unavailable, error: null })
+      setHmjResult({ forBem: bemId, options: result.data, error: null })
     }).catch((error) => {
       if (!active) return
       setHmjResult({
         forBem: bemId,
         options: [],
-        unavailable: false,
         error: error.response?.data?.message ?? 'Daftar organisasi di bawah BEM gagal dimuat.',
       })
     })
@@ -107,7 +105,6 @@ function RegisterAnggotaPage() {
 
   const hmjReady = values.bem !== '' && hmjResult.forBem === values.bem
   const hmjOptions = hmjReady ? hmjResult.options : []
-  const hmjUnavailable = hmjReady && hmjResult.unavailable
   const hmjError = hmjReady ? hmjResult.error : null
   const hmjLoading = values.bem !== '' && !hmjReady && !hmjError
 
@@ -155,7 +152,8 @@ function RegisterAnggotaPage() {
     Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
     try {
       await registerAnggota(formData)
-      navigate('/login?redirect=/status-registrasi', { replace: true })
+      simpanStatusAwal({ jenisPendaftar: 'anggota', namaPendaftar: values.nama })
+      navigate('/status-registrasi', { replace: true })
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
@@ -179,7 +177,6 @@ function RegisterAnggotaPage() {
           <h1>Formulir registrasi anggota</h1>
           <p className="ranggota-subtitle">Dilakukan individu yang akan bergabung ke organisasi</p>
           <form className="auth-form ranggota-form" onSubmit={handleSubmit} noValidate>
-            {bemUnavailable && <FormMessage variant="info">Pilihan organisasi belum tersedia. Pendaftaran anggota dapat dilakukan setelah daftar BEM yang sudah terverifikasi tersedia. Informasi ini akan diperbarui setelah integrasi backend.</FormMessage>}
             <section className="ranggota-section">
               <div className="ranggota-section-heading"><h2>Data diri</h2><span>Langkah Wajib</span></div>
               <TextInput id="nama" name="nama" label="Nama" placeholder="Nama lengkap mahasiswa" value={values.nama} onChange={handleChange} required error={errors.nama} />
@@ -192,12 +189,10 @@ function RegisterAnggotaPage() {
             <section className="ranggota-section">
               <div className="ranggota-section-heading"><h2>Pilih organisasi</h2><span>Afiliasi Kampus</span></div>
               <SelectInput id="bem" name="bem" label="BEM" value={values.bem} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required disabled={bemLoading || bemOptions.length === 0} error={errors.bem} />
-               {hmjUnavailable && <FormMessage variant="info">Pilihan HMJ/UKM di bawah BEM yang dipilih belum tersedia.</FormMessage>}
                {hmjError && <FormMessage variant="error">{hmjError}</FormMessage>}
                <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjError ? 'Daftar organisasi gagal dimuat' : hmjPlaceholder} required disabled={!values.bem || hmjLoading || Boolean(hmjError) || hmjOptions.length === 0} error={errors.hmjUkm} />
               <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih BEM, lalu pilih sebagai anggota HMJ/UKM/BEM di bawah BEM tersebut. Hanya organisasi terverifikasi yang muncul.</p></div>
             </section>
-            {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
             <hr />
             <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>
             <p className="ranggota-note">Data kamu akan diperiksa oleh organisasi yang dipilih.</p>

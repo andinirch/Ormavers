@@ -10,6 +10,7 @@ import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getVerifiedBem } from '../services/orgApi.js'
 import { registerHmjUkm } from '../api/register.js'
+import { simpanStatusAwal } from '../services/statusAwal.js'
 import {
   isNonEmpty,
   requiredError,
@@ -106,14 +107,12 @@ function RegisterHmjUkmPage() {
   const [status, setStatus] = useState('idle')
   const [bemOptions, setBemOptions] = useState([])
   const [bemLoading, setBemLoading] = useState(true)
-  const [bemUnavailable, setBemUnavailable] = useState(false)
 
   useEffect(() => {
     let active = true
     getVerifiedBem().then((result) => {
       if (!active) return
       setBemOptions(result.data)
-      setBemUnavailable(result.unavailable)
       setBemLoading(false)
     })
     return () => {
@@ -179,7 +178,8 @@ function RegisterHmjUkmPage() {
     Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
     try {
       await registerHmjUkm(formData)
-      navigate('/login?redirect=/status-registrasi', { replace: true })
+      simpanStatusAwal({ jenisPendaftar: 'organisasi', jenisOrganisasi: values.jenisOrganisasi, namaPendaftar: values.namaOrganisasi })
+      navigate('/status-registrasi', { replace: true })
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
@@ -203,11 +203,6 @@ function RegisterHmjUkmPage() {
           <h1>Formulir registrasi HMJ/UKM</h1>
           <p className="rhmj-subtitle">Dilakukan oleh penanggung jawab HMJ/UKM</p>
           <form className="auth-form rhmj-form" onSubmit={handleSubmit} noValidate>
-            {bemUnavailable && (
-              <FormMessage variant="info">
-                Pendaftaran HMJ/UKM belum dapat dilakukan karena daftar BEM yang sudah terverifikasi belum tersedia. Informasi ini akan diperbarui setelah integrasi backend.
-              </FormMessage>
-            )}
             <section className="rhmj-section">
               <h2>Pilih BEM induk</h2>
               <SelectInput id="bemInduk" name="bemInduk" label="BEM induk" value={values.bemInduk} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required hint="Hanya BEM yang telah terverifikasi yang tersedia" disabled={bemLoading || bemOptions.length === 0} error={errors.bemInduk} />
@@ -260,7 +255,6 @@ function RegisterHmjUkmPage() {
                 </UploadField>
               </div>
             </section>
-            {status === 'unavailable' && <FormMessage variant="info">Data registrasi Anda sudah lengkap. Pengiriman registrasi akan aktif setelah integrasi backend tersedia.</FormMessage>}
             <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>
             <p className="rhmj-note">Data kamu akan diperiksa oleh BEM induk.</p>
           </form>

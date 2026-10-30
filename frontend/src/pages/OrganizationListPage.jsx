@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import { getBidangOrganisasi } from '../api/organizationManagement.js'
-import { getDirectoryOrganizations } from '../services/orgApi.js'
+import { getDirectoryOrganizations, searchOrganizations } from '../services/orgApi.js'
 import '../styles/organization-directory.css'
 
 function BackIcon() {
@@ -42,34 +42,42 @@ function OrganizationListPage() {
         const fieldData = fieldResult?.data
         const fieldItems = Array.isArray(fieldData) ? fieldData : fieldData?.bidang ?? fieldData?.data ?? []
         setUniversity(result.university)
-        setOrganizations(result.organizations)
         setFields(Array.isArray(fieldItems) ? fieldItems : [])
       })
       .catch((requestError) => {
         if (active) setError(requestError.response?.data?.message ?? 'Daftar organisasi gagal dimuat.')
       })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
 
     return () => { active = false }
   }, [universityId])
 
+  // Pencarian dilakukan di backend (/organisasi/cari), dengan debounce 300 ms
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError('')
+    const timer = setTimeout(() => {
+      searchOrganizations({ keyword: query, id_universitas: universityId, jenis_organisasi: type, id_bidang: field })
+        .then((items) => { if (active) setOrganizations(items) })
+        .catch((requestError) => {
+          if (active) setError(requestError.response?.data?.message ?? 'Daftar organisasi gagal dimuat.')
+        })
+        .finally(() => {
+          if (active) setLoading(false)
+        })
+    }, 300)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [universityId, query, type, field])
+
   const resetFilters = () => {
     setQuery('')
-     setType('')
-     setField('')
+    setType('')
+    setField('')
   }
-
-  const filteredOrganizations = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    return organizations.filter((organization) => {
-       const matchesQuery = !normalizedQuery || (organization.name ?? organization.label ?? '').toLowerCase().includes(normalizedQuery)
-       const matchesType = !type || String(organization.type ?? organization.organization_type).toUpperCase() === type
-       const matchesField = !field || String(organization.field_id ?? '') === String(field)
-       return matchesQuery && matchesType && matchesField
-    })
-  }, [organizations, query, type])
 
   return (
     <main className="organization-directory-main">
@@ -113,7 +121,7 @@ function OrganizationListPage() {
 
       {loading && <div className="organization-directory-state">Memuat organisasi...</div>}
       {!loading && error && <div className="organization-directory-state organization-directory-state--error" role="alert">{error}</div>}
-      {!loading && !error && filteredOrganizations.length === 0 && (
+      {!loading && !error && organizations.length === 0 && (
         <section className="organization-directory-empty" role="status">
           <span className="organization-directory-empty__icon"><AdminIcon name="filter-alert" size={28} /></span>
           <h2>Organisasi tidak ditemukan.</h2>
@@ -124,9 +132,9 @@ function OrganizationListPage() {
           </div>
         </section>
       )}
-      {!loading && !error && filteredOrganizations.length > 0 && (
+      {!loading && !error && organizations.length > 0 && (
         <section className="organization-directory-grid" aria-label="Daftar organisasi">
-          {filteredOrganizations.map((organization) => (
+          {organizations.map((organization) => (
             <article className="organization-directory-card" key={organization.id}>
                <div className="organization-directory-card__icon" aria-hidden="true">
                  <AdminIcon name={organization.type === 'BEM' ? 'building' : 'users'} size={22} />

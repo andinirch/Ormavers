@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
-import { validateDocumentFile } from '../../validation/rules.js'
+import { validateDocumentFile, validatePhotoFile, MAX_PHOTO_LABEL } from '../../validation/rules.js'
 
-function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', documentType }) {
+function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', documentType, mode = 'dokumen' }) {
+  const isFoto = mode === 'foto'
+  const validate = (f) => (isFoto ? validatePhotoFile(f, documentName) : validateDocumentFile(f, documentName))
   const [file, setFile] = useState(null)
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
@@ -10,8 +12,7 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
     const selected = e.target.files?.[0] ?? null
     setFile(selected)
     if (selected) {
-      const err = validateDocumentFile(selected, documentName)
-      setError(err)
+      setError(validate(selected))
     } else {
       setError(null)
     }
@@ -19,12 +20,12 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const err = validateDocumentFile(file, documentName)
+    const err = validate(file)
     if (err) {
       setError(err)
       return
     }
-    const submitted = await onSubmit(file, documentType || (documentName === 'SK Organisasi' ? 'sk_organisasi' : 'sk_kepengurusan'))
+    const submitted = await onSubmit(file, documentType || (isFoto ? 'foto_ktm' : (documentName === 'SK Organisasi' ? 'sk_organisasi' : 'sk_kepengurusan')))
 
     if (submitted) {
       setFile(null)
@@ -41,7 +42,7 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
 
   return (
     <form onSubmit={handleSubmit} aria-busy={submitting}>
-      <p className="status-section-label">Unggah Ulang Dokumen</p>
+      <p className="status-section-label">{isFoto ? 'Unggah Ulang Foto KTM' : 'Unggah Ulang Dokumen'}</p>
       <div
         className={`upload-dropzone${hasError ? ' upload-dropzone--has-error' : ''}`}
         onClick={handleDropzoneClick}
@@ -57,13 +58,13 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept={isFoto ? 'image/jpeg,image/jpg' : 'application/pdf'}
            onChange={handleChange}
            onClick={(event) => event.stopPropagation()}
            className="upload-dropzone__input"
 
           tabIndex={-1}
-          aria-label={`Pilih ${documentName} baru`}
+          aria-label={isFoto ? 'Pilih foto KTM baru' : `Pilih ${documentName} baru`}
           aria-describedby={hasError ? 'document-upload-hint document-upload-error' : 'document-upload-hint'}
           aria-invalid={hasError}
 
@@ -77,9 +78,9 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
         {file ? (
           <span className="upload-dropzone__filename">{file.name}</span>
         ) : (
-          <span className="upload-dropzone__label">Pilih dokumen SK baru</span>
+          <span className="upload-dropzone__label">{isFoto ? 'Pilih foto KTM baru' : 'Pilih dokumen SK baru'}</span>
         )}
-        <span id="document-upload-hint" className="upload-dropzone__hint">PDF, maksimal 2 MB</span>
+        <span id="document-upload-hint" className="upload-dropzone__hint">{isFoto ? `JPG/JPEG, maksimal ${MAX_PHOTO_LABEL}` : 'PDF, maksimal 2 MB'}</span>
       </div>
       {hasError && <p id="document-upload-error" className="upload-error" role="alert">{error}</p>}
       <button

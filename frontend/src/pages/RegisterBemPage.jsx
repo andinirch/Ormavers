@@ -13,6 +13,7 @@ import {
   validateRequiredFields,
 } from '../validation/rules.js'
 import { registerBem } from '../api/register.js'
+import { simpanStatusAwal } from '../services/statusAwal.js'
 import { getUniversitas } from '../services/orgApi.js'
 import '../styles/register-bem.css'
 
@@ -133,7 +134,8 @@ function RegisterBemPage() {
     Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
     try {
       await registerBem(formData)
-      navigate('/login?redirect=/status-registrasi', { replace: true })
+      simpanStatusAwal({ jenisPendaftar: 'organisasi', jenisOrganisasi: 'bem', namaPendaftar: values.namaOrganisasi })
+      navigate('/status-registrasi', { replace: true })
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [

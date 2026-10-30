@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import StatusCard from '../components/status/StatusCard.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { getMyRegistrationStatus, resubmitSk } from '../services/registrationStatusApi.js'
+import { ajukanUlangFotoKtm, getMyRegistrationStatus, resubmitSk } from '../services/registrationStatusApi.js'
+import { ambilStatusAwal } from '../services/statusAwal.js'
 
 function RegistrationStatusPage() {
   const { user } = useAuth()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [unavailable, setUnavailable] = useState(false)
+  const [statusAwal] = useState(() => ambilStatusAwal())
+  const [data, setData] = useState(statusAwal)
+  const [loading, setLoading] = useState(!statusAwal)
   const [loadError, setLoadError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState(null)
@@ -19,11 +20,9 @@ function RegistrationStatusPage() {
     try {
       const result = await getMyRegistrationStatus()
       setData(result.data)
-      setUnavailable(result.unavailable)
       if (result.error) setLoadError(result.error)
     } catch {
       setData(null)
-      setUnavailable(false)
       setLoadError('Status registrasi gagal dimuat. Silakan coba lagi.')
     } finally {
       setLoading(false)
@@ -31,8 +30,9 @@ function RegistrationStatusPage() {
   }, [])
 
   useEffect(() => {
+    if (statusAwal) return
     Promise.resolve().then(() => loadStatus()).catch(() => {})
-  }, [loadStatus])
+  }, [loadStatus, statusAwal])
 
   const handleApprovedLogin = useCallback(() => {
     if (user?.username) {
@@ -44,7 +44,9 @@ function RegistrationStatusPage() {
     setSubmitting(true)
     setSubmitResult(null)
     try {
-      const result = await resubmitSk(file, documentType)
+      const result = displayedData?.jenisPendaftar === 'anggota'
+        ? await ajukanUlangFotoKtm(file)
+        : await resubmitSk(file, documentType)
 
       setSubmitResult(result)
 
@@ -53,7 +55,7 @@ function RegistrationStatusPage() {
       }
       return result.ok
     } catch {
-      setSubmitResult({ ok: false, unavailable: false, error: 'Terjadi kesalahan. Silakan coba lagi.' })
+      setSubmitResult({ ok: false, error: 'Terjadi kesalahan. Silakan coba lagi.' })
       return false
     } finally {
       setSubmitting(false)
@@ -84,12 +86,6 @@ function RegistrationStatusPage() {
               Coba lagi
             </button>
           </div>
-        )}
-
-        {!loading && !loadError && unavailable && !data && (
-          <p className="status-unavailable">
-            Data status registrasi belum tersedia. Fitur ini akan aktif setelah integrasi backend tersedia.
-          </p>
         )}
 
         {!loading && data && (

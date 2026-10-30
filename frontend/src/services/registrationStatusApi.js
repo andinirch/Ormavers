@@ -37,22 +37,45 @@ function normalizeStatus(result) {
  */
 
 /**
- * @returns {Promise<{data: RegistrationStatusData|null, unavailable: boolean, error: string|null}>}
+ * @returns {Promise<{data: RegistrationStatusData|null, error: string|null}>}
  */
 export async function getMyRegistrationStatus() {
   try {
     const response = await api.get('/registration/status')
-    return { data: normalizeStatus(response.data), unavailable: false, error: null }
+    return { data: normalizeStatus(response.data), error: null }
   } catch (error) {
     const message = error.response?.data?.message ?? 'Status registrasi gagal dimuat. Silakan coba lagi.'
-    return { data: null, unavailable: false, error: message }
+    return { data: null, error: message }
+  }
+}
+
+/**
+ * Unggah ulang foto KTM untuk pendaftar anggota yang ditolak.
+ * @param {File} file JPG/JPEG
+ * @returns {Promise<{ok: boolean, error: string|null}>}
+ */
+export async function ajukanUlangFotoKtm(file) {
+  const formData = new FormData()
+  formData.append('foto_ktm', file)
+
+  try {
+    await api.post('/registration/anggota/ajukan-ulang', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return { ok: true, error: null }
+  } catch (error) {
+    const validationErrors = error.response?.data?.errors
+    const message = validationErrors
+      ? Object.values(validationErrors).flat()[0]
+      : error.response?.data?.message ?? 'Foto KTM gagal dikirim. Silakan coba lagi.'
+    return { ok: false, error: message }
   }
 }
 
 /**
  * @param {File} file
  * @param {'sk_organisasi'|'sk_kepengurusan'} documentType
- * @returns {Promise<{ok: boolean, unavailable: boolean, error: string|null}>}
+ * @returns {Promise<{ok: boolean, error: string|null}>}
  */
 export async function resubmitSk(file, documentType = 'sk_kepengurusan') {
   const formData = new FormData()
@@ -62,12 +85,12 @@ export async function resubmitSk(file, documentType = 'sk_kepengurusan') {
     await api.post('/registration/resubmit-sk', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return { ok: true, unavailable: false, error: null }
+    return { ok: true, error: null }
   } catch (error) {
     const validationErrors = error.response?.data?.errors
     const message = validationErrors
       ? Object.values(validationErrors).flat()[0]
       : error.response?.data?.message ?? 'Dokumen gagal dikirim. Silakan coba lagi.'
-    return { ok: false, unavailable: false, error: message }
+    return { ok: false, error: message }
   }
 }

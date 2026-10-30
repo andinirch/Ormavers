@@ -538,7 +538,6 @@
 
 /* --- Status messages --- */
 
-.status-unavailable,
 .status-message {
   text-align: center;
   padding: 2rem 1rem;

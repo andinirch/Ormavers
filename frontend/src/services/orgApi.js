@@ -67,12 +67,21 @@ export async function getDirectoryOrganizationCounts(universities) {
   return new Map(counts)
 }
 
-export async function searchOrganizations(params = {}) {
-  const searchParams = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== '' && value != null),
-  )
-  const result = await api.get('/organisasi/cari', { params: searchParams }).then(responseData)
-  return Array.isArray(result?.data) ? result.data.map(normalizeOrganizationOption) : []
+// Parameter sesuai PencarianProfilOrganisasiController::cari (keyword, id_universitas, jenis_organisasi, id_bidang)
+export async function searchOrganizations({ keyword, id_universitas, jenis_organisasi, id_bidang } = {}) {
+  const params = {
+    keyword: keyword?.trim() || undefined,
+    id_universitas: id_universitas || undefined,
+    jenis_organisasi: jenis_organisasi ? String(jenis_organisasi).toLowerCase() : undefined,
+    id_bidang: id_bidang || undefined,
+  }
+  const result = await api.get('/organisasi/cari', { params }).then(responseData)
+  return Array.isArray(result?.data)
+    ? result.data.map((item) => ({
+      ...normalizeOrganizationOption(item),
+      type: String(item.jenis_organisasi ?? '').toUpperCase(),
+    }))
+    : []
 }
 
 export async function getOrganizationDetail(organizationId) {
@@ -135,7 +144,7 @@ export async function getVerifiedBem() {
   console.log('[orgApi] Fetching BEM from API')
   const result = await api.get('/public/bem').then(responseData)
   const items = result?.data?.bem ?? result?.bem ?? []
-  const data = { data: items.map(normalizeOrganizationOption), unavailable: false }
+  const data = { data: items.map(normalizeOrganizationOption) }
 
   // Save to cache
   setInCache('verified_bem', data)
@@ -155,7 +164,7 @@ export async function getVerifiedHmjUkm(bemId) {
   console.log(`[orgApi] Fetching HMJ/UKM for BEM ${bemId} from API`)
   const result = await api.get(`/public/bem/${bemId}/organisasi`).then(responseData)
   const items = result?.data?.organisasi ?? result?.organisasi ?? []
-  const data = { data: items.map(normalizeOrganizationOption), unavailable: false }
+  const data = { data: items.map(normalizeOrganizationOption) }
 
   // Save to cache
   setInCache(cacheKey, data)

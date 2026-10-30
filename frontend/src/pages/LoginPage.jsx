@@ -8,6 +8,7 @@ import OrmaLogo from '../components/OrmaLogo.jsx'
 import { isNonEmpty, requiredError } from '../validation/rules.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/login.css'
+import { hapusStatusAwal } from '../services/statusAwal.js'
 
 function VerifiedMark() {
   return (
@@ -50,13 +51,12 @@ function LoginPage() {
     }
     try {
       const result = await login(values)
+      hapusStatusAwal()
       const loggedInUser = result?.data?.pengguna
       const loggedInRoles = (result?.data?.roles ?? []).map((role) => typeof role === 'string' ? role : role?.name)
       const loggedInPermissions = result?.data?.permissions ?? []
       const redirect = searchParams.get('redirect')
-      const isOrganizationOrMember = loggedInUser?.peran === 'akun_bem'
-        || loggedInUser?.peran === 'akun_hmj_ukm'
-        || loggedInUser?.peran === 'akun_organisasi'
+      const isOrganizationOrMember = loggedInUser?.peran === 'akun_organisasi'
         || loggedInUser?.peran === 'anggota'
         || loggedInUser?.peran === 'member'
         || loggedInRoles.includes('akun_bem')
