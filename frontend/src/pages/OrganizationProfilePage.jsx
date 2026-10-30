@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
 
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
+import { findBemInduk } from '../services/orgApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
@@ -91,6 +92,7 @@ function OrganizationProfilePage() {
   const [personal, setPersonal] = useState({ name: '', nim: '', whatsapp: '', username: '' })
   const [photoUrl, setPhotoUrl] = useState(null)
   const [organizationDetail, setOrganizationDetail] = useState(null)
+  const [bemInduk, setBemInduk] = useState(null)
   const [registrationStatus, setRegistrationStatus] = useState(null)
   const [organizations, setOrganizations] = useState([])
   const [password, setPassword] = useState({ old: '', next: '', confirm: '' })
@@ -207,7 +209,12 @@ function OrganizationProfilePage() {
     // Load organization data (mungkin lambat)
     getMyRegistrationStatus().then((statusResult) => {
        if (!active) return
-       if (statusResult?.data?.organisasiDetail) setOrganizationDetail(statusResult.data.organisasiDetail)
+       if (statusResult?.data?.organisasiDetail) {
+         setOrganizationDetail(statusResult.data.organisasiDetail)
+         findBemInduk(statusResult.data.organisasiDetail.id_organisasi)
+           .then((name) => { if (active) setBemInduk(name) })
+           .catch(() => {})
+       }
       setRegistrationStatus(statusResult?.data?.status ?? null)
     }).catch(() => {
       // Silent fail untuk org data
@@ -227,7 +234,7 @@ function OrganizationProfilePage() {
   } : {
     name: organizationDetail?.nama_organisasi ?? null,
     campus: organizationDetail?.nama_universitas ?? null,
-    parent: organizationDetail?.induk?.nama_organisasi ?? null,
+    parent: organizationDetail?.induk?.nama_organisasi ?? bemInduk,
     type: organizationDetail?.jenis_organisasi?.toUpperCase() ?? null,
     phone: organizationDetail?.nomor_telepon ?? null,
   }

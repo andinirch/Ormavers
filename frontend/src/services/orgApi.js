@@ -191,6 +191,23 @@ export async function getOrganizationDirectory(universityId, universitiesData = 
   return { university, organizations }
 }
 
+/**
+ * Cari nama BEM induk dari sebuah HMJ/UKM dengan menelusuri anak tiap BEM aktif.
+ * Tanpa perubahan backend: hanya bekerja untuk organisasi yang sudah aktif (muncul di daftar publik).
+ * @returns {Promise<string|null>}
+ */
+export async function findBemInduk(organizationId) {
+  if (!organizationId) return null
+  const bemResult = await getVerifiedBem()
+  const parents = await Promise.all(bemResult.data.map(async (bem) => {
+    const children = await getVerifiedHmjUkm(bem.organization_id)
+    const found = children.data.some((item) => String(item.organization_id) === String(organizationId)
+      && item.organization_type !== 'BEM')
+    return found ? bem.name : null
+  }))
+  return parents.find(Boolean) ?? null
+}
+
 export async function getUniversityOrganizationCounts(universities, bemData = null) {
   // Reuse bemData jika sudah di-pass (avoid duplicate API call)
   const bemResult = bemData || await getVerifiedBem()
