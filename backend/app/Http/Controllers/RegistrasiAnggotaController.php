@@ -29,23 +29,38 @@ class RegistrasiAnggotaController extends Controller
         ], 201);
     }
 
-    public function ajukanUlang(AjukanUlangFotoKtmRequest $request)
+    public function ajukanUlang(AjukanUlangFotoKtmRequest $request): JsonResponse
     {
         $user = $request->user();
-        $profilAnggota = \App\Models\ProfilAnggota::where('id_pengguna', $user->id_pengguna)->first();
-        $idKeanggotaan = $profilAnggota ? $profilAnggota->id_keanggotaan : null;
 
+        // 1. Ambil data keanggotaan terbaru dari relasi user
+        $keanggotaan = $user->keanggotaan()->latest('id_keanggotaan')->first();
+        if (!$keanggotaan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data keanggotaan tidak ditemukan',
+            ], 404);
+        }
+
+        $idKeanggotaan = $keanggotaan->id_keanggotaan;
         $data = $request->validated();
         $fotoKtm = $request->file('foto_ktm');
 
-        $pendaftaran = $this->registrasiAnggotaService->ajukanUlang($idKeanggotaan, $data, $fotoKtm, $user);
+        // 2. Panggil service
+        $hasil = $this->registrasiAnggotaService->ajukanUlang($idKeanggotaan, $data, $fotoKtm, $user);
+
+        // 3. Tangani jika service mengembalikan error
+        if (isset($hasil['error'])) {
+            return response()->json([
+                'success' => false,
+                'message' => $hasil['error'],
+            ], $hasil['status'] ?? 400);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Foto KTM berhasil diajukan ulang',
-            'data' => [
-            'pendaftaran' => $pendaftaran,
-            ]
+            'message' => $hasil['message'] ?? 'Foto KTM berhasil diajukan ulang',
+            'data'    => $hasil,
         ], 200);
     }
 }
