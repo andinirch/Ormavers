@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegistrasiAnggotaRequest;
+use App\Http\Requests\AjukanUlangFotoKtmRequest;
 use App\Services\RegistrasiAnggotaService;
 use Illuminate\Http\JsonResponse;
 
@@ -28,20 +29,23 @@ class RegistrasiAnggotaController extends Controller
         ], 201);
     }
 
-    public function ajukanUlang(AjukanUlangFotoKtmRequest $request): JsonResponse
+    public function ajukanUlang(AjukanUlangFotoKtmRequest $request)
     {
+        $user = $request->user();
+        $profilAnggota = \App\Models\ProfilAnggota::where('id_pengguna', $user->id_pengguna)->first();
+        $idKeanggotaan = $profilAnggota ? $profilAnggota->id_keanggotaan : null;
+
         $data = $request->validated();
         $fotoKtm = $request->file('foto_ktm');
 
-        // Memanggil service untuk menangani logika resubmit foto KTM
-        $pendaftaran = $this->registrasiAnggotaService->ajukanUlang($request->user(), $data, $fotoKtm);
+        $pendaftaran = $this->registrasiAnggotaService->ajukanUlang($idKeanggotaan, $data, $fotoKtm, $user);
 
         return response()->json([
             'success' => true,
             'message' => 'Foto KTM berhasil diajukan ulang',
-            'data'    => [
-                'pendaftaran' => $pendaftaran,
-            ],
+            'data' => [
+            'pendaftaran' => $pendaftaran,
+            ]
         ], 200);
     }
 }

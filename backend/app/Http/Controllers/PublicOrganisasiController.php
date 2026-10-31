@@ -41,4 +41,20 @@ class PublicOrganisasiController extends Controller
             'data'    => $result,
         ]);
     }
+
+    public function organisasiBerdasarkanUniversitas(int $id_universitas): JsonResponse
+    {
+        // Ambil semua organisasi (BEM, HMJ, UKM) yang terdaftar di universitas tersebut
+        $organisasi = \App\Models\Organisasi::where('id_universitas', $id_universitas)
+            ->where('status_pendaftaran', 'disetujui') 
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar organisasi universitas berhasil diambil',
+            'data'    => [
+            'organisasi' => $organisasi,
+            ],
+        ]);
+    }
 }

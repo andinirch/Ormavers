@@ -40,6 +40,10 @@ Route::get('/public/bem/{id}/organisasi', [PublicOrganisasiController::class, 'o
     ->whereNumber('id')
     ->middleware('throttle:300,1');
 
+Route::get('/public/universitas/{id_universitas}/organisasi-lengkap', [PublicOrganisasiController::class, 'organisasiBerdasarkanUniversitas'])
+    ->whereNumber('id_universitas')
+    ->middleware('throttle:300,1');
+
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
 
