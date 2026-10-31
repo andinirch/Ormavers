@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\DirektoriOrganisasiService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DirektoriOrganisasiController extends Controller
 {
@@ -12,11 +13,14 @@ class DirektoriOrganisasiController extends Controller
     ) {}
 
     /**
-     * Menampilkan daftar direktori universitas.
+     * Menampilkan daftar direktori universitas dengan fitur pencarian dan pagination.
      */
-    public function universitas(): JsonResponse
+    public function universitas(Request $request): JsonResponse
     {
-        $data = $this->direktoriService->getDaftarUniversitas();
+        $search = $request->input('search');
+
+        // Mengirim parameter pencarian ke service
+        $data = $this->direktoriService->getDaftarUniversitas($search);
 
         return response()->json([
             'success' => true,

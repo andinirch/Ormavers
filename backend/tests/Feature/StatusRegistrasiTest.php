@@ -205,34 +205,6 @@ class StatusRegistrasiTest extends TestCase
             ]);
     }
 
-    public function test_logout_registrasi_mencabut_token_dan_mencatat_log(): void
-    {
-        $data = $this->buatPendaftaranOrganisasi(['status_akun' => 'menunggu']);
-        $res = $this->postJson('/api/auth/login', [
-            'username' => $data['pengguna']->username,
-            'password' => 'password',
-        ]);
-        $token = $res->json('data.token');
-        $headers = ['Authorization' => 'Bearer ' . $token];
-
-        $resLogout = $this->postJson('/api/registration/logout', [], $headers);
-        $resLogout->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Logout berhasil',
-            ]);
-
-        // Token sudah dicabut
-        auth()->forgetGuards();
-        $this->getJson('/api/registration/status', $headers)
-            ->assertStatus(401);
-
-        $this->assertDatabaseHas('log_aktivitas', [
-            'id_pengguna'     => $data['pengguna']->id_pengguna,
-            'jenis_aktivitas' => 'logout',
-            'keterangan'      => 'Keluar dari sistem',
-        ]);
-    }
 
     // -------------------------------------------------------
     // 2. GET /api/registration/status (UC-04)

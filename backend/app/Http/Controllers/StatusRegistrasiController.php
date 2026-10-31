@@ -61,22 +61,4 @@ class StatusRegistrasiController extends Controller
             'data'    => $result,
         ]);
     }
-
-    public function logout(Request $request): JsonResponse
-    {
-        $pengguna = $request->user();
-
-        $pengguna->currentAccessToken()->delete();
-
-        $this->logAktivitasService->catat(
-            $pengguna->id_pengguna,
-            'logout',
-            'Keluar dari sistem'
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout berhasil',
-        ]);
-    }
 }

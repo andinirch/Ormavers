@@ -84,19 +84,6 @@ class LogLintasFiturTest extends TestCase
         $this->assertEquals($userAktif->id_pengguna, $log1->id_pengguna);
         $this->assertEquals(LogAktivitasService::JENIS_LOGOUT, $log1->jenis_aktivitas);
 
-        // 2. Logout status registrasi (/registration/logout)
-        $userMenunggu = Pengguna::factory()->menunggu()->create();
-        $tokenTerbatas = $userMenunggu->createToken('auth_token', ['status-registrasi'])->plainTextToken;
-
-        $this->app['auth']->forgetGuards();
-
-        $res2 = $this->withHeader('Authorization', "Bearer {$tokenTerbatas}")
-            ->postJson('/api/registration/logout');
-        $res2->assertStatus(200);
-
-        $log2 = LogAktivitas::latest('id_log')->first();
-        $this->assertEquals($userMenunggu->id_pengguna, $log2->id_pengguna);
-        $this->assertEquals(LogAktivitasService::JENIS_LOGOUT, $log2->jenis_aktivitas);
     }
 
     public function test_registrasi_bem_hmj_ukm_anggota_dan_resubmit_sk_mencatat_log_pendaftaran()

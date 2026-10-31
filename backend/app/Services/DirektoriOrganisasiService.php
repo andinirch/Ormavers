@@ -13,11 +13,14 @@ class DirektoriOrganisasiService
      *
      * @return array
      */
-    public function getDaftarUniversitas(): array
+    public function getDaftarUniversitas(?string $search = null)
     {
         return Universitas::orderBy('nama_universitas', 'asc')
-            ->get()
-            ->map(function (Universitas $univ) {
+            ->when($search, function ($query, $search) {
+                return $query->where('nama_universitas', 'like', '%' . $search . '%');
+            })
+            ->paginate(6)
+            ->through(function (Universitas $univ) {
                 $isDefaultLogo = true;
                 $logoUrl = asset('images/default-university.png');
 

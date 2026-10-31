@@ -249,8 +249,9 @@ class OrgMemberRequestTest extends TestCase
             ->assertJsonPath('message', 'Keanggotaan berhasil ditolak');
 
         // Record keanggotaan terhapus
-        $this->assertDatabaseMissing('keanggotaan', [
-            'id_keanggotaan' => $idKeanggotaan,
+        $this->assertDatabaseHas('keanggotaan', [
+            'id_keanggotaan'       => $idKeanggotaan,
+            'status_keanggotaan'   => 'ditolak', 
         ]);
 
         // Akun pengguna & profil TETAP ADA dan AMAN

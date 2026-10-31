@@ -236,24 +236,12 @@ class VerifikasiHmjUkmTest extends TestCase
     ]);
 
         // 1. Data pendaftaran terhapus secara permanen (hard delete)
-        $this->assertDatabaseMissing('pendaftaran_organisasi', [
+        $this->assertDatabaseHas('pendaftaran_organisasi', [
             'id_pendaftaran_organisasi' => $idPend,
+            'status_pendaftaran'        => 'ditolak',
         ]);
 
-        // 2. Data organisasi terhapus
-        $this->assertDatabaseMissing('organisasi', [
-            'id_organisasi' => $idOrg,
-        ]);
-
-        // 3. Akun dan profil pengguna terhapus
-        $this->assertDatabaseMissing('pengguna', [
-            'id_pengguna' => $idPengguna,
-        ]);
-        $this->assertDatabaseMissing('profil_anggota', [
-            'id_pengguna' => $idPengguna,
-        ]);
-
-        // 4. Log verifikasi tercatat
+        // 2. Log verifikasi tercatat
         $this->assertDatabaseHas('log_aktivitas', [
             'id_pengguna'     => $userBem->id_pengguna,
             'jenis_aktivitas' => 'verifikasi',

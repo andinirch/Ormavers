@@ -57,7 +57,7 @@ Route::middleware(['auth:sanctum', 'akses.status.registrasi'])->group(function (
     Route::get('/registration/status', [StatusRegistrasiController::class, 'status'])
         ->middleware('throttle:30,1');
     Route::post('/registration/resubmit-sk', [StatusRegistrasiController::class, 'resubmitSk']);
-    Route::post('/registration/logout', [StatusRegistrasiController::class, 'logout']);
+    Route::post('/registration/anggota/ajukan-ulang', [RegistrasiAnggotaController::class, 'ajukanUlang']);
 });
 
 // Butuh token

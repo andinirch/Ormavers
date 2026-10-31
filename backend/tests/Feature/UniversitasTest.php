@@ -54,7 +54,7 @@ class UniversitasTest extends TestCase
 
         $seeder->run();
         $countAwal = Universitas::count();
-        $this->assertEquals(5, $countAwal);
+        $this->assertEquals(24, $countAwal);
 
         // Jalankan kedua kali untuk verifikasi idempoten
         $seeder->run();

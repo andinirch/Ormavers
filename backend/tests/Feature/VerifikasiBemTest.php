@@ -305,28 +305,16 @@ class VerifikasiBemTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
+                'message' => 'Pendaftaran BEM berhasil ditolak',
             ]);
 
         // 1. Data pendaftaran terhapus (hard delete)
-        $this->assertDatabaseMissing('pendaftaran_organisasi', [
+        $this->assertDatabaseHas('pendaftaran_organisasi', [
             'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
+            'status_pendaftaran'        => 'ditolak',
         ]);
 
-        // 2. Data organisasi terhapus
-        $this->assertDatabaseMissing('organisasi', [
-            'id_organisasi' => $idOrganisasi,
-        ]);
-
-        // 3. Pengguna dan profil terhapus
-        $this->assertDatabaseMissing('pengguna', [
-            'id_pengguna' => $idPengguna,
-        ]);
-        $this->assertDatabaseMissing('profil_anggota', [
-            'id_pengguna' => $idPengguna,
-        ]);
-
-        // 4. Log verifikasi tercatat dengan pelaku verifikator
+        // 3. Log verifikasi tercatat dengan pelaku verifikator
         $this->assertDatabaseHas('log_aktivitas', [
             'id_pengguna'     => $admin->id_pengguna,
             'jenis_aktivitas' => 'verifikasi',
@@ -351,7 +339,7 @@ class VerifikasiBemTest extends TestCase
             'password' => 'password',
         ]);
 
-        $loginResponse->assertStatus(401);
+        $loginResponse->assertStatus(200);
     }
 
     public function test_dokumen_dapat_diunduh_oleh_administrator(): void
@@ -558,10 +546,10 @@ class VerifikasiBemTest extends TestCase
         ], $headers)->assertStatus(200);
 
         $resApproveSetelahReject = $this->postJson("/api/admin/registrations/bem/{$p2->id_pendaftaran_organisasi}/approve", [], $headers);
-        $resApproveSetelahReject->assertStatus(404)
+        $resApproveSetelahReject->assertStatus(409)
             ->assertJson([
                 'success' => false,
-                'message' => 'Pendaftaran BEM tidak ditemukan',
+                'message' => 'Pendaftaran sudah diputuskan',
             ]);
     }
 

@@ -104,7 +104,7 @@ class StatusRegistrasiService
                 'id_organisasi'   => $keanggotaan->organisasi?->id_organisasi,
                 'nama_organisasi' => $keanggotaan->organisasi?->nama_organisasi,
             ],
-            'bisa_unggah_ulang'   => false,
+            'bisa_unggah_ulang' => ($keanggotaan->status_keanggotaan === 'ditolak'),
             'batas_ukuran_sk_mb'  => 2,
             'tanggal_pendaftaran' => $keanggotaan->tanggal_pendaftaran?->toISOString(),
             'tanggal_verifikasi'  => $keanggotaan->tanggal_verifikasi?->toISOString(),

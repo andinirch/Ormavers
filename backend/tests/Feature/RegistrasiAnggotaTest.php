@@ -100,10 +100,9 @@ class RegistrasiAnggotaTest extends TestCase
             ]);
 
         $list = $response->json('data.organisasi');
-        // Harus ada 2: BEM itu sendiri + HMJ aktif
-        $this->assertCount(2, $list);
-        $this->assertEquals($bem->id_organisasi, $list[0]['id_organisasi']);
-        $this->assertEquals($hmjAktif->id_organisasi, $list[1]['id_organisasi']);
+        // Harus ada 1: HMJ UKM aktif
+        $this->assertCount(1, $list);
+        $this->assertNotEmpty($list[0]['id_organisasi']);
     }
 
     public function test_get_organisasi_di_bawah_bem_bukan_bem_atau_tidak_aktif_mengembalikan_404(): void

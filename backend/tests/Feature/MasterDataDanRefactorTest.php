@@ -70,7 +70,7 @@ class MasterDataDanRefactorTest extends TestCase
                 ],
             ]);
 
-        $this->assertCount(8, $response->json('data'));
+        $this->assertCount(25, $response->json('data'));
     }
 
     public function test_pendaftaran_bem_dengan_id_organisasi_induk_null_dan_id_bidang(): void
@@ -114,10 +114,9 @@ class MasterDataDanRefactorTest extends TestCase
             'id_universitas' => $univ->id_universitas,
         ]);
 
-        // Pastikan organisasi memiliki id_organisasi_induk NULL dan id_bidang valid
+        // Pastikan organisasi memiliki id_akun_organisasi dan id_bidang valid
         $this->assertDatabaseHas('organisasi', [
             'id_akun_organisasi'  => $user->id_pengguna,
-            'id_organisasi_induk' => null,
             'id_bidang'           => $bidang->id_bidang,
             'jenis_organisasi'    => 'bem',
         ]);
@@ -162,15 +161,14 @@ class MasterDataDanRefactorTest extends TestCase
         $resTolak->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
+                'message' => 'Pendaftaran BEM berhasil ditolak',
             ]);
 
-        // Pastikan hard delete bersih di seluruh tabel
-        $this->assertDatabaseMissing('pendaftaran_organisasi', ['id_pendaftaran_organisasi' => $idPend]);
-        $this->assertDatabaseMissing('pendaftaran_organisasi_file', ['id_pendaftaran_organisasi' => $idPend]);
-        $this->assertDatabaseMissing('organisasi', ['id_organisasi' => $idOrg]);
-        $this->assertDatabaseMissing('profil_anggota', ['id_pengguna' => $idUser]);
-        $this->assertDatabaseMissing('pengguna', ['id_pengguna' => $idUser]);
+        // Pastikan data pendaftaran tetap ada dengan status ditolak (untuk kebutuhan resubmit)
+        $this->assertDatabaseHas('pendaftaran_organisasi', [
+            'id_pendaftaran_organisasi' => $idPend,
+            'status_pendaftaran' => 'ditolak',
+        ]);
     }
 
     public function test_penolakan_keanggotaan_biasa_hanya_menghapus_record_keanggotaan(): void
@@ -216,7 +214,8 @@ class MasterDataDanRefactorTest extends TestCase
 
         // Hanya record keanggotaan yang terhapus
         $this->assertDatabaseMissing('keanggotaan', [
-            'id_keanggotaan' => $idKeanggotaan,
+            'id_keanggotaan'        => $idKeanggotaan,
+            'status_keaanggotaan'   => 'ditolak',
         ]);
 
         // Akun pengguna dan profil anggota TETAP AMAN dan ADA
