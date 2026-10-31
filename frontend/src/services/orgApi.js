@@ -196,16 +196,31 @@ export async function getOrganizationDirectory(universityId, universitiesData = 
  * Tanpa perubahan backend: hanya bekerja untuk organisasi yang sudah aktif (muncul di daftar publik).
  * @returns {Promise<string|null>}
  */
-export async function findBemInduk(organizationId) {
+export async function findBemIndukInfo(organizationId) {
   if (!organizationId) return null
   const bemResult = await getVerifiedBem()
   const parents = await Promise.all(bemResult.data.map(async (bem) => {
     const children = await getVerifiedHmjUkm(bem.organization_id)
     const found = children.data.some((item) => String(item.organization_id) === String(organizationId)
       && item.organization_type !== 'BEM')
-    return found ? bem.name : null
+    return found ? bem : null
   }))
-  return parents.find(Boolean) ?? null
+  const parent = parents.find(Boolean)
+  if (!parent) return null
+
+  let universityName = null
+  try {
+    const universities = await getUniversitas()
+    universityName = universities.find((item) => String(item.value) === String(parent.university_id))?.label ?? null
+  } catch {
+    universityName = null
+  }
+  return { name: parent.name, universityName }
+}
+
+export async function findBemInduk(organizationId) {
+  const info = await findBemIndukInfo(organizationId)
+  return info?.name ?? null
 }
 
 export async function getUniversityOrganizationCounts(universities, bemData = null) {
