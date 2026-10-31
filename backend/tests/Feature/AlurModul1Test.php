@@ -139,9 +139,9 @@ class AlurModul1Test extends TestCase
             ->assertJsonMissing(['akses_terbatas' => true]);
         $tokenBemPenuh = $resBemLoginPenuh->json('data.token');
 
-        // Step 5: HMJ/UKM mendaftar ke BEM aktif
+        // Step 5: HMJ/UKM mendaftar ke BEM aktif menggunakan id_universitas
         $resHmjReg = $this->postJson('/api/register/hmj-ukm', [
-            'id_organisasi_induk'      => $bemOrg->id_organisasi,
+            'id_universitas'           => $univ->id_universitas,
             'jenis_organisasi'         => 'hmj',
             'nama_organisasi'          => 'HMJ Teknik Informatika',
             'nomor_telepon_organisasi' => '08222222222',
@@ -164,11 +164,9 @@ class AlurModul1Test extends TestCase
         $hmjPendaftaran = PendaftaranOrganisasi::where('id_organisasi', $hmjOrg->id_organisasi)->first();
         $this->assertEquals('menunggu', $hmjPendaftaran->status_pendaftaran);
 
-        // Step 6: BEM menolak pendaftaran HMJ dengan alasan (Hard Delete sesuai PDM baru)
+        // Step 6: BEM menolak pendaftaran HMJ dengan alasan
         $this->app['auth']->forgetGuards();
         $idHmjPend = $hmjPendaftaran->id_pendaftaran_organisasi;
-        $idHmjOrg  = $hmjOrg->id_organisasi;
-        $idHmjUser = $hmjUser->id_pengguna;
 
         $resHmjTolak = $this->withHeader('Authorization', "Bearer {$tokenBemPenuh}")
             ->postJson("/api/org/registrations/hmj-ukm/{$idHmjPend}/reject", [
@@ -177,25 +175,25 @@ class AlurModul1Test extends TestCase
         $resHmjTolak->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
+                'message' => 'Pendaftaran HMJ berhasil ditolak',
             ]);
 
-        // Verifikasi hard delete: data pendaftaran, organisasi, akun, dan profil terhapus
-        $this->assertDatabaseMissing('pendaftaran_organisasi', ['id_pendaftaran_organisasi' => $idHmjPend]);
-        $this->assertDatabaseMissing('organisasi', ['id_organisasi' => $idHmjOrg]);
-        $this->assertDatabaseMissing('pengguna', ['id_pengguna' => $idHmjUser]);
-        $this->assertDatabaseMissing('profil_anggota', ['id_pengguna' => $idHmjUser]);
+        // Verifikasi status pendaftaran ditolak
+        $this->assertDatabaseHas('pendaftaran_organisasi', [
+            'id_pendaftaran_organisasi' => $idHmjPend,
+            'status_pendaftaran'        => 'ditolak',
+        ]);
 
-        // Step 7: Karena data lama dibersihkan, pendaftar mendaftar ulang dengan dokumen valid
+        // Step 7: Pendaftar mendaftar ulang dengan dokumen valid dan akun baru
         $resHmjRegUlang = $this->postJson('/api/register/hmj-ukm', [
-            'id_organisasi_induk'      => $bemOrg->id_organisasi,
+            'id_universitas'           => $univ->id_universitas,
             'jenis_organisasi'         => 'hmj',
-            'nama_organisasi'          => 'HMJ Teknik Informatika',
+            'nama_organisasi'          => 'HMJ Teknik Informatika Revisi',
             'nomor_telepon_organisasi' => '08222222222',
-            'nama'                     => 'Ketua HMJ TI',
-            'nim'                      => 'HMJ001',
+            'nama'                     => 'Ketua HMJ TI Baru',
+            'nim'                      => 'HMJ002',
             'nomor_whatsapp'           => '08222222222',
-            'username'                 => 'ketua_hmj_ti',
+            'username'                 => 'ketua_hmj_ti_baru',
             'password'                 => 'HmjPassword123',
             'password_confirmation'    => 'HmjPassword123',
             'foto_ktm'                 => UploadedFile::fake()->createWithContent('ktm_hmj.jpg', $this->jpegHeader()),
@@ -204,29 +202,29 @@ class AlurModul1Test extends TestCase
         ]);
         $resHmjRegUlang->assertStatus(201);
 
-        $hmjUser = Pengguna::where('username', 'ketua_hmj_ti')->first();
-        $this->assertEquals('menunggu', $hmjUser->status_akun);
-        $hmjOrg = Organisasi::where('id_akun_organisasi', $hmjUser->id_pengguna)->first();
-        $hmjPendaftaran = PendaftaranOrganisasi::where('id_organisasi', $hmjOrg->id_organisasi)->first();
-        $this->assertEquals('menunggu', $hmjPendaftaran->status_pendaftaran);
+        $hmjUserBaru = Pengguna::where('username', 'ketua_hmj_ti_baru')->first();
+        $this->assertEquals('menunggu', $hmjUserBaru->status_akun);
+        $hmjOrgBaru = Organisasi::where('id_akun_organisasi', $hmjUserBaru->id_pengguna)->first();
+        $hmjPendaftaranBaru = PendaftaranOrganisasi::where('id_organisasi', $hmjOrgBaru->id_organisasi)->first();
+        $this->assertEquals('menunggu', $hmjPendaftaranBaru->status_pendaftaran);
 
         // Step 8: BEM menyetujui HMJ
         $this->app['auth']->forgetGuards();
         $resHmjApprove = $this->withHeader('Authorization', "Bearer {$tokenBemPenuh}")
-            ->postJson("/api/org/registrations/hmj-ukm/{$hmjPendaftaran->id_pendaftaran_organisasi}/approve");
+            ->postJson("/api/org/registrations/hmj-ukm/{$hmjPendaftaranBaru->id_pendaftaran_organisasi}/approve");
         $resHmjApprove->assertStatus(200);
 
-        $hmjPendaftaran->refresh();
-        $hmjOrg->refresh();
-        $hmjUser->refresh();
-        $this->assertEquals('disetujui', $hmjPendaftaran->status_pendaftaran);
-        $this->assertEquals('aktif', $hmjOrg->status_organisasi);
-        $this->assertEquals('aktif', $hmjUser->status_akun);
-        $this->assertCount(0, $hmjUser->tokens()->get());
+        $hmjPendaftaranBaru->refresh();
+        $hmjOrgBaru->refresh();
+        $hmjUserBaru->refresh();
+        $this->assertEquals('disetujui', $hmjPendaftaranBaru->status_pendaftaran);
+        $this->assertEquals('aktif', $hmjOrgBaru->status_organisasi);
+        $this->assertEquals('aktif', $hmjUserBaru->status_akun);
+        $this->assertCount(0, $hmjUserBaru->tokens()->get());
 
         // Step 9: HMJ login penuh
         $resHmjLoginPenuh = $this->postJson('/api/auth/login', [
-            'username' => 'ketua_hmj_ti',
+            'username' => 'ketua_hmj_ti_baru',
             'password' => 'HmjPassword123',
         ]);
         $resHmjLoginPenuh->assertStatus(200)
@@ -235,7 +233,7 @@ class AlurModul1Test extends TestCase
 
         // Step 10: Anggota mendaftar ke HMJ/UKM
         $resAnggotaReg = $this->postJson('/api/register/anggota', [
-            'id_organisasi'         => $hmjOrg->id_organisasi,
+            'id_organisasi'         => $hmjOrgBaru->id_organisasi,
             'nama'                  => 'Mahasiswa Anggota',
             'nim'                   => 'MHS001',
             'nomor_whatsapp'        => '08333333333',

@@ -32,7 +32,6 @@ class ProfilLintasPeranTest extends TestCase
     private function buatUserPeran(string $roleName, string $statusAkun = 'aktif'): array
     {
         $univ = Universitas::first();
-
         $user = Pengguna::factory()->create([
             'status_akun' => $statusAkun,
             'kata_sandi'  => 'Password123',
@@ -76,6 +75,7 @@ class ProfilLintasPeranTest extends TestCase
             // 1. GET /api/profil
             $getRes = $this->withHeader('Authorization', "Bearer {$token}")
                 ->getJson('/api/profil');
+
             $getRes->assertStatus(200)
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('data.id_pengguna', $user->id_pengguna)
@@ -85,8 +85,10 @@ class ProfilLintasPeranTest extends TestCase
             $putRes = $this->withHeader('Authorization', "Bearer {$token}")
                 ->putJson('/api/profil', [
                     'nama'           => "Nama Baru {$role}",
+                    'username'       => $user->username, // Menambahkan username agar lolos ProfilRequest
                     'nomor_whatsapp' => '081234567890',
                 ]);
+
             $putRes->assertStatus(200)
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('data.nama', "Nama Baru {$role}");
@@ -98,6 +100,7 @@ class ProfilLintasPeranTest extends TestCase
                     'password_baru'       => 'NewPassword123',
                     'konfirmasi_password' => 'NewPassword123',
                 ]);
+
             $pwdRes->assertStatus(200)
                 ->assertJsonPath('success', true);
 
@@ -106,6 +109,7 @@ class ProfilLintasPeranTest extends TestCase
                 'username' => $user->username,
                 'password' => 'NewPassword123',
             ]);
+
             $newToken = $loginRes->json('data.token');
 
             // 4. POST /api/profil/foto
@@ -114,6 +118,7 @@ class ProfilLintasPeranTest extends TestCase
                 ->postJson('/api/profil/foto', [
                     'foto' => UploadedFile::fake()->createWithContent('avatar.jpg', $this->jpegHeader()),
                 ]);
+
             $fotoRes->assertStatus(200)
                 ->assertJsonPath('success', true);
         }

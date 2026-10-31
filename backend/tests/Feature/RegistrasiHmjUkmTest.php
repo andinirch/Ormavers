@@ -45,7 +45,6 @@ class RegistrasiHmjUkmTest extends TestCase
 
         return Organisasi::create([
             'id_universitas'     => $univ->id_universitas,
-            'id_organisasi_induk'=> null,
             'id_akun_organisasi' => $pengguna->id_pengguna,
             'nama_organisasi'    => $namaBem,
             'jenis_organisasi'   => 'bem',
@@ -54,10 +53,10 @@ class RegistrasiHmjUkmTest extends TestCase
         ]);
     }
 
-    private function validPayload(Organisasi $bemInduk, array $overrides = []): array
+    private function validPayload(Organisasi $bem, array $overrides = []): array
     {
         return array_merge([
-            'id_organisasi_induk'      => $bemInduk->id_organisasi,
+            'id_universitas'           => $bem->id_universitas,
             'jenis_organisasi'         => 'hmj',
             'nama_organisasi'          => 'HMJ Teknik Informatika',
             'nomor_telepon_organisasi' => '02198765432',
@@ -124,11 +123,10 @@ class RegistrasiHmjUkmTest extends TestCase
                 'message' => 'Registrasi HMJ berhasil dikirim',
                 'data'    => [
                     'pendaftaran' => [
-                        'jenis_organisasi'    => 'hmj',
-                        'nama_organisasi'     => 'HMJ Teknik Informatika',
-                        'id_organisasi_induk' => $bem->id_organisasi,
-                        'nama_bem_induk'      => $bem->nama_organisasi,
-                        'status_pendaftaran'  => 'menunggu',
+                        'jenis_organisasi'   => 'hmj',
+                        'nama_organisasi'    => 'HMJ Teknik Informatika',
+                        'id_universitas'     => $bem->id_universitas,
+                        'status_pendaftaran' => 'menunggu',
                     ],
                 ],
             ]);
@@ -146,7 +144,6 @@ class RegistrasiHmjUkmTest extends TestCase
         $this->assertNotNull($organisasi);
         $this->assertEquals('hmj', $organisasi->jenis_organisasi);
         $this->assertEquals($bem->id_universitas, $organisasi->id_universitas);
-        $this->assertEquals($bem->id_organisasi, $organisasi->id_organisasi_induk);
         $this->assertEquals('menunggu', $organisasi->status_organisasi);
 
         // Verifikasi Pendaftaran & Berkas
@@ -161,7 +158,6 @@ class RegistrasiHmjUkmTest extends TestCase
         $log = LogAktivitas::where('id_pengguna', $pengguna->id_pengguna)->first();
         $this->assertNotNull($log);
         $this->assertEquals('pendaftaran', $log->jenis_aktivitas);
-        $this->assertStringContainsString("Pendaftaran HMJ HMJ Teknik Informatika ke {$bem->nama_organisasi}", $log->keterangan);
     }
 
     public function test_registrasi_ukm_berhasil_201(): void
@@ -242,43 +238,37 @@ class RegistrasiHmjUkmTest extends TestCase
     // 3. VALIDASI GAGAL
     // -------------------------------------------------------------------------
 
-    public function test_induk_tidak_ada_atau_bukan_bem_atau_belum_aktif_mengembalikan_422(): void
+    public function test_universitas_tidak_ada_atau_belum_ada_bem_aktif_mengembalikan_422(): void
     {
         $this->fakeStorage();
         $bem = $this->buatBemAktif();
 
-        // 1. ID tidak ada
-        $payload1 = $this->validPayload($bem, ['id_organisasi_induk' => 99999]);
+        // 1. ID universitas tidak ditemukan di DB
+        $payload1 = $this->validPayload($bem, ['id_universitas' => 99999]);
         $this->postJson('/api/register/hmj-ukm', $payload1)
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['id_organisasi_induk']);
+            ->assertJsonValidationErrors(['id_universitas']);
 
-        // 2. Organisasi induk bukan bem (misal jenis hmj)
-        $orgHmj = Organisasi::create([
-            'id_universitas'     => $bem->id_universitas,
-            'id_organisasi_induk'=> $bem->id_organisasi,
-            'nama_organisasi'    => 'HMJ Lain',
-            'jenis_organisasi'   => 'hmj',
-            'nomor_telepon'      => '081234',
-            'status_organisasi'  => 'aktif',
-        ]);
-        $payload2 = $this->validPayload($bem, ['id_organisasi_induk' => $orgHmj->id_organisasi]);
+        // 2. Universitas ada tapi belum memiliki BEM aktif
+        $univTanpaBem = Universitas::create(['nama_universitas' => 'Universitas Tanpa BEM']);
+        $payload2 = $this->validPayload($bem, ['id_universitas' => $univTanpaBem->id_universitas]);
         $this->postJson('/api/register/hmj-ukm', $payload2)
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['id_organisasi_induk']);
+            ->assertJsonValidationErrors(['id_universitas']);
 
-        // 3. BEM belum aktif (menunggu)
-        $bemMenunggu = Organisasi::create([
-            'id_universitas'     => $bem->id_universitas,
-            'nama_organisasi'    => 'BEM Menunggu',
-            'jenis_organisasi'   => 'bem',
-            'nomor_telepon'      => '081234',
-            'status_organisasi'  => 'menunggu',
+        // 3. Universitas ada namun status BEM-nya masih menunggu
+        $univBemMenunggu = Universitas::create(['nama_universitas' => 'Universitas BEM Menunggu']);
+        Organisasi::create([
+            'id_universitas'    => $univBemMenunggu->id_universitas,
+            'nama_organisasi'   => 'BEM Menunggu',
+            'jenis_organisasi'  => 'bem',
+            'nomor_telepon'     => '081234',
+            'status_organisasi' => 'menunggu',
         ]);
-        $payload3 = $this->validPayload($bem, ['id_organisasi_induk' => $bemMenunggu->id_organisasi]);
+        $payload3 = $this->validPayload($bem, ['id_universitas' => $univBemMenunggu->id_universitas]);
         $this->postJson('/api/register/hmj-ukm', $payload3)
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['id_organisasi_induk']);
+            ->assertJsonValidationErrors(['id_universitas']);
     }
 
     public function test_nama_organisasi_kembar_dalam_universitas_sama_mengembalikan_422(): void

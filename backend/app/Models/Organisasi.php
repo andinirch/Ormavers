@@ -20,7 +20,6 @@ class Organisasi extends Model
 
     protected $fillable = [
         'id_universitas',
-        'id_organisasi_induk',
         'id_akun_organisasi',
         'id_bidang',
         'nama_organisasi',

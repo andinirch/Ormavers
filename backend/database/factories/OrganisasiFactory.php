@@ -18,7 +18,6 @@ class OrganisasiFactory extends Factory
     {
         return [
             'id_universitas'     => Universitas::factory(),
-            'id_organisasi_induk'=> null,
             'id_akun_organisasi' => Pengguna::factory()->akunOrganisasi(),
             'id_bidang'          => null,
             'nama_organisasi'    => 'BEM ' . fake()->unique()->words(2, true),

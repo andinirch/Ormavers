@@ -17,7 +17,7 @@ class RegistrasiHmjUkmRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_organisasi_induk'      => ['required', 'integer', 'exists:organisasi,id_organisasi'],
+            'id_universitas'           => ['required', 'integer', 'exists:universitas,id_universitas'],
             'id_bidang'                => ['nullable', 'integer', 'exists:bidang_organisasi,id_bidang'],
             'jenis_organisasi'         => ['required', 'string', 'in:hmj,ukm'],
             'nama_organisasi'          => ['required', 'string', 'max:150'],
@@ -36,9 +36,9 @@ class RegistrasiHmjUkmRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id_organisasi_induk.required'      => 'Organisasi induk BEM wajib dipilih',
-            'id_organisasi_induk.integer'       => 'ID organisasi induk harus berupa angka',
-            'id_organisasi_induk.exists'        => 'Organisasi induk tidak ditemukan',
+            'id_universitas.required'           => 'Universitas wajib dipilih',
+            'id_universitas.integer'            => 'ID universitas harus berupa angka',
+            'id_universitas.exists'             => 'Universitas tidak ditemukan',
             'id_bidang.exists'                  => 'Bidang organisasi tidak ditemukan',
             'jenis_organisasi.required'         => 'Jenis organisasi wajib dipilih',
             'jenis_organisasi.in'               => 'Jenis organisasi harus hmj atau ukm',
@@ -84,15 +84,22 @@ class RegistrasiHmjUkmRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
-            $idInduk = $this->input('id_organisasi_induk');
+            $idUniversitas = $this->input('id_universitas');
 
-            if ($idInduk && ! $validator->errors()->has('id_organisasi_induk')) {
-                $induk = Organisasi::find($idInduk);
+            if ($idUniversitas && ! $validator->errors()->has('id_universitas')) {
+                // 1. Validasi: Universitas pilihan harus memiliki BEM yang aktif
+                $bemAktif = Organisasi::where('id_universitas', $idUniversitas)
+                    ->where('jenis_organisasi', 'bem')
+                    ->where('status_organisasi', 'aktif')
+                    ->exists();
 
-                if (! $induk || $induk->jenis_organisasi !== 'bem' || $induk->status_organisasi !== 'aktif') {
-                    $validator->errors()->add('id_organisasi_induk', 'Organisasi induk harus berupa BEM yang aktif');
-                } elseif ($this->input('nama_organisasi') && ! $validator->errors()->has('nama_organisasi')) {
-                    $namaKembar = Organisasi::where('id_universitas', $induk->id_universitas)
+                if (! $bemAktif) {
+                    $validator->errors()->add('id_universitas', 'Universitas pilihan belum memiliki BEM aktif yang terdaftar');
+                }
+
+                // 2. Validasi: Keunikan nama organisasi di universitas tersebut
+                if ($this->input('nama_organisasi') && ! $validator->errors()->has('nama_organisasi')) {
+                    $namaKembar = Organisasi::where('id_universitas', $idUniversitas)
                         ->whereRaw('LOWER(TRIM(nama_organisasi)) = ?', [strtolower(trim($this->input('nama_organisasi')))])
                         ->exists();
 

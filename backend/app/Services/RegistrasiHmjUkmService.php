@@ -33,20 +33,20 @@ class RegistrasiHmjUkmService
 
         try {
             return DB::transaction(function () use ($data, $files, &$uploadedPaths) {
-                // 1. Ambil BEM induk
-                $bemInduk = Organisasi::where('id_organisasi', $data['id_organisasi_induk'])
+                // 1. Cari BEM aktif di universitas pilihan sebagai BEM Verifikator
+                $bemVerifikator = Organisasi::where('id_universitas', $data['id_universitas'])
                     ->where('jenis_organisasi', 'bem')
                     ->where('status_organisasi', 'aktif')
                     ->first();
 
-                if (! $bemInduk) {
+                if (! $bemVerifikator) {
                     throw ValidationException::withMessages([
-                        'id_organisasi_induk' => ['Organisasi induk harus berupa BEM yang aktif'],
+                        'id_universitas' => ['Universitas pilihan belum memiliki BEM aktif yang terdaftar'],
                     ]);
                 }
 
                 // 2. Cek keunikan nama organisasi di dalam universitas yang sama
-                $namaKembar = Organisasi::where('id_universitas', $bemInduk->id_universitas)
+                $namaKembar = Organisasi::where('id_universitas', $data['id_universitas'])
                     ->whereRaw('LOWER(TRIM(nama_organisasi)) = ?', [strtolower(trim($data['nama_organisasi']))])
                     ->exists();
 
@@ -76,19 +76,18 @@ class RegistrasiHmjUkmService
                     'nim'            => $data['nim'] ?? null,
                     'nomor_whatsapp' => $data['nomor_whatsapp'] ?? null,
                     'foto_ktm'       => $uploadedPaths[0],
-                    'id_universitas' => $bemInduk->id_universitas,
+                    'id_universitas' => $data['id_universitas'],
                 ]);
 
-                // 5. Buat organisasi (jenis hmj atau ukm, id_organisasi_induk = BEM, id_universitas dari induk)
+                // 5. Buat organisasi (menggunakan id_universitas, tanpa id_organisasi_induk)
                 $organisasi = Organisasi::create([
-                    'id_universitas'      => $bemInduk->id_universitas,
-                    'id_organisasi_induk' => $bemInduk->id_organisasi,
-                    'id_akun_organisasi'  => $pengguna->id_pengguna,
-                    'id_bidang'           => $data['id_bidang'] ?? null,
-                    'nama_organisasi'     => $data['nama_organisasi'],
-                    'jenis_organisasi'    => $data['jenis_organisasi'],
-                    'nomor_telepon'       => $data['nomor_telepon_organisasi'],
-                    'status_organisasi'   => 'menunggu',
+                    'id_universitas'     => $data['id_universitas'],
+                    'id_akun_organisasi' => $pengguna->id_pengguna,
+                    'id_bidang'          => $data['id_bidang'] ?? null,
+                    'nama_organisasi'    => $data['nama_organisasi'],
+                    'jenis_organisasi'   => $data['jenis_organisasi'],
+                    'nomor_telepon'      => $data['nomor_telepon_organisasi'],
+                    'status_organisasi'  => 'menunggu',
                 ]);
 
                 // 6. Tetapkan role Spatie akun_hmj_ukm (bukan akun_bem)
@@ -129,15 +128,15 @@ class RegistrasiHmjUkmService
                 $this->logAktivitasService->catat(
                     $pengguna->id_pengguna,
                     'pendaftaran',
-                    "Pendaftaran {$jenisLabel} {$organisasi->nama_organisasi} ke {$bemInduk->nama_organisasi}"
+                    "Pendaftaran {$jenisLabel} {$organisasi->nama_organisasi} untuk verifikasi BEM {$bemVerifikator->nama_organisasi}"
                 );
 
                 return [
                     'id_pendaftaran_organisasi' => $pendaftaran->id_pendaftaran_organisasi,
                     'jenis_organisasi'          => $organisasi->jenis_organisasi,
                     'nama_organisasi'           => $organisasi->nama_organisasi,
-                    'id_organisasi_induk'       => $bemInduk->id_organisasi,
-                    'nama_bem_induk'            => $bemInduk->nama_organisasi,
+                    'id_universitas'            => $organisasi->id_universitas,
+                    'nama_bem_verifikator'      => $bemVerifikator->nama_organisasi,
                     'status_pendaftaran'        => $pendaftaran->status_pendaftaran,
                     'tanggal_pendaftaran'       => $pendaftaran->tanggal_pendaftaran->toISOString(),
                 ];

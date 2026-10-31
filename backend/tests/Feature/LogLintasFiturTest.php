@@ -126,14 +126,14 @@ class LogLintasFiturTest extends TestCase
         $this->assertEquals($idBemUser, $logBem->id_pengguna);
         $this->assertEquals(LogAktivitasService::JENIS_PENDAFTARAN, $logBem->jenis_aktivitas);
 
-        // Aktifkan BEM agar bisa jadi induk
+        // Aktifkan BEM agar universitas memiliki BEM aktif
         $bemOrg = Organisasi::where('id_akun_organisasi', $idBemUser)->first();
         $bemOrg->update(['status_organisasi' => 'aktif']);
         Pengguna::where('id_pengguna', $idBemUser)->update(['status_akun' => 'aktif']);
 
-        // 2. Registrasi HMJ
+        // 2. Registrasi HMJ (Menggunakan id_universitas)
         $resHmj = $this->postJson('/api/register/hmj-ukm', [
-            'id_organisasi_induk'      => $bemOrg->id_organisasi,
+            'id_universitas'           => $univ->id_universitas,
             'jenis_organisasi'         => 'hmj',
             'nama_organisasi'          => 'HMJ Log Test',
             'nomor_telepon_organisasi' => '081234567891',

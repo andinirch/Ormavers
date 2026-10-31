@@ -101,9 +101,11 @@ class ProfilTest extends TestCase
 
         foreach ($perans as $peran) {
             [, , $headers] = $this->buatPengguna($peran);
+
             auth()->forgetGuards();
 
             $response = $this->getJson('/api/profil', $headers);
+
             $response->assertOk();
             $this->assertSame('aktif', $response->json('data.status_akun'));
         }
@@ -122,6 +124,7 @@ class ProfilTest extends TestCase
 
         $response = $this->putJson('/api/profil', [
             'nama'           => 'Nama Baru',
+            'username'       => $user->username, // Menambahkan username agar lolos ProfilRequest
             'nomor_whatsapp' => '082222222222',
         ], $headers);
 
@@ -154,6 +157,7 @@ class ProfilTest extends TestCase
 
         $response = $this->putJson('/api/profil', [
             'nama'           => 'Nama Baru Saja',
+            'username'       => $user->username, // Menambahkan username agar lolos ProfilRequest
             'nomor_whatsapp' => null,
         ], $headers);
 
@@ -329,7 +333,6 @@ class ProfilTest extends TestCase
     public function test_unggah_foto_profil_berhasil_dan_mengganti_foto_lama(): void
     {
         Storage::fake('public');
-
         [$user, , $headers] = $this->buatPengguna('anggota');
 
         auth()->forgetGuards();
@@ -374,7 +377,6 @@ class ProfilTest extends TestCase
 
         $user->refresh();
         $fotoBaruPath = $user->foto_profil;
-
         $this->assertNotEquals($fotoLamaPath, $fotoBaruPath);
         Storage::disk('public')->assertMissing($fotoLamaPath);
         Storage::disk('public')->assertExists($fotoBaruPath);
@@ -388,7 +390,6 @@ class ProfilTest extends TestCase
     public function test_unggah_foto_profil_format_salah_422(): void
     {
         Storage::fake('public');
-
         [, , $headers] = $this->buatPengguna('anggota');
 
         auth()->forgetGuards();
@@ -409,7 +410,6 @@ class ProfilTest extends TestCase
     public function test_unggah_foto_profil_lebih_dari_2mb_422(): void
     {
         Storage::fake('public');
-
         [, , $headers] = $this->buatPengguna('anggota');
 
         auth()->forgetGuards();

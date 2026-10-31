@@ -229,11 +229,11 @@ class VerifikasiHmjUkmTest extends TestCase
                 'alasan' => 'Berkas SK kepengurusan tidak ada cap stempel resmi.',
             ]);
 
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Pendaftaran ditolak dan data dibersihkan secara permanen.',
-            ]);
+     $response->assertStatus(200)
+    ->assertJson([
+        'success' => true,
+        'message' => 'Pendaftaran HMJ berhasil ditolak',
+    ]);
 
         // 1. Data pendaftaran terhapus secara permanen (hard delete)
         $this->assertDatabaseMissing('pendaftaran_organisasi', [
@@ -322,7 +322,7 @@ class VerifikasiHmjUkmTest extends TestCase
             ->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'message' => 'Registrasi ini bukan milik BEM Anda',
+                'message' => 'Registrasi ini bukan dari universitas Anda',
             ]);
 
         // BEM 2 mencoba menyetujui
@@ -331,7 +331,7 @@ class VerifikasiHmjUkmTest extends TestCase
             ->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'message' => 'Registrasi ini bukan milik BEM Anda',
+                'message' => 'Registrasi ini bukan dari universitas Anda',
             ]);
 
         // BEM 2 mencoba menolak
@@ -340,7 +340,7 @@ class VerifikasiHmjUkmTest extends TestCase
             ->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'message' => 'Registrasi ini bukan milik BEM Anda',
+                'message' => 'Registrasi ini bukan dari universitas Anda',
             ]);
     }
 
