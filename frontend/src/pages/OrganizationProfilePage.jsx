@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
 
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
-import { findBemInduk } from '../services/orgApi.js'
+import { findBemInduk, findBemIndukInfo } from '../services/orgApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
@@ -84,6 +84,24 @@ function MemberOrganizationIcon({ type }) {
     : <svg className="profile-member-org__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M18 9v6M15 12h6" /></svg>
 }
 
+function buildMemberList(organizations, organizationDetail) {
+  if (organizations.length > 0) return organizations
+  if (organizationDetail) {
+    return [{
+      id_organisasi: organizationDetail.id_organisasi,
+      nama_organisasi: organizationDetail.nama_organisasi,
+      jenis_organisasi: organizationDetail.jenis_organisasi,
+    }]
+  }
+  return []
+}
+
+function memberStatusLabel(status) {
+  if (status === 'disetujui' || status === 'aktif') return 'Aktif'
+  if (status === 'ditolak') return 'Ditolak'
+  return 'Menunggu verifikasi'
+}
+
 function OrganizationProfilePage() {
   const { user, roles, refreshUser } = useAuth()
   const key = roleKey(user, roles)
@@ -95,6 +113,7 @@ function OrganizationProfilePage() {
   const [bemInduk, setBemInduk] = useState(null)
   const [registrationStatus, setRegistrationStatus] = useState(null)
   const [organizations, setOrganizations] = useState([])
+  const [memberParents, setMemberParents] = useState({})
   const [password, setPassword] = useState({ old: '', next: '', confirm: '' })
   const [message, setMessage] = useState(null)
   const [profileLoading, setProfileLoading] = useState(true)
@@ -225,6 +244,46 @@ function OrganizationProfilePage() {
     return () => { active = false }
   }, [])
 
+  useEffect(() => {
+    if (key !== 'anggota') return
+    const list = buildMemberList(organizations, organizationDetail)
+    let active = true
+    Promise.all(list.map(async (item) => {
+      const id = item.id_organisasi ?? item.id
+      if (item.jenis_organisasi === 'bem') return [id, null]
+      const info = await findBemIndukInfo(id).catch(() => null)
+      return [id, info]
+    })).then((entries) => {
+      if (active) setMemberParents(Object.fromEntries(entries))
+    })
+    return () => { active = false }
+  }, [key, organizations, organizationDetail])
+
+  const memberList = key === 'anggota' ? buildMemberList(organizations, organizationDetail) : []
+
+  const renderMemberItem = (item) => {
+    const id = item.id_organisasi ?? item.id
+    const parent = memberParents[id]
+    const isBem = item.jenis_organisasi === 'bem'
+    const campus = parent?.universityName
+      ?? (item.id_organisasi === organizationDetail?.id_organisasi ? organizationDetail?.nama_universitas : null)
+    const details = [
+      { label: 'Nama organisasi', value: item.nama_organisasi },
+      { label: 'Kampus', value: campus },
+    ]
+    if (!isBem && parent?.name) details.push({ label: 'BEM induk', value: parent.name })
+    return (
+      <div className="profile-member-org-group" key={id}>
+        {details.filter((detail) => detail.value).map((detail) => (
+          <div className="profile-detail" key={detail.label}>
+            <small>{detail.label}</small>
+            <strong>{detail.value}</strong>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const displayName = personal.name || organizationDetail?.nama_organisasi || 'Profil Saya'
   const initials = getInitials(displayName) || 'P'
   const organization = key === 'anggota' ? {
@@ -256,7 +315,7 @@ function OrganizationProfilePage() {
       <div className="profile-layout">
         <div className="profile-side">
           <section className="profile-card profile-summary"><div className="profile-avatar">{photoUrl ? <img src={photoUrl} alt="Foto profil" onError={() => setPhotoUrl(null)} /> : initials}</div><h2>{displayName}</h2><span className={`profile-role${key === 'anggota' ? ' profile-role--member' : ''}`}>{key === 'anggota' && <span className="profile-role__dot" aria-hidden="true" />}{roleName}</span><label className="profile-button profile-button--outline"><CameraIcon /> Ubah foto profil<input className="profile-photo-input" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handlePhotoChange} disabled={saving} /></label><small>JPG/JPEG/PNG · Maks. 2 MB</small></section>
-          <section className={`profile-card profile-organization${key === 'anggota' ? ' profile-organization--member' : ''}`}><header className="profile-organization__heading"><h2><OrganizationIcon /> Organisasi</h2></header>{key === 'anggota' ? (organizations.length > 0 ? <div className="profile-member-org-list">{organizations.map((item) => <div className="profile-member-org" key={item.id_organisasi ?? item.id}><MemberOrganizationIcon type={item.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{item.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{item.nama_organisasi}</strong></div></div>)}</div> : organizationDetail ? <div className="profile-member-org-list"><div className="profile-member-org"><MemberOrganizationIcon type={organizationDetail.jenis_organisasi === 'bem' ? 'bem' : 'hmj'} /><div><small>{organizationDetail.jenis_organisasi?.toUpperCase() ?? 'Organisasi'}</small><strong>{organizationDetail.nama_organisasi}</strong><small className="profile-membership-status">{registrationStatus === 'disetujui' ? 'Aktif' : registrationStatus === 'ditolak' ? 'Ditolak' : 'Menunggu verifikasi'}</small></div></div></div> : <p className="profile-empty-state">Data organisasi yang diikuti belum tersedia.</p>) : Object.entries(organization).map(([label, value]) => <div className="profile-detail" key={label}><small>{key === 'bem' ? bemOrganizationLabels[label] : key === 'hmj' ? organizationLabels[label] : label === 'parent' ? 'BEM induk' : label}</small><strong>{value}</strong></div>)}</section>
+          <section className={`profile-card profile-organization${key === 'anggota' ? ' profile-organization--member' : ''}`}><header className="profile-organization__heading"><h2><OrganizationIcon /> Organisasi</h2></header>{key === 'anggota' ? (memberList.length > 0 ? <div className="profile-member-org-list">{memberList.map(renderMemberItem)}</div> : <p className="profile-empty-state">Data organisasi yang diikuti belum tersedia.</p>) : Object.entries(organization).map(([label, value]) => <div className="profile-detail" key={label}><small>{key === 'bem' ? bemOrganizationLabels[label] : key === 'hmj' ? organizationLabels[label] : label === 'parent' ? 'BEM induk' : label}</small><strong>{value}</strong></div>)}</section>
 
         </div>
         <div className="profile-main">
