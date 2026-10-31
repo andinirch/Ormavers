@@ -46,7 +46,7 @@ class PublicOrganisasiController extends Controller
     {
         // Ambil semua organisasi (BEM, HMJ, UKM) yang terdaftar di universitas tersebut
         $organisasi = \App\Models\Organisasi::where('id_universitas', $id_universitas)
-            ->where('status_pendaftaran', 'disetujui') 
+            ->where('status_organisasi', 'aktif')
             ->get();
 
         return response()->json([
