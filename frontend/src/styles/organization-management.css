@@ -6,3 +6,39 @@
 .organization-completeness-card__list li.is-done{color:#334155}
 .organization-completeness-card__list li.is-done .admin-icon{color:#16a34a}
 .organization-completeness-card__note{display:block;margin-top:12px;color:#64748b;font-size:.75rem;line-height:1.4;text-align:center}@media(max-width:1024px){.organization-management-content{padding:20px;gap:16px}.organization-management-card{padding:16px}}@media(max-width:768px){.organization-management-content{padding:16px;gap:12px}.organization-management-card{padding:14px}.organization-management-card h2{font-size:1.1rem}.organization-management-tabs{gap:8px}}@media(max-width:480px){.organization-management-content{padding:12px 10px;gap:10px}.organization-management-card{padding:12px}.organization-management-card h2{font-size:1rem}.organization-management-card textarea{font-size:0.9rem;min-height:100px}.organization-management-secondary,.organization-management-actions button{font-size:0.85rem;padding:8px 12px;height:auto}}@media(max-width:375px){.organization-management-content{padding:10px 8px;gap:8px}.organization-management-card{padding:10px}.organization-contact-list input{font-size:0.85rem}.organization-management-tabs{flex-wrap:wrap}}@media(max-width:320px){.organization-management-content{padding:8px;gap:6px}.organization-management-card{padding:8px}.organization-management-card h2{font-size:0.95rem}.organization-management-actions{flex-direction:column}.organization-management-actions button{width:100%}}
+
+/* Identitas organisasi: ukuran dan tampilan input seragam */
+.organization-identity-input-wrap select,
+.organization-identity-input-wrap input{
+  height:40px;
+  padding:0 12px;
+  font-family:var(--font-ui);
+  font-size:.875rem;
+  line-height:1.4;
+  color:#0f172a;
+}
+.organization-identity-input-wrap select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:36px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:16px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.organization-identity-input-wrap--icon input{
+  padding-left:38px;
+}
+.organization-identity-field-icon{
+  left:12px;
+}
+.organization-identity-input-wrap input[type=date]{
+  padding-right:10px;
+}
+.organization-identity-input-wrap input[type=date]::-webkit-calendar-picker-indicator{
+  opacity:.6;
+  cursor:pointer;
+}

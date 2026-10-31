@@ -58,7 +58,7 @@ function SkResubmitForm({ onSubmit, submitting, documentName = 'Dokumen SK', doc
         <input
           ref={inputRef}
           type="file"
-          accept={isFoto ? 'image/jpeg,image/jpg' : 'application/pdf'}
+          accept={isFoto ? '.jpg,.jpeg,image/jpeg' : 'application/pdf'}
            onChange={handleChange}
            onClick={(event) => event.stopPropagation()}
            className="upload-dropzone__input"

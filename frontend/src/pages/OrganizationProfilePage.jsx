@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { getProfile, updatePassword, updateProfile, uploadProfilePhoto } from '../api/profile.js'
 
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
-import { findBemInduk, findBemIndukInfo } from '../services/orgApi.js'
+import { findBemInduk, findBemIndukInfo, getOrganizationDetail } from '../services/orgApi.js'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
@@ -250,9 +250,11 @@ function OrganizationProfilePage() {
     let active = true
     Promise.all(list.map(async (item) => {
       const id = item.id_organisasi ?? item.id
-      if (item.jenis_organisasi === 'bem') return [id, null]
-      const info = await findBemIndukInfo(id).catch(() => null)
-      return [id, info]
+      const [detail, info] = await Promise.all([
+        getOrganizationDetail(id).catch(() => null),
+        item.jenis_organisasi === 'bem' ? Promise.resolve(null) : findBemIndukInfo(id).catch(() => null),
+      ])
+      return [id, { campus: detail?.university?.label ?? null, bem: info }]
     })).then((entries) => {
       if (active) setMemberParents(Object.fromEntries(entries))
     })
@@ -263,15 +265,14 @@ function OrganizationProfilePage() {
 
   const renderMemberItem = (item) => {
     const id = item.id_organisasi ?? item.id
-    const parent = memberParents[id]
+    const lookup = memberParents[id]
     const isBem = item.jenis_organisasi === 'bem'
-    const campus = parent?.universityName
-      ?? (item.id_organisasi === organizationDetail?.id_organisasi ? organizationDetail?.nama_universitas : null)
+    const campus = lookup?.campus ?? lookup?.bem?.universityName ?? null
     const details = [
       { label: 'Nama organisasi', value: item.nama_organisasi },
       { label: 'Kampus', value: campus },
     ]
-    if (!isBem && parent?.name) details.push({ label: 'BEM induk', value: parent.name })
+    if (!isBem && lookup?.bem?.name) details.push({ label: 'BEM induk', value: lookup.bem.name })
     return (
       <div className="profile-member-org-group" key={id}>
         {details.filter((detail) => detail.value).map((detail) => (

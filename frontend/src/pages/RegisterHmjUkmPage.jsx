@@ -8,7 +8,7 @@ import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
-import { getVerifiedBem } from '../services/orgApi.js'
+import { getUniversitasAktif } from '../services/orgApi.js'
 import { registerHmjUkm } from '../api/register.js'
 import { simpanStatusAwal } from '../services/statusAwal.js'
 import {
@@ -21,7 +21,7 @@ import {
 import '../styles/register-hmj-ukm.css'
 
 const initialValues = {
-  bemInduk: '',
+  universitas: '',
   jenisOrganisasi: '',
   namaOrganisasi: '',
   teleponOrganisasi: '',
@@ -105,15 +105,19 @@ function RegisterHmjUkmPage() {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
-  const [bemOptions, setBemOptions] = useState([])
-  const [bemLoading, setBemLoading] = useState(true)
+  const [universitasOptions, setUniversitasOptions] = useState([])
+  const [universitasLoading, setUniversitasLoading] = useState(true)
 
   useEffect(() => {
     let active = true
-    getVerifiedBem().then((result) => {
+    getUniversitasAktif().then((items) => {
       if (!active) return
-      setBemOptions(result.data)
-      setBemLoading(false)
+      setUniversitasOptions(items)
+      setUniversitasLoading(false)
+    }).catch(() => {
+      if (!active) return
+      setUniversitasOptions([])
+      setUniversitasLoading(false)
     })
     return () => {
       active = false
@@ -143,8 +147,8 @@ function RegisterHmjUkmPage() {
         })),
       ),
     }
-    if (!isNonEmpty(values.bemInduk)) {
-      nextErrors.bemInduk = requiredError('BEM induk')
+    if (!isNonEmpty(values.universitas)) {
+      nextErrors.universitas = requiredError('Universitas/Instansi')
     }
     if (!isNonEmpty(values.jenisOrganisasi)) {
       nextErrors.jenisOrganisasi = requiredError('Jenis organisasi')
@@ -162,7 +166,7 @@ function RegisterHmjUkmPage() {
     }
     const formData = new FormData()
     const fields = {
-      id_organisasi_induk: values.bemInduk,
+      id_universitas: values.universitas,
       jenis_organisasi: values.jenisOrganisasi,
       nama_organisasi: values.namaOrganisasi,
       nomor_telepon_organisasi: values.teleponOrganisasi,
@@ -183,7 +187,7 @@ function RegisterHmjUkmPage() {
     } catch (error) {
       const apiErrors = error.response?.data?.errors ?? {}
       const mappedErrors = Object.fromEntries(Object.entries(apiErrors).map(([name, messages]) => [
-        { id_organisasi_induk: 'bemInduk', jenis_organisasi: 'jenisOrganisasi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
+        { id_universitas: 'universitas', jenis_organisasi: 'jenisOrganisasi', nama_organisasi: 'namaOrganisasi', nomor_telepon_organisasi: 'teleponOrganisasi', nama: 'namaPj', nomor_whatsapp: 'whatsapp', foto_ktm: 'foto', sk_organisasi: 'skOrganisasi', sk_kepengurusan: 'skKepengurusan' }[name] ?? name,
         messages[0],
       ]))
       setErrors(mappedErrors)
@@ -191,7 +195,7 @@ function RegisterHmjUkmPage() {
     }
   }
 
-  const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM terverifikasi'
+  const universitasPlaceholder = universitasLoading ? 'Memuat daftar universitas…' : 'Pilih universitas/instansi'
 
   return (
     <div className="rhmj-page">
@@ -204,8 +208,8 @@ function RegisterHmjUkmPage() {
           <p className="rhmj-subtitle">Dilakukan oleh penanggung jawab HMJ/UKM</p>
           <form className="auth-form rhmj-form" onSubmit={handleSubmit} noValidate>
             <section className="rhmj-section">
-              <h2>Pilih BEM induk</h2>
-              <SelectInput id="bemInduk" name="bemInduk" label="BEM induk" value={values.bemInduk} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required hint="Hanya BEM yang telah terverifikasi yang tersedia" disabled={bemLoading || bemOptions.length === 0} error={errors.bemInduk} />
+              <h2>Pilih universitas/instansi</h2>
+              <SelectInput id="universitas" name="universitas" label="Universitas/Instansi" value={values.universitas} onChange={handleChange} options={universitasOptions} placeholder={universitasPlaceholder} required hint="Hanya universitas yang BEM-nya sudah terdaftar dan terverifikasi yang tersedia" disabled={universitasLoading || universitasOptions.length === 0} error={errors.universitas} />
             </section>
             <hr />
             <section className="rhmj-section">

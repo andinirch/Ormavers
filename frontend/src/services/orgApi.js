@@ -24,11 +24,14 @@ function normalizeOrganizationOption(option) {
   }
 }
 
-export async function getDirectoryUniversities() {
-  const cached = getFromCache('directory_universities', CACHE_TTL_UNIVERSITAS)
+export async function getDirectoryUniversities(search = '', page = 1) {
+  const keyword = search?.trim() ?? ''
+  const cacheKey = page === 1 && !keyword ? 'directory_universities' : null
+  const cached = cacheKey ? getFromCache(cacheKey, CACHE_TTL_UNIVERSITAS) : null
   if (cached) return cached
 
-  const result = await api.get('/direktori/universitas').then(responseData)
+  const params = { ...(keyword ? { search: keyword } : {}), ...(page > 1 ? { page } : {}) }
+  const result = await api.get('/direktori/universitas', { params: Object.keys(params).length ? params : undefined }).then(responseData)
   const items = Array.isArray(result?.data) ? result.data : result?.data?.universitas ?? []
   const data = items.map((item) => ({
     value: item.id_universitas,
@@ -36,7 +39,7 @@ export async function getDirectoryUniversities() {
     logo: item.logo ? `${assetUrl(item.logo)}${item.logo.includes('?') ? '&' : '?'}v=${Date.now()}` : '',
     isDefaultLogo: item.is_default_logo,
   }))
-  setInCache('directory_universities', data)
+  if (cacheKey) setInCache(cacheKey, data)
   return data
 }
 
@@ -223,17 +226,57 @@ export async function findBemInduk(organizationId) {
   return info?.name ?? null
 }
 
+/**
+ * Universitas yang sudah punya BEM aktif (sesuai aturan backend registrasi).
+ * @returns {Promise<Array<{value: number, label: string}>>}
+ */
+export async function getUniversitasAktif() {
+  const [bemResult, universities] = await Promise.all([getVerifiedBem(), getUniversitas()])
+  const activeIds = new Set(bemResult.data.map((bem) => String(bem.university_id)))
+  return universities.filter((item) => activeIds.has(String(item.value)))
+}
+
+/**
+ * Opsi organisasi untuk dropdown anggota: BEM aktif beserta HMJ/UKM aktif di bawahnya,
+ * hanya untuk universitas terpilih. BEM yang gagal dimuat anak-anaknya dilewati tanpa error.
+ * @returns {Promise<Array<{value: number, label: string}>>}
+ */
+export async function getOrganisasiByUniversitasAktif(universityId) {
+  if (!universityId) return []
+  let items = []
+  try {
+    const result = await api.get(`/public/universitas/${universityId}/organisasi-lengkap`).then(responseData)
+    items = Array.isArray(result?.data?.organisasi)
+      ? result.data.organisasi
+      : Array.isArray(result?.data) ? result.data : []
+  } catch (error) {
+    console.warn('[orgApi] organisasi-lengkap gagal dimuat:', error.response?.status ?? error.message)
+    return []
+  }
+  const order = { bem: 1, hmj: 2, ukm: 3 }
+  return items
+    .filter((item) => !item.status_organisasi || item.status_organisasi === 'aktif')
+    .sort((a, b) => (order[a.jenis_organisasi] ?? 9) - (order[b.jenis_organisasi] ?? 9)
+      || String(a.nama_organisasi).localeCompare(String(b.nama_organisasi)))
+    .map((item) => ({
+      value: item.id_organisasi,
+      label: item.nama_organisasi,
+    }))
+}
+
+/**
+ * Hitungan organisasi per universitas. Sementara hanya BEM aktif (sumber HMJ/UKM
+ * belum tersedia dari backend). Titik ganti: fungsi ini saja.
+ */
 export async function getUniversityOrganizationCounts(universities, bemData = null) {
-  // Reuse bemData jika sudah di-pass (avoid duplicate API call)
   const bemResult = bemData || await getVerifiedBem()
   const counts = new Map(universities.map((university) => [university.value, 0]))
 
-  await Promise.all(bemResult.data.map(async (bem) => {
-    const organizations = await getVerifiedHmjUkm(bem.organization_id)
-    const universityId = universities.find((university) => university.value === bem.university_id)?.value
+  bemResult.data.forEach((bem) => {
+    const universityId = universities.find((university) => String(university.value) === String(bem.university_id))?.value
     if (universityId == null) return
-    counts.set(universityId, (counts.get(universityId) ?? 0) + organizations.data.length)
-  }))
+    counts.set(universityId, (counts.get(universityId) ?? 0) + 1)
+  })
 
   return counts
 }

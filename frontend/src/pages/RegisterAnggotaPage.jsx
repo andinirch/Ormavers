@@ -7,7 +7,7 @@ import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
-import { getVerifiedBem, getVerifiedHmjUkm } from '../services/orgApi.js'
+import { getOrganisasiByUniversitasAktif, getUniversitasAktif } from '../services/orgApi.js'
 import { registerAnggota } from '../api/register.js'
 import { simpanStatusAwal } from '../services/statusAwal.js'
 import {
@@ -22,7 +22,7 @@ const initialValues = {
   nim: '',
   username: '',
   password: '',
-  bem: '',
+  universitas: '',
   hmjUkm: '',
   fotoKtm: null,
 }
@@ -69,55 +69,54 @@ function RegisterAnggotaPage() {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
-  const [bemOptions, setBemOptions] = useState([])
-  const [bemLoading, setBemLoading] = useState(true)
-  const [hmjResult, setHmjResult] = useState({ forBem: null, options: [], error: null })
+  const [universitasOptions, setUniversitasOptions] = useState([])
+  const [universitasLoading, setUniversitasLoading] = useState(true)
+  const [orgResult, setOrgResult] = useState({ forUniversitas: null, options: [], error: null })
 
   useEffect(() => {
     let active = true
-    getVerifiedBem().then((result) => {
+    getUniversitasAktif().then((items) => {
       if (!active) return
-      setBemOptions(result.data)
-      setBemLoading(false)
+      setUniversitasOptions(items)
+      setUniversitasLoading(false)
+    }).catch(() => {
+      if (!active) return
+      setUniversitasOptions([])
+      setUniversitasLoading(false)
     })
     return () => { active = false }
   }, [])
 
   useEffect(() => {
-    const bemId = values.bem
-    if (!bemId) return undefined
+    const universitasId = values.universitas
+    if (!universitasId) return undefined
     let active = true
-    getVerifiedHmjUkm(bemId).then((result) => {
+    getOrganisasiByUniversitasAktif(universitasId).then((options) => {
       if (!active) return
-      setHmjResult({ forBem: bemId, options: result.data, error: null })
-    }).catch((error) => {
+      setOrgResult({ forUniversitas: universitasId, options })
+    }).catch(() => {
       if (!active) return
-      setHmjResult({
-        forBem: bemId,
-        options: [],
-        error: error.response?.data?.message ?? 'Daftar organisasi di bawah BEM gagal dimuat.',
-      })
+      setOrgResult({ forUniversitas: universitasId, options: [] })
     })
     return () => {
       active = false
     }
-  }, [values.bem])
+  }, [values.universitas])
 
-  const hmjReady = values.bem !== '' && hmjResult.forBem === values.bem
-  const hmjOptions = hmjReady ? hmjResult.options : []
-  const hmjError = hmjReady ? hmjResult.error : null
-  const hmjLoading = values.bem !== '' && !hmjReady && !hmjError
+  const orgReady = values.universitas !== '' && orgResult.forUniversitas === values.universitas
+  const hmjOptions = orgReady ? orgResult.options : []
+  const hmjLoading = values.universitas !== '' && !orgReady
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setValues((prev) => {
       const next = { ...prev, [name]: value }
-      if (name === 'bem') next.hmjUkm = ''
+      if (name === 'universitas') next.hmjUkm = ''
       return next
     })
     setErrors((prev) => {
       const next = { ...prev, [name]: undefined }
-      if (name === 'bem') next.hmjUkm = undefined
+      if (name === 'universitas') next.hmjUkm = undefined
       return next
     })
   }
@@ -131,7 +130,7 @@ function RegisterAnggotaPage() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     const nextErrors = { ...validateRequiredFields(textFields.map((field) => ({ name: field.name, label: field.label, value: values[field.name] }))) }
-    if (!values.bem) nextErrors.bem = requiredError('BEM')
+    if (!values.universitas) nextErrors.universitas = requiredError('Universitas/Instansi')
     if (!values.hmjUkm) nextErrors.hmjUkm = requiredError('HMJ/UKM')
     const fotoError = validatePhotoFile(values.fotoKtm, 'Foto KTM')
     if (fotoError) nextErrors.fotoKtm = fotoError
@@ -142,7 +141,7 @@ function RegisterAnggotaPage() {
     }
     const formData = new FormData()
     const fields = {
-      id_organisasi: values.hmjUkm || values.bem,
+      id_organisasi: values.hmjUkm,
       nama: values.nama,
       nim: values.nim,
       username: values.username,
@@ -165,7 +164,7 @@ function RegisterAnggotaPage() {
     }
   }
 
-  const bemPlaceholder = bemLoading ? 'Memuat daftar BEM…' : 'Pilih BEM'
+  const universitasPlaceholder = universitasLoading ? 'Memuat daftar universitas…' : 'Pilih universitas/instansi'
   const hmjPlaceholder = hmjLoading ? 'Memuat daftar HMJ/UKM/BEM…' : 'Pilih sebagai anggota HMJ/UKM/BEM'
 
   return (
@@ -188,10 +187,9 @@ function RegisterAnggotaPage() {
             <hr />
             <section className="ranggota-section">
               <div className="ranggota-section-heading"><h2>Pilih organisasi</h2><span>Afiliasi Kampus</span></div>
-              <SelectInput id="bem" name="bem" label="BEM" value={values.bem} onChange={handleChange} options={bemOptions} placeholder={bemPlaceholder} required disabled={bemLoading || bemOptions.length === 0} error={errors.bem} />
-               {hmjError && <FormMessage variant="error">{hmjError}</FormMessage>}
-               <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjError ? 'Daftar organisasi gagal dimuat' : hmjPlaceholder} required disabled={!values.bem || hmjLoading || Boolean(hmjError) || hmjOptions.length === 0} error={errors.hmjUkm} />
-              <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih BEM, lalu pilih sebagai anggota HMJ/UKM/BEM di bawah BEM tersebut. Hanya organisasi terverifikasi yang muncul.</p></div>
+              <SelectInput id="universitas" name="universitas" label="Universitas/Instansi" value={values.universitas} onChange={handleChange} options={universitasOptions} placeholder={universitasPlaceholder} required disabled={universitasLoading || universitasOptions.length === 0} error={errors.universitas} />
+              <SelectInput id="hmjUkm" name="hmjUkm" label="HMJ/UKM/BEM" value={values.hmjUkm} onChange={handleChange} options={hmjOptions} placeholder={hmjPlaceholder} required disabled={!values.universitas || hmjLoading || hmjOptions.length === 0} error={errors.hmjUkm} />
+              <div className="ranggota-info"><span aria-hidden="true">i</span><p>Pilih universitas, lalu pilih BEM, HMJ, atau UKM yang ingin Anda ikuti. Hanya organisasi terverifikasi yang muncul.</p></div>
             </section>
             <hr />
             <div className="form-actions"><SubmitButton>Kirim registrasi <span aria-hidden="true">→</span></SubmitButton></div>

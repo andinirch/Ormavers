@@ -37,7 +37,7 @@
 .rhmj-page .form-input:focus { border-color: #2563eb; outline: 2px solid #dbeafe; }
 .rhmj-page .form-input:disabled { color: #64748b; background: #fff; opacity: 1; }
 .rhmj-page .form-input::placeholder { color: #64748b; }
-.rhmj-page select.form-input { appearance: none; padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, #0f172a 50%), linear-gradient(135deg, #0f172a 50%, transparent 50%); background-position: calc(100% - 17px) 20px, calc(100% - 12px) 20px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+.rhmj-page select.form-input { appearance: none; padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, #0f172a 50%), linear-gradient(135deg, #0f172a 50%, transparent 50%); background-position: calc(100% - 17px) center, calc(100% - 12px) center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
 .rhmj-page .form-field__hint { margin: 0; color: #334155; font-size: 12px; }
 .rhmj-page .form-field__error { margin: 0; font-size: 12px; }
 .rhmj-page .form-fieldset { min-width: 0; gap: 8px; padding: 0; border: 0; }
