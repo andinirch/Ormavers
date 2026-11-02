@@ -195,34 +195,23 @@ export async function getOrganizationDirectory(universityId, universitiesData = 
 }
 
 /**
- * Cari nama BEM induk dari sebuah HMJ/UKM dengan menelusuri anak tiap BEM aktif.
- * Tanpa perubahan backend: hanya bekerja untuk organisasi yang sudah aktif (muncul di daftar publik).
- * @returns {Promise<string|null>}
+ * BEM induk sebuah HMJ/UKM: BEM aktif dengan id_universitas yang sama.
+ * Sesuai skema baru (relasi lewat id_universitas, bukan id_organisasi_induk).
+ * @param {number|string} universityId id_universitas organisasi
+ * @returns {Promise<{name: string, universityName: string|null}|null>}
  */
-export async function findBemIndukInfo(organizationId) {
-  if (!organizationId) return null
+export async function findBemIndukInfo({ universityId = null, universityName = null } = {}) {
+  if (!universityId && !universityName) return null
   const bemResult = await getVerifiedBem()
-  const parents = await Promise.all(bemResult.data.map(async (bem) => {
-    const children = await getVerifiedHmjUkm(bem.organization_id)
-    const found = children.data.some((item) => String(item.organization_id) === String(organizationId)
-      && item.organization_type !== 'BEM')
-    return found ? bem : null
-  }))
-  const parent = parents.find(Boolean)
+  const parent = bemResult.data.find((bem) => (universityId != null
+    && String(bem.university_id) === String(universityId))
+    || (!universityId && universityName && bem.nama_universitas === universityName))
   if (!parent) return null
-
-  let universityName = null
-  try {
-    const universities = await getUniversitas()
-    universityName = universities.find((item) => String(item.value) === String(parent.university_id))?.label ?? null
-  } catch {
-    universityName = null
-  }
-  return { name: parent.name, universityName }
+  return { name: parent.name, universityName: parent.nama_universitas ?? universityName ?? null }
 }
 
-export async function findBemInduk(organizationId) {
-  const info = await findBemIndukInfo(organizationId)
+export async function findBemInduk(options) {
+  const info = await findBemIndukInfo(options)
   return info?.name ?? null
 }
 

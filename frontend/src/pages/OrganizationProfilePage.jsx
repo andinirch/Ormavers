@@ -228,9 +228,12 @@ function OrganizationProfilePage() {
     // Load organization data (mungkin lambat)
     getMyRegistrationStatus().then((statusResult) => {
        if (!active) return
-       if (statusResult?.data?.organisasiDetail) {
+        if (statusResult?.data?.organisasiDetail) {
          setOrganizationDetail(statusResult.data.organisasiDetail)
-         findBemInduk(statusResult.data.organisasiDetail.id_organisasi)
+          findBemInduk({
+            universityId: statusResult.data.organisasiDetail.id_universitas ?? null,
+            universityName: statusResult.data.organisasiDetail.nama_universitas ?? null,
+          })
            .then((name) => { if (active) setBemInduk(name) })
            .catch(() => {})
        }
@@ -250,10 +253,12 @@ function OrganizationProfilePage() {
     let active = true
     Promise.all(list.map(async (item) => {
       const id = item.id_organisasi ?? item.id
-      const [detail, info] = await Promise.all([
-        getOrganizationDetail(id).catch(() => null),
-        item.jenis_organisasi === 'bem' ? Promise.resolve(null) : findBemIndukInfo(id).catch(() => null),
-      ])
+      const detail = await getOrganizationDetail(id).catch(() => null)
+      const universityId = detail?.university?.value ?? detail?.id_universitas ?? null
+      const universityName = detail?.university?.label ?? detail?.nama_universitas ?? null
+      const info = item.jenis_organisasi === 'bem'
+        ? null
+        : await findBemIndukInfo({ universityId, universityName }).catch(() => null)
       return [id, { campus: detail?.university?.label ?? null, bem: info }]
     })).then((entries) => {
       if (active) setMemberParents(Object.fromEntries(entries))
@@ -296,7 +301,7 @@ function OrganizationProfilePage() {
     campus: organizationDetail?.nama_universitas ?? null,
     parent: organizationDetail?.induk?.nama_organisasi ?? bemInduk,
     type: organizationDetail?.jenis_organisasi?.toUpperCase() ?? null,
-    phone: organizationDetail?.nomor_telepon ?? null,
+    phone: personal.whatsapp || null,
   }
   const organizationLabels = { name: 'Nama organisasi', campus: 'Kampus', parent: 'BEM induk', type: 'Jenis', phone: 'No. telepon' }
   const bemOrganizationLabels = { name: 'Nama organisasi', campus: 'Kampus', phone: 'No. telepon' }
