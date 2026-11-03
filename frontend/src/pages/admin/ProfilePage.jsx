@@ -1,28 +1,52 @@
-import { PageIntro } from './DashboardPage.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import '../../styles/profile.css'
+
+function formatRole(value) {
+  const text = String(value ?? '').replace(/_/g, ' ').trim()
+  if (!text) return '—'
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
 
 function ProfilePage() {
   const { user, roles } = useAuth()
   const nama = user?.nama || user?.username || 'Pengguna'
-  const roleName = roles?.[0] || user?.peran || '—'
   const username = user?.username || '—'
-  const statusAkun = user?.status_akun || 'aktif'
-  const initials = nama.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'P'
+  const roleName = formatRole(roles?.[0]?.name ?? roles?.[0] ?? user?.peran)
+  const initials = nama.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'A'
+
+  const rows = [
+    { label: 'Nama', value: nama },
+    { label: 'Username', value: username },
+    { label: 'Role', value: roleName },
+  ]
 
   return (
-    <main className="admin-page">
-      <PageIntro eyebrow="AKUN • ADMIN PANEL" title="Profil Saya" description="Informasi akun yang sedang digunakan pada Admin Panel." />
-      <section className="admin-panel admin-profile-card">
-        <div className="admin-profile-avatar">{initials}</div>
-        <div className="admin-profile-details">
-          <div><span>Nama</span><strong>{nama}</strong></div>
-          <div><span>Username</span><strong>{username}</strong></div>
-          <div><span>Role</span><strong style={{ textTransform: 'capitalize' }}>{String(roleName).replace(/_/g, ' ')}</strong></div>
-          <div><span>Status Akun</span><strong style={{ textTransform: 'capitalize' }}>{statusAkun}</strong></div>
+    <main className="admin-page admin-profile-page">
+      <div className="profile-page__heading">
+        <h1>Profil Saya</h1>
+        <p>Informasi akun yang sedang digunakan pada Admin Panel.</p>
+      </div>
+
+      <section className="profile-card admin-profile-card">
+        <div className="admin-profile-hero">
+          <div className="profile-avatar" aria-hidden="true">{initials}</div>
+          <div className="admin-profile-names">
+            <strong className="admin-profile-username">{nama}</strong>
+            <span className="admin-profile-handle">{username}</span>
+          </div>
         </div>
-        <p className="admin-profile-note">Data profil bersifat read-only. Perubahan data diri, kata sandi, dan foto profil belum didukung oleh backend API.</p>
+
+        <div className="admin-profile-info">
+          {rows.map((row) => (
+            <div className="admin-profile-row" key={row.label}>
+              <span className="admin-profile-label">{row.label}</span>
+              <span className="admin-profile-value">{row.value}</span>
+            </div>
+          ))}
+        </div>
       </section>
     </main>
   )
 }
+
 export default ProfilePage
