@@ -16,7 +16,7 @@ function UniversityLogo({ university }) {
 }
 
 const PER_PAGE = 6
-const MAX_PAGES = 3
+const MAX_PAGES = 4
 
 function DirectoryPagination({ page, totalPages, onChange, disabled }) {
   if (totalPages <= 1) return null
