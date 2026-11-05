@@ -327,7 +327,7 @@ function OrganizationManagementPage() {
   const completenessPercent = Math.round((completenessItems.filter((item) => item.done).length / completenessItems.length) * 100)
 
   return <main className="organization-management-page">
-    <header className="organization-management-heading"><a className="organization-management-back" href="/verifikasi/direktori" aria-label="Kembali ke direktori"><BackIcon /></a><div><span className="directory-eyebrow">KELOLA PROFIL ORGANISASI</span><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
+    <header className="organization-management-heading"><a className="organization-management-back" href="/verifikasi/direktori" aria-label="Kembali ke direktori"><BackIcon /></a><div><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
     {loading && <div className="organization-management-state">Memuat profil organisasi...</div>}
     {!loading && error && <div className="organization-management-state organization-management-state--error">{error}</div>}
     {!loading && !error && <div className="organization-management-layout">
