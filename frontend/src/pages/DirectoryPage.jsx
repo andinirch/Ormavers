@@ -15,9 +15,6 @@ function UniversityLogo({ university }) {
   return <img src={university.logo} alt="" onError={() => setFailed(true)} />
 }
 
-const PER_PAGE = 6
-const MAX_PAGES = 4
-
 function DirectoryPagination({ page, totalPages, onChange, disabled }) {
   if (totalPages <= 1) return null
   return (
@@ -54,7 +51,7 @@ function DirectoryPage() {
   const [keyword, setKeyword] = useState('')
   const [searching, setSearching] = useState(false)
   const [page, setPage] = useState(1)
-  const [lastPage, setLastPage] = useState(null)
+  const [lastPage, setLastPage] = useState(1)
   const requestId = useRef(0)
 
   const loadData = async (search = keyword, targetPage = 1) => {
@@ -64,15 +61,8 @@ function DirectoryPage() {
     else setSearching(true)
 
     try {
-      const items = await getDirectoryUniversities(search, targetPage)
+      const { items, meta } = await getDirectoryUniversities(search, targetPage)
       if (currentId !== requestId.current) return
-
-      if (items.length === 0 && targetPage > 1) {
-        setLastPage(targetPage - 1)
-        setSearching(false)
-        loadData(search, targetPage - 1)
-        return
-      }
 
       const counts = await getDirectoryOrganizationCounts(items)
       if (currentId !== requestId.current) return
@@ -80,9 +70,8 @@ function DirectoryPage() {
         ...item,
         organizationCount: counts.get(item.value) ?? 0,
       })))
-      setPage(targetPage)
-      if (items.length < PER_PAGE) setLastPage(targetPage)
-      else setLastPage((current) => (current && current > targetPage ? current : null))
+      setPage(meta?.current_page ?? targetPage)
+      setLastPage(Math.max(1, meta?.last_page ?? 1))
       setLoading(false)
       setSearching(false)
     } catch (requestError) {
@@ -191,7 +180,7 @@ function DirectoryPage() {
           {!error && universities.length > 0 && (
             <DirectoryPagination
               page={page}
-              totalPages={Math.min(MAX_PAGES, lastPage ?? MAX_PAGES)}
+              totalPages={lastPage}
               disabled={searching}
               onChange={(target) => loadData(keyword, target)}
             />

@@ -24,21 +24,28 @@ function normalizeOrganizationOption(option) {
   }
 }
 
+export const DIRECTORY_PER_PAGE = 8
+
 export async function getDirectoryUniversities(search = '', page = 1) {
   const keyword = search?.trim() ?? ''
-  const cacheKey = page === 1 && !keyword ? 'directory_universities' : null
+  const cacheKey = page === 1 && !keyword ? 'directory_universities_v2' : null
   const cached = cacheKey ? getFromCache(cacheKey, CACHE_TTL_UNIVERSITAS) : null
   if (cached) return cached
 
-  const params = { ...(keyword ? { search: keyword } : {}), ...(page > 1 ? { page } : {}) }
-  const result = await api.get('/direktori/universitas', { params: Object.keys(params).length ? params : undefined }).then(responseData)
-  const items = Array.isArray(result?.data) ? result.data : result?.data?.universitas ?? []
-  const data = items.map((item) => ({
+  const params = {
+    per_page: DIRECTORY_PER_PAGE,
+    ...(keyword ? { search: keyword } : {}),
+    ...(page > 1 ? { page } : {}),
+  }
+  const result = await api.get('/direktori/universitas', { params }).then(responseData)
+  const rawItems = Array.isArray(result?.data) ? result.data : []
+  const items = rawItems.map((item) => ({
     value: item.id_universitas,
     label: item.nama_universitas,
     logo: item.logo ? `${assetUrl(item.logo)}${item.logo.includes('?') ? '&' : '?'}v=${Date.now()}` : '',
     isDefaultLogo: item.is_default_logo,
   }))
+  const data = { items, meta: result?.meta ?? null }
   if (cacheKey) setInCache(cacheKey, data)
   return data
 }
