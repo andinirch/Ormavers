@@ -131,3 +131,6 @@
 /* Jarak atas seragam antara header dan konten halaman (semua menu) */
 .verification-content{padding-top:12px}
 .verification-page__heading{padding-top:0}
+
+/* Daftar Registrasi HMJ/UKM & Daftar Permintaan Anggota: lebar penuh seperti menu lain */
+.verification-content .verification-page.verification-bem-page{max-width:none;margin-inline:0}
