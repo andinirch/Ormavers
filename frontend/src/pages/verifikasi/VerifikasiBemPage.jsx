@@ -121,6 +121,12 @@ export default function VerifikasiBemPage() {
     }
   }, [bagian, canAccess, isMemberMode, refreshIndex])
 
+  // Saat pindah tab (HMJ/UKM ↔ Anggota), kosongkan detail lama agar tidak terbaca dengan bentuk data yang salah
+  useEffect(() => {
+    setSelectedId(null)
+    setSelectedDetail(null)
+  }, [bagian])
+
   useEffect(() => {
     if (!selectedId) {
       queueMicrotask(() => setSelectedDetail(null))
@@ -541,7 +547,9 @@ export default function VerifikasiBemPage() {
                   </span>
                   <span>
                      <strong>Foto selfie dengan KTM</strong>
-                     <small>{selectedDetail.dokumen?.find((document) => document.jenis === 'ktm')?.file || 'Dokumen foto KTM'}</small>
+                     <small>{Array.isArray(selectedDetail.dokumen)
+                       ? (selectedDetail.dokumen.find((document) => document.jenis === 'ktm')?.file || 'Dokumen foto KTM')
+                       : (selectedDetail.fileName || 'Dokumen foto KTM')}</small>
                   </span>
                   <span className="verification-link" aria-label="Lihat foto selfie dengan KTM">
                     <EyeIcon />

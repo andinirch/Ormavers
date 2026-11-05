@@ -187,11 +187,6 @@ export default function VerifikasiHmjPage() {
   return (
     <div className="verification-page verification-hmj-page">
       <div className="verification-page__heading">
-        <div className="verification-eyebrow">
-          <span>Portal Verifikasi</span>
-          <span style={{ opacity: 0.5 }}>/</span>
-          <span>Keanggotaan Organisasi</span>
-        </div>
         <h1>Daftar permintaan anggota</h1>
         <p>Verifikasi permintaan keanggotaan di organisasi kamu</p>
       </div>

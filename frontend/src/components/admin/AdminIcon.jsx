@@ -58,6 +58,12 @@ const icons = {
   mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
   'music-tiktok': <><path d="M10 18V6l7 2" /><circle cx="7.5" cy="18" r="2.5" /></>,
   'checkbox-checked': <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="m9 12 2 2 4-4" /></>,
+  'lock-refresh': <>
+    <path d="M3.2 12a8.8 8.8 0 1 0 2.6-6.3" />
+    <path d="M3 3.4v5.8h5.8" />
+    <rect x="9.4" y="11.2" width="5.2" height="4.6" rx="1.1" fill="currentColor" stroke="none" />
+    <path d="M10.6 11.2V10a1.4 1.4 0 0 1 2.8 0v1.2" />
+  </>,
 }
 function AdminIcon({ name, size = 18, strokeWidth = 1.8 }) { return <svg className="admin-icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icons[name]}</svg> }
 export default AdminIcon

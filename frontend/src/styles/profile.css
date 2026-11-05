@@ -33,3 +33,7 @@
   .admin-profile-card{padding:1.25rem}
   .admin-profile-hero .profile-avatar{width:3.75rem;height:3.75rem;font-size:1.25rem}
 }
+
+/* Ubah password (Profil Saya): background input putih, tetap putih saat fokus */
+.profile-password-form .password-wrapper .form-input{background:#fff}
+.profile-password-form .password-wrapper .form-input:focus{background:#fff}

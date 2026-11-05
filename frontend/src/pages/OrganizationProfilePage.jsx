@@ -108,6 +108,7 @@ function OrganizationProfilePage() {
   const roleName = key === 'anggota' ? 'Anggota' : key === 'hmj' ? 'Akun Organisasi HMJ/UKM' : 'Akun Organisasi BEM'
   const personalTitle = key === 'anggota' ? 'Data diri anggota' : 'Data penanggung jawab organisasi'
   const [personal, setPersonal] = useState({ name: '', nim: '', whatsapp: '', username: '' })
+  const [personalDraft, setPersonalDraft] = useState({ name: '', nim: '', whatsapp: '', username: '' })
   const [photoUrl, setPhotoUrl] = useState(null)
   const [organizationDetail, setOrganizationDetail] = useState(null)
   const [bemInduk, setBemInduk] = useState(null)
@@ -119,7 +120,7 @@ function OrganizationProfilePage() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [orgLoading, setOrgLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const updatePersonal = (event) => setPersonal((current) => ({ ...current, [event.target.name]: event.target.value }))
+  const updatePersonal = (event) => setPersonalDraft((current) => ({ ...current, [event.target.name]: event.target.value }))
   const savePersonal = async (event) => {
     event.preventDefault()
     setSaving(true)
@@ -127,12 +128,18 @@ function OrganizationProfilePage() {
     try {
       // Backend mewajibkan username, tetapi hanya menyimpan nama dan nomor_whatsapp.
       const result = await updateProfile({
-        nama: personal.name,
+        nama: personalDraft.name,
         username: personal.username,
-        nomor_whatsapp: personal.whatsapp || null,
+        nomor_whatsapp: personalDraft.whatsapp || null,
       })
       const data = result?.data ?? result
-      setPersonal((current) => ({ ...current, name: data?.nama ?? current.name, whatsapp: data?.nomor_whatsapp ?? current.whatsapp }))
+      const saved = {
+        ...personal,
+        name: data?.nama ?? personalDraft.name,
+        whatsapp: data?.nomor_whatsapp ?? personalDraft.whatsapp,
+      }
+      setPersonal(saved)
+      setPersonalDraft(saved)
       await refreshUser()
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data profil berhasil diperbarui.', confirmButtonColor: '#2563eb' })
     } catch (error) {
@@ -210,13 +217,14 @@ function OrganizationProfilePage() {
     getProfile().then((result) => {
       if (!active) return
       const data = result?.data ?? result
-      setPersonal((current) => ({ 
-        ...current, 
-        name: data?.nama ?? current.name, 
-        nim: data?.nim ?? '', 
-        whatsapp: data?.nomor_whatsapp ?? current.whatsapp, 
-        username: data?.username ?? current.username 
-      }))
+      const loaded = {
+        name: data?.nama ?? '',
+        nim: data?.nim ?? '',
+        whatsapp: data?.nomor_whatsapp ?? '',
+        username: data?.username ?? '',
+      }
+      setPersonal(loaded)
+      setPersonalDraft(loaded)
       setPhotoUrl(resolveAssetUrl(data?.foto_profil_url))
       if (Array.isArray(data?.organisasi_diikuti)) setOrganizations(data.organisasi_diikuti)
     }).catch(() => {
@@ -304,7 +312,7 @@ function OrganizationProfilePage() {
     phone: personal.whatsapp || null,
   }
   const organizationLabels = { name: 'Nama organisasi', campus: 'Kampus', parent: 'BEM induk', type: 'Jenis', phone: 'No. telepon' }
-  const bemOrganizationLabels = { name: 'Nama organisasi', campus: 'Kampus', phone: 'No. telepon' }
+  const bemOrganizationLabels = { name: 'Nama organisasi', campus: 'Kampus', parent: 'BEM induk', type: 'Jenis', phone: 'No. telepon' }
 
   const content = (
     <main className="admin-page profile-page">
@@ -325,8 +333,8 @@ function OrganizationProfilePage() {
 
         </div>
         <div className="profile-main">
-          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personal.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personal.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} readOnly /><small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '-0.5rem', display: 'block' }}>NIM dan username dikelola oleh admin</small><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
-          <section className="profile-card"><h2><AdminIcon name="refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordInput id="old-password" label="Password lama" name="old" value={password.old} onChange={(e) => setPassword({ ...password, old: e.target.value })} placeholder="Masukkan password saat ini" required /><PasswordInput id="new-password" label="Password baru" name="next" value={password.next} onChange={(e) => setPassword({ ...password, next: e.target.value })} placeholder="Minimal 8 karakter" required /><PasswordInput id="confirm-password" label="Konfirmasi password baru" name="confirm" value={password.confirm} onChange={(e) => setPassword({ ...password, confirm: e.target.value })} placeholder="Ulangi password baru" required /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="users" /> Data diri</h2><p className="profile-card__subtitle">{personalTitle}</p><form className={`profile-form${key === 'anggota' ? ' profile-form--member' : ''}`} onSubmit={savePersonal}><Field label={key === 'anggota' ? 'Nama lengkap' : 'Nama penanggung jawab'} name="name" value={personalDraft.name} onChange={updatePersonal} /><Field label="NIM" name="nim" value={personal.nim || 'Belum tersedia'} onChange={updatePersonal} readOnly /><>{key !== 'anggota' && <Field label="Nomor WhatsApp" name="whatsapp" value={personalDraft.whatsapp} onChange={updatePersonal} />}</><Field label="Username" name="username" value={personal.username} onChange={updatePersonal} readOnly /><small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '-0.5rem', display: 'block' }}>NIM dan username dikelola oleh admin</small><button className="profile-button" type="submit"><AdminIcon name="save" /> Simpan perubahan</button></form></section>
+          <section className="profile-card"><h2><AdminIcon name="lock-refresh" /> Ubah password</h2><form className="profile-form profile-password-form" onSubmit={savePassword}><PasswordInput id="old-password" label="Password lama" name="old" value={password.old} onChange={(e) => setPassword({ ...password, old: e.target.value })} placeholder="Masukkan password saat ini" required /><PasswordInput id="new-password" label="Password baru" name="next" value={password.next} onChange={(e) => setPassword({ ...password, next: e.target.value })} placeholder="Minimal 8 karakter" required /><PasswordInput id="confirm-password" label="Konfirmasi password baru" name="confirm" value={password.confirm} onChange={(e) => setPassword({ ...password, confirm: e.target.value })} placeholder="Ulangi password baru" required /><button className="profile-button" type="submit"><LockIcon /> Ubah password</button></form></section>
            {message && <p className="profile-message" role="status">{message}</p>}
          </div>
        </div>
