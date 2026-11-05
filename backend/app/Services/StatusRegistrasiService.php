@@ -49,13 +49,33 @@ class StatusRegistrasiService
         $statusPendaftaran = $pendaftaran?->status_pendaftaran ?? 'menunggu';
         $alasanPenolakan   = ($statusPendaftaran === 'ditolak') ? $pendaftaran?->alasan_penolakan : null;
         $bisaUnggahUlang   = ($statusPendaftaran === 'ditolak');
+        $dokumenDitolakList = ($statusPendaftaran === 'ditolak') ? ($pendaftaran?->dokumen_ditolak ?? []) : [];
 
-        $dokumen = $pendaftaran?->files->map(fn ($f) => [
+        // Bangun array dokumen termasuk foto_ktm penanggung jawab
+        $dokumenItems = [];
+
+        // Tambahkan foto_ktm penanggung jawab organisasi
+        $profil = $pengguna->profilAnggota;
+        if ($profil?->foto_ktm) {
+            $dokumenItems[] = [
+                'jenis_dokumen'  => 'foto_ktm',
+                'nama_file_asli' => basename($profil->foto_ktm),
+                'ukuran_kb'      => null,
+                'diunggah_pada'  => null,
+                'ditolak'        => in_array('foto_ktm', $dokumenDitolakList, true),
+            ];
+        }
+
+        // Tambahkan file dari pendaftaran_organisasi_file
+        $filesDokumen = $pendaftaran?->files?->map(fn ($f) => [
             'jenis_dokumen'  => $f->jenis_dokumen,
             'nama_file_asli' => $f->nama_file_asli,
             'ukuran_kb'      => $f->ukuran_kb,
             'diunggah_pada'  => $f->diunggah_pada?->toISOString(),
+            'ditolak'        => in_array($f->jenis_dokumen, $dokumenDitolakList, true),
         ])->values()->all() ?? [];
+
+        $dokumen = array_merge($dokumenItems, $filesDokumen);
 
         return [
             'pendaftar' => [
@@ -66,10 +86,12 @@ class StatusRegistrasiService
             ],
             'status_pendaftaran'  => $statusPendaftaran,
             'alasan_penolakan'    => $alasanPenolakan,
+            'dokumen_ditolak'     => $dokumenDitolakList,
             'organisasi'          => [
                 'id_organisasi'     => $organisasi->id_organisasi,
                 'nama_organisasi'   => $organisasi->nama_organisasi,
                 'jenis_organisasi'  => $organisasi->jenis_organisasi,
+                'id_universitas'    => $organisasi->id_universitas,
                 'nama_universitas'  => $organisasi->universitas?->nama_universitas,
                 'status_organisasi' => $organisasi->status_organisasi,
             ],
@@ -90,6 +112,7 @@ class StatusRegistrasiService
 
         $statusPendaftaran = $keanggotaan->status_keanggotaan;
         $alasanPenolakan   = ($statusPendaftaran === 'ditolak') ? $keanggotaan->alasan_penolakan : null;
+        $dokumenDitolakList = ($statusPendaftaran === 'ditolak') ? ($keanggotaan->dokumen_ditolak ?? []) : [];
 
         return [
             'pendaftar' => [
@@ -100,6 +123,7 @@ class StatusRegistrasiService
             ],
             'status_pendaftaran'  => $statusPendaftaran,
             'alasan_penolakan'    => $alasanPenolakan,
+            'dokumen_ditolak'     => $dokumenDitolakList,
             'organisasi'          => [
                 'id_organisasi'   => $keanggotaan->organisasi?->id_organisasi,
                 'nama_organisasi' => $keanggotaan->organisasi?->nama_organisasi,
@@ -112,7 +136,8 @@ class StatusRegistrasiService
     }
 
     /**
-     * Unggah ulang berkas SK untuk pendaftaran yang ditolak.
+     * Unggah ulang berkas dokumen untuk pendaftaran yang ditolak.
+     * Mendukung foto_ktm, sk_organisasi, dan sk_kepengurusan.
      *
      * @return array
      */
@@ -157,6 +182,21 @@ class StatusRegistrasiService
                 &$filesBaru,
                 &$filesLama
             ) {
+                // Handle foto_ktm (disimpan di profil_anggota)
+                if (isset($files['foto_ktm']) && $files['foto_ktm']) {
+                    $pathBaru = $files['foto_ktm']->store('pendaftaran/ktm', 'local');
+                    $filesBaru[] = $pathBaru;
+
+                    $profil = $pengguna->profilAnggota;
+                    if ($profil) {
+                        if ($profil->foto_ktm && Storage::disk('local')->exists($profil->foto_ktm)) {
+                            $filesLama[] = $profil->foto_ktm;
+                        }
+                        $profil->update(['foto_ktm' => $pathBaru]);
+                    }
+                }
+
+                // Handle sk_organisasi
                 if (isset($files['sk_organisasi']) && $files['sk_organisasi']) {
                     $pathBaru = $files['sk_organisasi']->store('pendaftaran/sk_organisasi', 'local');
                     $filesBaru[] = $pathBaru;
@@ -183,6 +223,7 @@ class StatusRegistrasiService
                     );
                 }
 
+                // Handle sk_kepengurusan
                 if (isset($files['sk_kepengurusan']) && $files['sk_kepengurusan']) {
                     $pathBaru = $files['sk_kepengurusan']->store('pendaftaran/sk_kepengurusan', 'local');
                     $filesBaru[] = $pathBaru;
@@ -209,10 +250,11 @@ class StatusRegistrasiService
                     );
                 }
 
-                // Perbarui pendaftaran_organisasi
+                // Perbarui pendaftaran_organisasi — reset status dan dokumen_ditolak
                 $pendaftaran->update([
                     'status_pendaftaran'      => 'menunggu',
                     'alasan_penolakan'        => null,
+                    'dokumen_ditolak'         => null,
                     'id_pengguna_verifikator' => null,
                     'tanggal_verifikasi'      => null,
                 ]);

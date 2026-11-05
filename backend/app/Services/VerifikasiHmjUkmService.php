@@ -115,6 +115,7 @@ class VerifikasiHmjUkmService
                 'tanggal_pendaftaran'       => $pendaftaran->tanggal_pendaftaran?->toISOString(),
                 'tanggal_verifikasi'        => $pendaftaran->tanggal_verifikasi?->toISOString(),
                 'alasan_penolakan'          => $pendaftaran->alasan_penolakan,
+                'dokumen_ditolak'           => $pendaftaran->dokumen_ditolak ?? [],
                 'penanggung_jawab'          => [
                     'nama'           => $pendaftar?->nama,
                     'nim'            => $profil?->nim,
@@ -291,7 +292,7 @@ class VerifikasiHmjUkmService
      *
      * @return array
      */
-    public function tolak(int $id, string $alasan, Pengguna $userBem, int $idPelaku): array
+    public function tolak(int $id, string $alasan, Pengguna $userBem, int $idPelaku, array $dokumenDitolak = []): array
     {
         $bem = $this->getBemAktif($userBem);
         if (! $bem) {
@@ -326,7 +327,7 @@ class VerifikasiHmjUkmService
             ];
         }
 
-        return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku) {
+        return DB::transaction(function () use ($pendaftaran, $alasan, $idPelaku, $dokumenDitolak) {
             $pendaftaranLocked = PendaftaranOrganisasi::with('organisasi')
                 ->where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
                 ->lockForUpdate()
@@ -350,14 +351,14 @@ class VerifikasiHmjUkmService
                 "Menolak pendaftaran {$jenisLabel} {$namaOrg} dengan alasan: {$alasan}"
             );
 
-            // 2. Update status pendaftaran menjadi 'ditolak' dan simpan alasannya
-            PendaftaranOrganisasi::where('id_pendaftaran_organisasi', $pendaftaran->id_pendaftaran_organisasi)
-                ->update([
-                    'status_pendaftaran'      => 'ditolak',
-                    'alasan_penolakan'        => $alasan,
-                    'id_pengguna_verifikator' => $idPelaku,
-                    'tanggal_verifikasi'      => now(),
-                ]);
+            // 2. Update status pendaftaran menjadi 'ditolak' dan simpan alasannya beserta dokumen ditolak
+            $pendaftaranLocked->update([
+                'status_pendaftaran'      => 'ditolak',
+                'alasan_penolakan'        => $alasan,
+                'dokumen_ditolak'         => ! empty($dokumenDitolak) ? $dokumenDitolak : null,
+                'id_pengguna_verifikator' => $idPelaku,
+                'tanggal_verifikasi'      => now(),
+            ]);
 
             return [
                 'message' => "Pendaftaran {$jenisLabel} berhasil ditolak",

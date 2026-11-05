@@ -92,6 +92,7 @@ class VerifikasiBemController extends Controller
             $id,
             $request->validated()['alasan'],
             $request->user()->id_pengguna,
+            $request->getDokumenDitolak(),
         );
 
         if (isset($result['error'])) {

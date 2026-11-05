@@ -98,6 +98,7 @@ class VerifikasiHmjUkmController extends Controller
             $request->validated()['alasan'],
             $request->user(),
             $request->user()->id_pengguna,
+            $request->getDokumenDitolak(),
         );
 
         if (isset($result['error'])) {

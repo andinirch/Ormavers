@@ -149,6 +149,7 @@ class RegistrasiAnggotaService
             $keanggotaan->update([
                 'status_keanggotaan'      => 'menunggu',
                 'alasan_penolakan'        => null,
+                'dokumen_ditolak'         => null,
                 'id_pengguna_verifikator' => null,
                 'tanggal_verifikasi'      => null,
                 'tanggal_pendaftaran'     => now(),

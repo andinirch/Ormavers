@@ -105,9 +105,9 @@ class PencarianProfilOrganisasiService
                 'id_universitas'   => $organisasi->universitas->id_universitas,
                 'nama_universitas' => $organisasi->universitas->nama_universitas,
             ] : null,
-            'bidang' => $organisasi->bidang ? [
-                'id_bidang'    => $organisasi->bidang->id_bidang,
-                'nama_bidang'  => $organisasi->bidang->nama_bidang,
+            'bidang' => ($organisasi->bidang || $organisasi->bidang_kustom) ? [
+                'id_bidang'    => $organisasi->id_bidang,
+                'nama_bidang'  => $organisasi->bidang_kustom ?: $organisasi->bidang?->nama_bidang,
             ] : null,
             'portofolio' => $organisasi->portofolio->map(function ($porto) {
                 return [
@@ -154,7 +154,7 @@ class PencarianProfilOrganisasiService
             'nama_organisasi'  => $org->nama_organisasi,
             'jenis_organisasi' => $org->jenis_organisasi,
             'id_bidang'        => $org->id_bidang,
-            'nama_bidang'      => $org->bidang?->nama_bidang,
+            'nama_bidang'      => $org->bidang_kustom ?: $org->bidang?->nama_bidang,
             'nama_universitas' => $org->universitas?->nama_universitas,
             'deskripsi'        => $org->deskripsi,
             'alamat'           => $org->alamat,

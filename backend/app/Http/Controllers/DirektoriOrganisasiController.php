@@ -17,15 +17,31 @@ class DirektoriOrganisasiController extends Controller
      */
     public function universitas(Request $request): JsonResponse
     {
-        $search = $request->input('search');
+        $search  = $request->input('search');
+        $perPage = (int) $request->input('per_page', 6);
+        $sort    = $request->input('sort');
 
-        // Mengirim parameter pencarian ke service
-        $data = $this->direktoriService->getDaftarUniversitas($search);
+        // Mengirim parameter pencarian, limit pagination, dan pengurutan ke service
+        $paginator = $this->direktoriService->getDaftarUniversitas($search, $perPage, $sort);
 
         return response()->json([
             'success' => true,
             'message' => 'Daftar universitas berhasil diambil',
-            'data'    => $data,
+            'data'    => $paginator->items(),
+            'links'   => [
+                'first' => $paginator->url(1),
+                'last'  => $paginator->url($paginator->lastPage()),
+                'prev'  => $paginator->previousPageUrl(),
+                'next'  => $paginator->nextPageUrl(),
+            ],
+            'meta'    => [
+                'current_page' => $paginator->currentPage(),
+                'from'         => $paginator->firstItem(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'to'           => $paginator->lastItem(),
+                'total'        => $paginator->total(),
+            ],
         ]);
     }
 

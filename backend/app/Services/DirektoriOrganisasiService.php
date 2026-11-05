@@ -11,33 +11,45 @@ class DirektoriOrganisasiService
     /**
      * Mengambil daftar universitas beserta URL logonya atau ikon bawaan jika belum diunggah.
      *
-     * @return array
+     * @param string|null $search
+     * @param int|null $perPage
+     * @param string|null $sort
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getDaftarUniversitas(?string $search = null)
+    public function getDaftarUniversitas(?string $search = null, ?int $perPage = 6, ?string $sort = null)
     {
-        return Universitas::orderBy('nama_universitas', 'asc')
-            ->when($search, function ($query, $search) {
-                return $query->where('nama_universitas', 'like', '%' . $search . '%');
-            })
-            ->paginate(6)
-            ->through(function (Universitas $univ) {
-                $isDefaultLogo = true;
-                $logoUrl = asset('images/default-university.png');
+        $query = Universitas::query();
 
-                if ($univ->logo && Storage::disk('public')->exists($univ->logo)) {
-                    $logoUrl = Storage::disk('public')->url($univ->logo);
-                    $isDefaultLogo = false;
-                }
+        if ($search) {
+            $query->where('nama_universitas', 'like', '%' . $search . '%');
+        }
 
-                return [
-                    'id_universitas'   => $univ->id_universitas,
-                    'nama_universitas' => $univ->nama_universitas,
-                    'logo'             => $logoUrl,
-                    'is_default_logo'  => $isDefaultLogo,
-                ];
-            })
-            ->values()
-            ->all();
+        if ($sort === 'latest') {
+            $query->latest('id_universitas');
+        } else {
+            $query->orderBy('nama_universitas', 'asc');
+        }
+
+        $paginator = $query->paginate($perPage ?? 6);
+
+        $paginator->through(function (Universitas $univ) {
+            $isDefaultLogo = true;
+            $logoUrl = asset('images/default-university.png');
+
+            if ($univ->logo && Storage::disk('public')->exists($univ->logo)) {
+                $logoUrl = Storage::disk('public')->url($univ->logo);
+                $isDefaultLogo = false;
+            }
+
+            return [
+                'id_universitas'   => $univ->id_universitas,
+                'nama_universitas' => $univ->nama_universitas,
+                'logo'             => $logoUrl,
+                'is_default_logo'  => $isDefaultLogo,
+            ];
+        });
+
+        return $paginator;
     }
 
     /**
@@ -80,7 +92,7 @@ class DirektoriOrganisasiService
                 'nama_organisasi'     => $org->nama_organisasi,
                 'jenis_organisasi'    => $org->jenis_organisasi,
                 'id_bidang'           => $org->id_bidang,
-                'nama_bidang'         => $org->bidang?->nama_bidang,
+                'nama_bidang'         => $org->bidang_kustom ?: $org->bidang?->nama_bidang,
                 'deskripsi'           => $org->deskripsi,
                 'alamat'              => $org->alamat,
                 'nomor_telepon'       => $org->nomor_telepon,

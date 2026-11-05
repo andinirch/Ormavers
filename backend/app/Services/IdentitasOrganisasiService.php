@@ -108,7 +108,20 @@ class IdentitasOrganisasiService
                 }
 
                 // 3. Update field identitas pada tabel organisasi
-                $organisasi->id_bidang           = $data['id_bidang'];
+                $idBidangRaw = $data['id_bidang'] ?? null;
+                $isCustom = ! empty($data['is_custom_bidang'])
+                    || strtolower(trim((string) $idBidangRaw)) === 'lainnya'
+                    || (! empty($data['bidang_organisasi']) && (empty($idBidangRaw) || ! is_numeric($idBidangRaw) || strtolower((string) $idBidangRaw) === 'lainnya'))
+                    || (! empty($data['bidang_kustom']) && (empty($idBidangRaw) || ! is_numeric($idBidangRaw) || strtolower((string) $idBidangRaw) === 'lainnya'));
+
+                if ($isCustom) {
+                    $organisasi->id_bidang = null;
+                    $organisasi->bidang_kustom = $data['bidang_organisasi'] ?? $data['bidang_kustom'] ?? null;
+                } else {
+                    $organisasi->id_bidang = is_numeric($idBidangRaw) ? (int) $idBidangRaw : null;
+                    $organisasi->bidang_kustom = null;
+                }
+
                 $organisasi->alamat              = $data['alamat'];
                 $organisasi->tanggal_mulai_sk    = $data['tanggal_mulai_sk'];
                 $organisasi->tanggal_berakhir_sk = $data['tanggal_berakhir_sk'];
@@ -166,7 +179,9 @@ class IdentitasOrganisasiService
             'id_universitas'      => $organisasi->id_universitas,
             'nama_universitas'    => $organisasi->universitas?->nama_universitas,
             'id_bidang'           => $organisasi->id_bidang,
-            'nama_bidang'         => $organisasi->bidang?->nama_bidang,
+            'nama_bidang'         => $organisasi->bidang_kustom ?: $organisasi->bidang?->nama_bidang,
+            'bidang_kustom'       => $organisasi->bidang_kustom,
+            'is_custom_bidang'    => ! empty($organisasi->bidang_kustom),
             'alamat'              => $organisasi->alamat,
             'logo'                => $logoUrl,
             'logo_universitas'    => $logoUnivUrl,

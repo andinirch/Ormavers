@@ -38,6 +38,7 @@ class StatusRegistrasiController extends Controller
         $idPelaku = $request->user()->id_pengguna;
 
         $files = [
+            'foto_ktm'        => $request->file('foto_ktm'),
             'sk_organisasi'   => $request->file('sk_organisasi'),
             'sk_kepengurusan' => $request->file('sk_kepengurusan'),
         ];

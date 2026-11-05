@@ -111,6 +111,7 @@ class OrgMemberRequestService
             'username'            => $pengguna?->username,
             'status_keanggotaan'  => $keanggotaan->status_keanggotaan,
             'alasan_penolakan'    => $keanggotaan->alasan_penolakan,
+            'dokumen_ditolak'     => $keanggotaan->dokumen_ditolak ?? [],
             'tanggal_pendaftaran' => $keanggotaan->tanggal_pendaftaran?->toISOString(),
             'tanggal_verifikasi'  => $keanggotaan->tanggal_verifikasi?->toISOString(),
             'dokumen'             => [
@@ -246,10 +247,7 @@ class OrgMemberRequestService
     /**
      * Tolak pendaftaran anggota.
      */
-    /**
-     * Tolak pendaftaran anggota.
-     */
-    public function reject(int $id, string $alasan, Pengguna $user, int $idPelaku): array
+    public function reject(int $id, string $alasan, Pengguna $user, int $idPelaku, array $dokumenDitolak = []): array
     {
         $organisasi = $this->getOrganisasiAktif($user);
         if (! $organisasi) {
@@ -284,7 +282,7 @@ class OrgMemberRequestService
             ];
         }
 
-        return DB::transaction(function () use ($keanggotaan, $organisasi, $alasan, $idPelaku) {
+        return DB::transaction(function () use ($keanggotaan, $organisasi, $alasan, $idPelaku, $dokumenDitolak) {
             $locked = Keanggotaan::where('id_keanggotaan', $keanggotaan->id_keanggotaan)
                 ->lockForUpdate()
                 ->first();
@@ -307,10 +305,11 @@ class OrgMemberRequestService
                 "Menolak keanggotaan {$namaAnggota} di {$namaOrg} dengan alasan: {$alasan}"
             );
 
-            // 2. Ubah status keanggotaan menjadi 'ditolak' dan simpan alasannya
+            // 2. Ubah status keanggotaan menjadi 'ditolak' dan simpan alasannya beserta dokumen ditolak
             $locked->update([
                 'status_keanggotaan'      => 'ditolak',
                 'alasan_penolakan'        => $alasan,
+                'dokumen_ditolak'         => ! empty($dokumenDitolak) ? $dokumenDitolak : null,
                 'id_pengguna_verifikator' => $idPelaku,
                 'tanggal_verifikasi'      => now(),
             ]);

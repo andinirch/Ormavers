@@ -21,6 +21,7 @@ class Keanggotaan extends Model
         'id_organisasi',
         'status_keanggotaan',
         'alasan_penolakan',
+        'dokumen_ditolak',
         'id_pengguna_verifikator',
         'tanggal_pendaftaran',
         'tanggal_verifikasi',
@@ -31,6 +32,7 @@ class Keanggotaan extends Model
         return [
             'tanggal_pendaftaran' => 'datetime',
             'tanggal_verifikasi'  => 'datetime',
+            'dokumen_ditolak'     => 'array',
         ];
     }
 

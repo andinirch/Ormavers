@@ -22,6 +22,7 @@ class Organisasi extends Model
         'id_universitas',
         'id_akun_organisasi',
         'id_bidang',
+        'bidang_kustom',
         'nama_organisasi',
         'jenis_organisasi',
         'nomor_telepon',
