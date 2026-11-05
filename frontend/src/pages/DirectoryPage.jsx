@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getDirectoryOrganizationCounts, getDirectoryUniversities } from '../services/orgApi.js'
+import { getCachedDirectoryCounts, getDirectoryOrganizationCounts, getDirectoryUniversities } from '../services/orgApi.js'
 import { DirectorySkeleton } from '../components/skeletons'
 import { showError, showRateLimitError } from '../utils/alerts.js'
 import '../styles/directory.css'
@@ -64,16 +64,32 @@ function DirectoryPage() {
       const { items, meta } = await getDirectoryUniversities(search, targetPage)
       if (currentId !== requestId.current) return
 
-      const counts = await getDirectoryOrganizationCounts(items)
-      if (currentId !== requestId.current) return
+      // Tampilkan grid segera; hitungan dari cache bila ada, sisanya diisi di background.
+      const cachedCounts = getCachedDirectoryCounts(items)
       setUniversities(items.map((item) => ({
         ...item,
-        organizationCount: counts.get(item.value) ?? 0,
+        organizationCount: cachedCounts.get(item.value) ?? null,
       })))
       setPage(meta?.current_page ?? targetPage)
       setLastPage(Math.max(1, meta?.last_page ?? 1))
       setLoading(false)
       setSearching(false)
+
+      getDirectoryOrganizationCounts(items)
+        .then((counts) => {
+          if (currentId !== requestId.current) return
+          setUniversities((current) => current.map((item) => ({
+            ...item,
+            organizationCount: counts.get(item.value) ?? item.organizationCount ?? 0,
+          })))
+        })
+        .catch(() => {
+          if (currentId !== requestId.current) return
+          setUniversities((current) => current.map((item) => ({
+            ...item,
+            organizationCount: item.organizationCount ?? 0,
+          })))
+        })
     } catch (requestError) {
       if (currentId !== requestId.current) return
       setSearching(false)
@@ -170,7 +186,7 @@ function DirectoryPage() {
                     <h2>{university.label}</h2>
                   </div>
                 <span className="directory-university__count">
-                  {university.organizationCount} organisasi
+                  {university.organizationCount == null ? '… organisasi' : `${university.organizationCount} organisasi`}
                 </span>
                 </Link>
               ))}

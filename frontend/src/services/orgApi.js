@@ -62,6 +62,19 @@ export async function getDirectoryOrganizations(universityId) {
   }
 }
 
+/**
+ * Baca hitungan organisasi dari cache saja (sinkron, tanpa request jaringan).
+ * @returns {Map<number|string, number>} value universitas → jumlah organisasi (hanya yang sudah di-cache)
+ */
+export function getCachedDirectoryCounts(universities) {
+  const map = new Map()
+  universities.forEach((university) => {
+    const cached = getFromCache(`directory_count_${university.value}`, CACHE_TTL_DIRECTORY_COUNTS)
+    if (cached !== null && cached !== undefined) map.set(university.value, cached)
+  })
+  return map
+}
+
 export async function getDirectoryOrganizationCounts(universities) {
   const counts = await Promise.all(universities.map(async (university) => {
     const cacheKey = `directory_count_${university.value}`
