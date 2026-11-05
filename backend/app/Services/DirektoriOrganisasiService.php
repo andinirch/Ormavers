@@ -16,7 +16,7 @@ class DirektoriOrganisasiService
      * @param string|null $sort
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getDaftarUniversitas(?string $search = null, ?int $perPage = 6, ?string $sort = null)
+    public function getDaftarUniversitas(?string $search = null, ?int $perPage = 8, ?string $sort = null)
     {
         $query = Universitas::query();
 
@@ -30,7 +30,7 @@ class DirektoriOrganisasiService
             $query->orderBy('nama_universitas', 'asc');
         }
 
-        $paginator = $query->paginate($perPage ?? 6);
+        $paginator = $query->paginate($perPage ?? 8);
 
         $paginator->through(function (Universitas $univ) {
             $isDefaultLogo = true;

@@ -18,7 +18,7 @@ class DirektoriOrganisasiController extends Controller
     public function universitas(Request $request): JsonResponse
     {
         $search  = $request->input('search');
-        $perPage = (int) $request->input('per_page', 6);
+        $perPage = (int) $request->input('per_page', 8);
         $sort    = $request->input('sort');
 
         // Mengirim parameter pencarian, limit pagination, dan pengurutan ke service
