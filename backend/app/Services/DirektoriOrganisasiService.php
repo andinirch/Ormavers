@@ -70,7 +70,7 @@ class DirektoriOrganisasiService
             ];
         }
 
-        $organisasiList = Organisasi::with(['bidang'])
+        $organisasiList = Organisasi::with(['bidang', 'tambahBidangKustom'])
             ->where('id_universitas', $idUniversitas)
             ->where('status_organisasi', 'aktif')
             ->orderByRaw("CASE WHEN jenis_organisasi = 'bem' THEN 1 WHEN jenis_organisasi = 'hmj' THEN 2 ELSE 3 END")
@@ -92,7 +92,7 @@ class DirektoriOrganisasiService
                 'nama_organisasi'     => $org->nama_organisasi,
                 'jenis_organisasi'    => $org->jenis_organisasi,
                 'id_bidang'           => $org->id_bidang,
-                'nama_bidang'         => $org->bidang_kustom ?: $org->bidang?->nama_bidang,
+                'nama_bidang'         => $org->tambahBidangKustom?->nama_bidang_kustom ?: $org->bidang?->nama_bidang,
                 'deskripsi'           => $org->deskripsi,
                 'alamat'              => $org->alamat,
                 'nomor_telepon'       => $org->nomor_telepon,

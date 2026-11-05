@@ -15,7 +15,7 @@ class PencarianProfilOrganisasiService
      */
     public function cariOrganisasi(array $filters): array
     {
-        $query = Organisasi::with(['universitas', 'bidang'])
+        $query = Organisasi::with(['universitas', 'bidang', 'tambahBidangKustom'])
             ->where('status_organisasi', 'aktif');
 
         if (! empty($filters['keyword'])) {
@@ -68,6 +68,7 @@ class PencarianProfilOrganisasiService
         $organisasi = Organisasi::with([
             'universitas',
             'bidang',
+            'tambahBidangKustom',
             'portofolio' => function ($query) {
                 $query->orderBy('tahun', 'desc')
                       ->orderBy('id_portofolio', 'desc');
@@ -105,9 +106,9 @@ class PencarianProfilOrganisasiService
                 'id_universitas'   => $organisasi->universitas->id_universitas,
                 'nama_universitas' => $organisasi->universitas->nama_universitas,
             ] : null,
-            'bidang' => ($organisasi->bidang || $organisasi->bidang_kustom) ? [
+            'bidang' => ($organisasi->bidang || $organisasi->tambahBidangKustom) ? [
                 'id_bidang'    => $organisasi->id_bidang,
-                'nama_bidang'  => $organisasi->bidang_kustom ?: $organisasi->bidang?->nama_bidang,
+                'nama_bidang'  => $organisasi->tambahBidangKustom?->nama_bidang_kustom ?: $organisasi->bidang?->nama_bidang,
             ] : null,
             'portofolio' => $organisasi->portofolio->map(function ($porto) {
                 return [
@@ -154,7 +155,7 @@ class PencarianProfilOrganisasiService
             'nama_organisasi'  => $org->nama_organisasi,
             'jenis_organisasi' => $org->jenis_organisasi,
             'id_bidang'        => $org->id_bidang,
-            'nama_bidang'      => $org->bidang_kustom ?: $org->bidang?->nama_bidang,
+            'nama_bidang'      => $org->tambahBidangKustom?->nama_bidang_kustom ?: $org->bidang?->nama_bidang,
             'nama_universitas' => $org->universitas?->nama_universitas,
             'deskripsi'        => $org->deskripsi,
             'alamat'           => $org->alamat,

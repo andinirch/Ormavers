@@ -22,7 +22,6 @@ class Organisasi extends Model
         'id_universitas',
         'id_akun_organisasi',
         'id_bidang',
-        'bidang_kustom',
         'nama_organisasi',
         'jenis_organisasi',
         'nomor_telepon',
@@ -85,5 +84,10 @@ class Organisasi extends Model
     public function kontak(): HasMany
     {
         return $this->hasMany(KontakOrganisasi::class, 'id_organisasi', 'id_organisasi');
+    }
+
+    public function tambahBidangKustom(): HasOne
+    {
+        return $this->hasOne(TambahBidangOrganisasi::class, 'id_organisasi', 'id_organisasi');
     }
 }

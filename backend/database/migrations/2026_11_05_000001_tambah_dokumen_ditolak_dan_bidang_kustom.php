@@ -21,13 +21,6 @@ return new class extends Migration
                 $table->json('dokumen_ditolak')->nullable()->after('alasan_penolakan');
             }
         });
-
-        // 3. Tambah kolom bidang_kustom pada organisasi
-        Schema::table('organisasi', function (Blueprint $table) {
-            if (! Schema::hasColumn('organisasi', 'bidang_kustom')) {
-                $table->string('bidang_kustom', 100)->nullable()->after('id_bidang');
-            }
-        });
     }
 
     public function down(): void
@@ -41,12 +34,6 @@ return new class extends Migration
         Schema::table('keanggotaan', function (Blueprint $table) {
             if (Schema::hasColumn('keanggotaan', 'dokumen_ditolak')) {
                 $table->dropColumn('dokumen_ditolak');
-            }
-        });
-
-        Schema::table('organisasi', function (Blueprint $table) {
-            if (Schema::hasColumn('organisasi', 'bidang_kustom')) {
-                $table->dropColumn('bidang_kustom');
             }
         });
     }

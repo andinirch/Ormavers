@@ -9,6 +9,7 @@ use App\Models\PendaftaranOrganisasi;
 use App\Models\PendaftaranOrganisasiFile;
 use App\Models\Pengguna;
 use App\Models\ProfilAnggota;
+use App\Models\TambahBidangOrganisasi;
 use App\Models\Universitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -256,6 +257,7 @@ class UatFase1RefactoringTest extends TestCase
     public function test_input_kustom_bidang_organisasi_lainnya_tidak_mengotori_master(): void
     {
         $univ = Universitas::create(['nama_universitas' => 'Universitas Kustom']);
+        $masterBidangLainnya = BidangOrganisasi::create(['nama_bidang' => 'Lainnya']);
         $masterCountAwal = BidangOrganisasi::count();
 
         $orgUser = Pengguna::factory()->akunOrganisasi()->create(['status_akun' => 'aktif']);
@@ -274,7 +276,7 @@ class UatFase1RefactoringTest extends TestCase
         // 1. Organisasi memilih opsi "Lainnya" dan mengetikkan teks kustom
         $updateResponse = $this->postJson('/api/organisasi/identitas', [
             'id_bidang'           => 'lainnya',
-            'bidang_organisasi'   => 'Robotika dan Kecerdasan Buatan',
+            'nama_bidang_kustom'  => 'Robotika dan Kecerdasan Buatan',
             'is_custom_bidang'    => true,
             'alamat'              => 'Gedung Lab Robotika Lt. 2',
             'tanggal_mulai_sk'    => '2026-01-01',
@@ -285,10 +287,10 @@ class UatFase1RefactoringTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data'    => [
-                    'nama_bidang'      => 'Robotika dan Kecerdasan Buatan',
-                    'bidang_kustom'    => 'Robotika dan Kecerdasan Buatan',
-                    'is_custom_bidang' => true,
-                    'id_bidang'        => null,
+                    'nama_bidang'        => 'Robotika dan Kecerdasan Buatan',
+                    'nama_bidang_kustom' => 'Robotika dan Kecerdasan Buatan',
+                    'is_custom_bidang'   => true,
+                    'id_bidang'          => null,
                 ],
             ]);
 
@@ -298,11 +300,15 @@ class UatFase1RefactoringTest extends TestCase
             'nama_bidang' => 'Robotika dan Kecerdasan Buatan',
         ]);
 
-        // 3. Kolom bidang_kustom tersimpan di tabel organisasi
+        // 3. Data bidang kustom tersimpan di tabel relasi tambah_bidang_organisasi
         $this->assertDatabaseHas('organisasi', [
             'id_organisasi' => $organisasi->id_organisasi,
             'id_bidang'     => null,
-            'bidang_kustom' => 'Robotika dan Kecerdasan Buatan',
+        ]);
+        $this->assertDatabaseHas('tambah_bidang_organisasi', [
+            'id_organisasi'      => $organisasi->id_organisasi,
+            'id_bidang'          => $masterBidangLainnya->id_bidang,
+            'nama_bidang_kustom' => 'Robotika dan Kecerdasan Buatan',
         ]);
 
         // 4. GET /api/organisasi/identitas mengembalikan data bidang kustom
@@ -311,8 +317,9 @@ class UatFase1RefactoringTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data'    => [
-                    'nama_bidang'      => 'Robotika dan Kecerdasan Buatan',
-                    'is_custom_bidang' => true,
+                    'nama_bidang'        => 'Robotika dan Kecerdasan Buatan',
+                    'nama_bidang_kustom' => 'Robotika dan Kecerdasan Buatan',
+                    'is_custom_bidang'   => true,
                 ],
             ]);
 

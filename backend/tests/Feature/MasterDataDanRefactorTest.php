@@ -70,7 +70,7 @@ class MasterDataDanRefactorTest extends TestCase
                 ],
             ]);
 
-        $this->assertCount(25, $response->json('data'));
+        $this->assertCount(26, $response->json('data'));
     }
 
     public function test_pendaftaran_bem_dengan_id_organisasi_induk_null_dan_id_bidang(): void

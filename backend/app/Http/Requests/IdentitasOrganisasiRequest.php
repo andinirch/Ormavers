@@ -20,7 +20,7 @@ class IdentitasOrganisasiRequest extends FormRequest
             'logo_universitas'    => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'id_bidang'           => ['nullable'],
             'bidang_organisasi'   => ['nullable', 'string', 'max:100'],
-            'bidang_kustom'       => ['nullable', 'string', 'max:100'],
+            'nama_bidang_kustom'  => ['nullable', 'string', 'max:100'],
             'is_custom_bidang'    => ['nullable'],
             'alamat'              => ['required', 'string'],
             'tanggal_mulai_sk'    => ['required', 'date'],
@@ -39,7 +39,7 @@ class IdentitasOrganisasiRequest extends FormRequest
         return $isCustom
             || strtolower(trim((string) $idBidang)) === 'lainnya'
             || (! empty($this->input('bidang_organisasi')) && (empty($idBidang) || ! is_numeric($idBidang) || strtolower((string) $idBidang) === 'lainnya'))
-            || (! empty($this->input('bidang_kustom')) && (empty($idBidang) || ! is_numeric($idBidang) || strtolower((string) $idBidang) === 'lainnya'));
+            || (! empty($this->input('nama_bidang_kustom')) && (empty($idBidang) || ! is_numeric($idBidang) || strtolower((string) $idBidang) === 'lainnya'));
     }
 
     /**
@@ -47,7 +47,7 @@ class IdentitasOrganisasiRequest extends FormRequest
      */
     public function getBidangKustom(): ?string
     {
-        $val = $this->input('bidang_organisasi', $this->input('bidang_kustom'));
+        $val = $this->input('nama_bidang_kustom', $this->input('bidang_organisasi'));
         return $val !== null ? trim((string) $val) : null;
     }
 
@@ -88,7 +88,7 @@ class IdentitasOrganisasiRequest extends FormRequest
             'id_bidang.required'                 => 'Bidang organisasi wajib dipilih.',
             'id_bidang.exists'                   => 'Bidang organisasi yang dipilih tidak valid.',
             'bidang_organisasi.max'              => 'Nama bidang organisasi maksimal 100 karakter.',
-            'bidang_kustom.max'                  => 'Nama bidang organisasi maksimal 100 karakter.',
+            'nama_bidang_kustom.max'             => 'Nama bidang organisasi maksimal 100 karakter.',
             'alamat.required'                    => 'Alamat organisasi wajib diisi.',
             'alamat.string'                      => 'Alamat organisasi harus berupa teks.',
             'tanggal_mulai_sk.required'          => 'Tanggal mulai SK wajib diisi.',

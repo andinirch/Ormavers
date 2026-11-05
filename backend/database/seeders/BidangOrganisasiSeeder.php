@@ -44,6 +44,7 @@ class BidangOrganisasiSeeder extends Seeder
             'Tilawah dan Seni Islami',
             'Organisasi Otonom Muhammadiyah',
             'Organisasi Otonom ‘Aisyiyah',
+            'Lainnya',
         ];
 
         foreach ($bidangList as $nama) {

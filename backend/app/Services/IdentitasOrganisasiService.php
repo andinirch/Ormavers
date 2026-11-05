@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\BidangOrganisasi;
 use App\Models\Organisasi;
 use App\Models\Pengguna;
+use App\Models\TambahBidangOrganisasi;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +18,7 @@ class IdentitasOrganisasiService
      */
     public function getOrganisasiAktif(Pengguna $pengguna): ?Organisasi
     {
-        $organisasi = Organisasi::with(['universitas', 'bidang'])
+        $organisasi = Organisasi::with(['universitas', 'bidang', 'tambahBidangKustom'])
             ->where('id_akun_organisasi', $pengguna->id_pengguna)
             ->first();
 
@@ -112,20 +114,41 @@ class IdentitasOrganisasiService
                 $isCustom = ! empty($data['is_custom_bidang'])
                     || strtolower(trim((string) $idBidangRaw)) === 'lainnya'
                     || (! empty($data['bidang_organisasi']) && (empty($idBidangRaw) || ! is_numeric($idBidangRaw) || strtolower((string) $idBidangRaw) === 'lainnya'))
-                    || (! empty($data['bidang_kustom']) && (empty($idBidangRaw) || ! is_numeric($idBidangRaw) || strtolower((string) $idBidangRaw) === 'lainnya'));
+                    || (! empty($data['nama_bidang_kustom']) && (empty($idBidangRaw) || ! is_numeric($idBidangRaw) || strtolower((string) $idBidangRaw) === 'lainnya'));
+
+                $customText = $data['nama_bidang_kustom'] ?? $data['bidang_organisasi'] ?? null;
 
                 if ($isCustom) {
                     $organisasi->id_bidang = null;
-                    $organisasi->bidang_kustom = $data['bidang_organisasi'] ?? $data['bidang_kustom'] ?? null;
                 } else {
                     $organisasi->id_bidang = is_numeric($idBidangRaw) ? (int) $idBidangRaw : null;
-                    $organisasi->bidang_kustom = null;
                 }
 
                 $organisasi->alamat              = $data['alamat'];
                 $organisasi->tanggal_mulai_sk    = $data['tanggal_mulai_sk'];
                 $organisasi->tanggal_berakhir_sk = $data['tanggal_berakhir_sk'];
                 $organisasi->save();
+
+                if ($isCustom) {
+                    if (! empty($customText)) {
+                        $bidangLainnya = BidangOrganisasi::where('nama_bidang', 'Lainnya')->first();
+                        $fkBidang = $bidangLainnya?->id_bidang
+                            ?? (is_numeric($idBidangRaw) ? (int) $idBidangRaw : null)
+                            ?? BidangOrganisasi::value('id_bidang');
+
+                        if ($fkBidang) {
+                            TambahBidangOrganisasi::updateOrCreate(
+                                ['id_organisasi' => $organisasi->id_organisasi],
+                                [
+                                    'id_bidang'          => $fkBidang,
+                                    'nama_bidang_kustom' => trim((string) $customText),
+                                ]
+                            );
+                        }
+                    }
+                } else {
+                    $organisasi->tambahBidangKustom()->delete();
+                }
             });
 
             // Hapus file lama setelah transaksi sukses
@@ -136,7 +159,7 @@ class IdentitasOrganisasiService
             }
 
             $organisasi->refresh();
-            $organisasi->load(['universitas', 'bidang']);
+            $organisasi->load(['universitas', 'bidang', 'tambahBidangKustom']);
 
             return [
                 'data' => $this->formatIdentitasResponse($organisasi),
@@ -179,9 +202,9 @@ class IdentitasOrganisasiService
             'id_universitas'      => $organisasi->id_universitas,
             'nama_universitas'    => $organisasi->universitas?->nama_universitas,
             'id_bidang'           => $organisasi->id_bidang,
-            'nama_bidang'         => $organisasi->bidang_kustom ?: $organisasi->bidang?->nama_bidang,
-            'bidang_kustom'       => $organisasi->bidang_kustom,
-            'is_custom_bidang'    => ! empty($organisasi->bidang_kustom),
+            'nama_bidang'         => $organisasi->tambahBidangKustom?->nama_bidang_kustom ?: $organisasi->bidang?->nama_bidang,
+            'nama_bidang_kustom'  => $organisasi->tambahBidangKustom?->nama_bidang_kustom,
+            'is_custom_bidang'    => ! empty($organisasi->tambahBidangKustom),
             'alamat'              => $organisasi->alamat,
             'logo'                => $logoUrl,
             'logo_universitas'    => $logoUnivUrl,
