@@ -1,4 +1,4 @@
-export const REJECTABLE_DOCUMENTS = [
+const REJECTABLE_DOCUMENTS = [
   { value: 'foto_ktm', label: 'KTM' },
   { value: 'sk_organisasi', label: 'SK Organisasi' },
   { value: 'sk_kepengurusan', label: 'SK Kepengurusan' },

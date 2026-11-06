@@ -79,6 +79,17 @@ export function setInCache(key, data) {
  * Clear specific cache by key
  * @param {string} key - Cache key yang akan dihapus
  */
+export function clearCacheByPrefix(prefix) {
+  try {
+    const fullPrefix = CACHE_PREFIX + prefix
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith(fullPrefix))
+      .forEach((key) => localStorage.removeItem(key))
+  } catch (error) {
+    console.error('[CacheService] Error clearing cache by prefix:', error)
+  }
+}
+
 export function clearCache(key) {
   try {
     const cacheKey = CACHE_PREFIX + key
@@ -90,22 +101,6 @@ export function clearCache(key) {
 
 /**
  * Clear all Ormavers cache
- */
-export function clearAllCache() {
-  try {
-    const keys = Object.keys(localStorage)
-    keys.forEach(key => {
-      if (key.startsWith(CACHE_PREFIX)) {
-        localStorage.removeItem(key)
-      }
-    })
-  } catch (error) {
-    console.error('[CacheService] Error clearing all cache:', error)
-  }
-}
-
-/**
- * Clear cache yang sudah expired (cleanup utility)
  */
 export function clearOldCache() {
   try {
@@ -123,7 +118,7 @@ export function clearOldCache() {
               localStorage.removeItem(key)
             }
           }
-        } catch (err) {
+        } catch {
           // Jika error parsing, hapus saja
           localStorage.removeItem(key)
         }
@@ -134,22 +129,10 @@ export function clearOldCache() {
   }
 }
 
-/**
- * Check apakah cache exist dan belum expired
- * @param {string} key - Cache key
- * @param {number} ttl - Time to live dalam milliseconds
- * @returns {boolean}
- */
-export function isCacheValid(key, ttl = DEFAULT_TTL) {
-  return getFromCache(key, ttl) !== null
-}
-
-// Export semua functions
 export default {
   getFromCache,
   setInCache,
   clearCache,
-  clearAllCache,
   clearOldCache,
-  isCacheValid
+  clearCacheByPrefix
 }

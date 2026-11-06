@@ -24,7 +24,7 @@ class ErrorBoundary extends Component {
     }
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     // Update state agar next render menampilkan fallback UI
     return { hasError: true }
   }
@@ -130,7 +130,7 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#f9fafb',
     padding: '20px',
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: 'var(--font-ui)'
   },
   card: {
     maxWidth: '500px',

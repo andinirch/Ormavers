@@ -18,6 +18,7 @@ import {
   DocumentModal,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
+import { clearOrganizationCaches } from '../../services/orgApi.js'
 import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
 
 function EyeIcon() {
@@ -106,17 +107,22 @@ export default function VerifikasiBemPage() {
     const run = async () => {
       if (!canAccess) return
       setLoading(true)
-      const res = isMemberMode ? await listMemberRequests() : await listHmjRegistrations()
-      if (cancelled) return
-      const list = (res.data ?? []).filter((item) => item.id != null)
-      setItems(list)
-      if (list.length > 0) {
-        setSelectedId((current) => (current && list.some((it) => it.id === current) ? current : list[0].id))
-      } else {
-        setSelectedId(null)
-        setSelectedDetail(null)
+      try {
+        const res = isMemberMode ? await listMemberRequests() : await listHmjRegistrations()
+        if (cancelled) return
+        const list = (res.data ?? []).filter((item) => item.id != null)
+        setItems(list)
+        if (list.length > 0) {
+          setSelectedId((current) => (current && list.some((it) => it.id === current) ? current : list[0].id))
+        } else {
+          setSelectedId(null)
+          setSelectedDetail(null)
+        }
+      } catch (error) {
+        if (!cancelled) setToastMessage(error.response?.data?.message ?? 'Daftar pendaftaran gagal dimuat.')
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      setLoading(false)
     }
     queueMicrotask(run)
     return () => {
@@ -126,8 +132,10 @@ export default function VerifikasiBemPage() {
 
   // Saat pindah tab (HMJ/UKM ↔ Anggota), kosongkan detail lama agar tidak terbaca dengan bentuk data yang salah
   useEffect(() => {
-    setSelectedId(null)
-    setSelectedDetail(null)
+    queueMicrotask(() => {
+      setSelectedId(null)
+      setSelectedDetail(null)
+    })
   }, [bagian])
 
   useEffect(() => {
@@ -278,7 +286,11 @@ export default function VerifikasiBemPage() {
       setConfirmDialog(null)
       setRejectionReason('')
       setDokumenDitolak([])
+      clearOrganizationCaches()
       setRefreshIndex((idx) => idx + 1)
+    } catch (error) {
+      setConfirmDialog(null)
+      setToastMessage(error.response?.data?.message ?? 'Aksi verifikasi gagal diproses.')
     } finally {
       setActionLoading(false)
     }
@@ -577,31 +589,35 @@ export default function VerifikasiBemPage() {
                   <small style={{ fontWeight: 700, color: 'var(--v-navy)', letterSpacing: '0.04em' }}>SURAT KEPUTUSAN (SK)</small>
                 </div>
 
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   className="verification-doc-row"
                   onClick={() => handlePreviewDocument('sk-organisasi', 'SK Organisasi', 'SK_Organisasi.pdf')}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePreviewDocument('sk-organisasi', 'SK Organisasi', 'SK_Organisasi.pdf') } }}
                 >
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Organisasi</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <button type="button" className="verification-download" aria-label="Unduh SK Organisasi" onClick={() => handleDownloadDocument('sk-organisasi', 'SK_Organisasi.pdf')} disabled={downloadingDoc === 'sk-organisasi'}><DownloadIcon /></button>
-                </button>
+                  <button type="button" className="verification-download" aria-label="Unduh SK Organisasi" onClick={(e) => { e.stopPropagation(); handleDownloadDocument('sk-organisasi', 'SK_Organisasi.pdf') }} disabled={downloadingDoc === 'sk-organisasi'}><DownloadIcon /></button>
+                </div>
 
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   className="verification-doc-row"
                   onClick={() => handlePreviewDocument('sk-kepengurusan', 'SK Kepengurusan', 'SK_Kepengurusan.pdf')}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePreviewDocument('sk-kepengurusan', 'SK Kepengurusan', 'SK_Kepengurusan.pdf') } }}
                 >
                   <span className="verification-file-icon is-pdf">PDF</span>
                   <span>
                     <strong>SK Kepengurusan</strong>
                     <small>Maks. 2 MB</small>
                   </span>
-                  <button type="button" className="verification-download" aria-label="Unduh SK Kepengurusan" onClick={() => handleDownloadDocument('sk-kepengurusan', 'SK_Kepengurusan.pdf')} disabled={downloadingDoc === 'sk-kepengurusan'}><DownloadIcon /></button>
-                </button>
+                  <button type="button" className="verification-download" aria-label="Unduh SK Kepengurusan" onClick={(e) => { e.stopPropagation(); handleDownloadDocument('sk-kepengurusan', 'SK_Kepengurusan.pdf') }} disabled={downloadingDoc === 'sk-kepengurusan'}><DownloadIcon /></button>
+                </div>
               </div>
 
               <div style={{ marginTop: '20px' }}>
@@ -682,7 +698,10 @@ export default function VerifikasiBemPage() {
            url={previewDoc.url}
            fileName={previewDoc.fileName}
           type={previewDoc.type}
-          onClose={() => setPreviewDoc(null)}
+          onClose={() => {
+            if (previewDoc.url) URL.revokeObjectURL(previewDoc.url)
+            setPreviewDoc(null)
+          }}
         />
       )}
 

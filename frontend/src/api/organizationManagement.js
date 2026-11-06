@@ -15,6 +15,7 @@ export const updateOrganizationContact = (id, data) => api.put(`/organisasi/kont
 export const deleteOrganizationContact = (id) => api.delete(`/organisasi/kontak/${id}`).then(responseData)
 export const listOrganizationPortfolios = () => api.get('/organisasi/portofolio').then(responseData)
 export const createOrganizationPortfolio = (data) => api.post('/organisasi/portofolio', data).then(responseData)
+export const getOrganizationPortfolio = (id) => api.get(`/organisasi/portofolio/${id}`).then(responseData)
 export const updateOrganizationPortfolio = (id, data) =>
   api.put(`/organisasi/portofolio/${id}`, data).then(responseData)
 export const deleteOrganizationPortfolio = (id) => api.delete(`/organisasi/portofolio/${id}`).then(responseData)

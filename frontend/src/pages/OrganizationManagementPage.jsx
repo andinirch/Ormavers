@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import Swal from 'sweetalert2'
 import { assetUrl } from '../api/api.js'
-import { clearCache } from '../services/cacheService.js'
-import { getProfile } from '../api/profile.js'
+
 import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
-import { getOrganizationIdentity, updateOrganizationIdentity, getBidangOrganisasi, getOrganizationDescription, updateOrganizationDescription, listOrganizationContacts, createOrganizationContact, updateOrganizationContact, deleteOrganizationContact, listOrganizationPortfolios } from '../api/organizationManagement.js'
-import { getUniversitas } from '../services/orgApi.js'
+import { getOrganizationIdentity, updateOrganizationIdentity, getBidangOrganisasi, getOrganizationDescription, updateOrganizationDescription, listOrganizationContacts, createOrganizationContact, updateOrganizationContact, deleteOrganizationContact } from '../api/organizationManagement.js'
+import { clearOrganizationCaches, getUniversitas } from '../services/orgApi.js'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/organization-management.css'
@@ -38,19 +37,15 @@ function OrganizationManagementPage() {
   const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
   const isHmjUkm = roleNames.includes('akun_hmj_ukm') || user?.peran === 'akun_hmj_ukm'
   const [description, setDescription] = useState('')
-  const [portfolioCount, setPortfolioCount] = useState(0)
   const [universityLogo, setUniversityLogo] = useState(null)
   const [identity, setIdentity] = useState({ id_bidang: '', alamat: '', tanggal_mulai_sk: '', tanggal_berakhir_sk: '', logo: null, logo_universitas: null })
   const [identityDraft, setIdentityDraft] = useState(null)
   const [identityLogoFile, setIdentityLogoFile] = useState(null)
-  const [universityLogoFile, setUniversityLogoFile] = useState(null)
-  const [universityLogoPreview, setUniversityLogoPreview] = useState(null)
   const [bidangOptions, setBidangOptions] = useState([])
   const [bidangError, setBidangError] = useState('')
   const [editingDescription, setEditingDescription] = useState(false)
   const [editingContacts, setEditingContacts] = useState(false)
   const [editingIdentity, setEditingIdentity] = useState(false)
-  const [profile, setProfile] = useState({ name: '', photoUrl: null })
   const [organizationName, setOrganizationName] = useState('')
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -61,10 +56,9 @@ function OrganizationManagementPage() {
     setLoading(true)
     setError('')
     try {
-      const [descriptionResult, contactsResult, profileResult, statusResult, identityResult] = await Promise.all([
+      const [descriptionResult, contactsResult, statusResult, identityResult] = await Promise.all([
         getOrganizationDescription(),
         listOrganizationContacts(),
-        getProfile(),
         getMyRegistrationStatus(),
         getOrganizationIdentity(),
       ])
@@ -83,18 +77,12 @@ function OrganizationManagementPage() {
       setIdentity(normalizedIdentity)
       setIdentityDraft(normalizedIdentity)
       setUniversityLogo(normalizedIdentity.logo_universitas ?? null)
-      setUniversityLogoPreview(null)
-      setProfile({ name: profileResult.data?.nama ?? '', photoUrl: assetUrl(profileResult.data?.foto_profil_url) })
       setOrganizationName(statusResult.data?.organisasiDetail?.nama_organisasi ?? '')
       const detail = statusResult.data?.organisasiDetail
-      const [portfolioResult, universitasResult, bidangResult] = await Promise.allSettled([
-        listOrganizationPortfolios(),
+      const [universitasResult, bidangResult] = await Promise.allSettled([
         getUniversitas(),
         getBidangOrganisasi(),
       ])
-      const portfolioData = portfolioResult.status === 'fulfilled' ? portfolioResult.value.data : null
-      const portfolioItems = Array.isArray(portfolioData) ? portfolioData : portfolioData?.portofolio ?? []
-      setPortfolioCount(portfolioItems.length)
       if (bidangResult.status === 'fulfilled') {
         const bidangResponse = bidangResult.value
         const bidangItems = Array.isArray(bidangResponse?.data)
@@ -172,7 +160,7 @@ function OrganizationManagementPage() {
     if (!item) return
     
     // Validasi ID kontak exist sebelum delete
-    if (!item.id_kontak) {
+    if (!(item.id_kontak ?? item.id)) {
       await Swal.fire({
         icon: 'error',
         title: 'Kesalahan',
@@ -185,7 +173,7 @@ function OrganizationManagementPage() {
     const confirmed = await Swal.fire({ icon: 'warning', title: 'Hapus kontak?', text: 'Kontak yang dihapus tidak dapat dipulihkan.', showCancelButton: true, confirmButtonText: 'Hapus', cancelButtonText: 'Batal', confirmButtonColor: '#dc2626' })
     if (!confirmed.isConfirmed) return
     try {
-      await deleteOrganizationContact(item.id_kontak)
+      await deleteOrganizationContact(item.id_kontak ?? item.id)
       setContacts((current) => current.filter((contactItem) => contactItem.jenis !== jenis))
     } catch (requestError) {
       await Swal.fire({ icon: 'error', title: 'Gagal menghapus', text: requestError.response?.data?.message ?? 'Kontak gagal dihapus.', confirmButtonColor: '#2563eb' })
@@ -223,7 +211,6 @@ function OrganizationManagementPage() {
       identityPayload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk)
       identityPayload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk)
       identityPayload.append('logo', file)
-      if (universityLogoFile && !isHmjUkm) identityPayload.append('logo_universitas', universityLogoFile)
       const identityResult = await updateOrganizationIdentity(identityPayload)
       const nextIdentity = identityResult.data ?? identityResult
       const normalizedIdentity = {
@@ -234,8 +221,7 @@ function OrganizationManagementPage() {
       setIdentity(normalizedIdentity)
       setIdentityDraft(normalizedIdentity)
       setUniversityLogo(normalizedIdentity.logo_universitas || universityLogo)
-      setUniversityLogoPreview(null)
-      clearCache('directory_universities')
+      clearOrganizationCaches()
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Logo organisasi berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (requestError) {
       const validationErrors = requestError.response?.data?.errors
@@ -287,9 +273,7 @@ function OrganizationManagementPage() {
       setIdentity(nextIdentity)
       setIdentityDraft(nextIdentity)
       setUniversityLogo(nextIdentity.logo_universitas || universityLogo)
-      setUniversityLogoPreview(null)
-      setUniversityLogoFile(null)
-      clearCache('directory_universities')
+      clearOrganizationCaches()
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Logo universitas berhasil diubah.', confirmButtonColor: '#2563eb' })
     } catch (requestError) {
       const validationErrors = requestError.response?.data?.errors
@@ -314,7 +298,6 @@ function OrganizationManagementPage() {
       payload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk ?? '')
       payload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk ?? '')
       if (identityLogoFile) payload.append('logo', identityLogoFile)
-      if (universityLogoFile && !isHmjUkm) payload.append('logo_universitas', universityLogoFile)
       const result = await updateOrganizationIdentity(payload)
       const responseIdentity = result.data ?? result
       const nextIdentity = {
@@ -325,10 +308,8 @@ function OrganizationManagementPage() {
       setIdentity(nextIdentity)
       setIdentityDraft(nextIdentity)
       setUniversityLogo(nextIdentity.logo_universitas || universityLogo)
-      setUniversityLogoPreview(null)
-      clearCache('directory_universities')
+      clearOrganizationCaches()
       setIdentityLogoFile(null)
-      setUniversityLogoFile(null)
       setEditingIdentity(false)
       await Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Identitas organisasi berhasil disimpan.', confirmButtonColor: '#2563eb' })
     } catch (requestError) {
@@ -361,8 +342,8 @@ function OrganizationManagementPage() {
               <AdminIcon name="university" size={20} />
             </header>
             <div className="organization-logo-card__preview">
-               {universityLogoPreview || universityLogo
-                 ? <img className="organization-logo-card__image" src={universityLogoPreview || universityLogo} alt="Logo universitas" />
+               {universityLogo
+                 ? <img className="organization-logo-card__image" src={universityLogo} alt="Logo universitas" />
                 : <>
                     <span className="organization-logo-card__badge"><AdminIcon name="graduation-cap" size={28} /></span>
                     <p>Logo universitas belum tersedia</p>

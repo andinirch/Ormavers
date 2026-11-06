@@ -1,4 +1,4 @@
-.ranggota-page { min-height: 100svh; display: flex; flex-direction: column; overflow-x: hidden; color: #0f172a; background: #f0f7ff; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.ranggota-page { min-height: 100svh; display: flex; flex-direction: column; overflow-x: hidden; color: #0f172a; background: #f0f7ff; font-family: var(--font-ui); }
 .ranggota-header { position: relative; min-height: var(--orma-logo-band); display: flex; align-items: center; gap: 32px; padding: 0 var(--orma-logo-inset); background: #fff; border-bottom: 1px solid #eef0f8; }
 .ranggota-brand { display: inline-flex; align-items: center; color: #0f172a; text-decoration: none; }
 .ranggota-nav { position: absolute; left: 50%; display: flex; align-items: center; gap: 8px; margin: 0; color: #1e293b; font-size: 14px; font-weight: 600; transform: translateX(-50%); }

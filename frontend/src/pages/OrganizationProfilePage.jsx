@@ -78,12 +78,6 @@ function SkeletonCard({ height = '200px', className = '' }) {
   )
 }
 
-function MemberOrganizationIcon({ type }) {
-  return type === 'bem'
-    ? <svg className="profile-member-org__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V6h12v14M9 6V3h6v3M9 10h2M13 10h2M9 14h2M13 14h2" /></svg>
-    : <svg className="profile-member-org__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M18 9v6M15 12h6" /></svg>
-}
-
 function buildMemberList(organizations, organizationDetail) {
   if (organizations.length > 0) return organizations
   if (organizationDetail) {
@@ -96,12 +90,6 @@ function buildMemberList(organizations, organizationDetail) {
   return []
 }
 
-function memberStatusLabel(status) {
-  if (status === 'disetujui' || status === 'aktif') return 'Aktif'
-  if (status === 'ditolak') return 'Ditolak'
-  return 'Menunggu verifikasi'
-}
-
 function OrganizationProfilePage() {
   const { user, roles, refreshUser } = useAuth()
   const key = roleKey(user, roles)
@@ -112,7 +100,6 @@ function OrganizationProfilePage() {
   const [photoUrl, setPhotoUrl] = useState(null)
   const [organizationDetail, setOrganizationDetail] = useState(null)
   const [bemInduk, setBemInduk] = useState(null)
-  const [registrationStatus, setRegistrationStatus] = useState(null)
   const [organizations, setOrganizations] = useState([])
   const [memberParents, setMemberParents] = useState({})
   const [password, setPassword] = useState({ old: '', next: '', confirm: '' })
@@ -245,7 +232,6 @@ function OrganizationProfilePage() {
            .then((name) => { if (active) setBemInduk(name) })
            .catch(() => {})
        }
-      setRegistrationStatus(statusResult?.data?.status ?? null)
     }).catch(() => {
       // Silent fail untuk org data
     }).finally(() => {

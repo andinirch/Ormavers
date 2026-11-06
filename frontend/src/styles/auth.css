@@ -148,17 +148,6 @@
   border-color: var(--danger);
 }
 
-.form-input--file {
-  padding: 8px 12px;
-  font-size: 13px;
-}
-
-.form-file__name {
-  font-size: 12px;
-  color: var(--text);
-  margin: 0;
-}
-
 .form-fieldset {
   border: 0;
   padding: 0;

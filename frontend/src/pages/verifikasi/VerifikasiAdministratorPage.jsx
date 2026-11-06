@@ -12,6 +12,7 @@ import {
   StatusBadge,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
+import { clearOrganizationCaches } from '../../services/orgApi.js'
 import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
 
 function FileTextIcon() {
@@ -212,6 +213,7 @@ export default function VerifikasiAdministratorPage() {
       setConfirmDialog(null)
       setRejectionReason('')
       setDokumenDitolak([])
+      clearOrganizationCaches()
       await loadList()
     } catch (err) {
       setToastMessage(err?.response?.data?.message ?? 'Aksi verifikasi gagal diproses.')

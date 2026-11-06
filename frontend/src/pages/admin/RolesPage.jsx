@@ -26,13 +26,29 @@ function roleLabel(name) {
 }
 
 function RolesPage() {
-  const { roles, permissions, deleteRole } = useAdminData()
+  const { roles, permissions, deleteRole, fetchRole } = useAdminData()
   const { user, roles: sessionRoles, permissions: sessionPermissions } = useAuth()
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState(null)
   const [creating, setCreating] = useState(false)
   const isSuperAdmin = user?.peran === 'super_admin' || sessionRoles.some((role) => (typeof role === 'string' ? role : role?.name) === 'super_admin')
   const can = (permission) => isSuperAdmin || sessionPermissions.includes(permission)
+  const handleDelete = async (role) => {
+    if (!window.confirm(`Hapus role ${role.name}?`)) return
+    try {
+      await deleteRole(role.id)
+    } catch (err) {
+      window.alert(err?.response?.data?.message ?? 'Role gagal dihapus.')
+    }
+  }
+  // Ambil detail role terbaru; bila gagal, pakai data dari daftar.
+  const handleEdit = async (role) => {
+    try {
+      setEditing(await fetchRole(role.id))
+    } catch {
+      setEditing(role)
+    }
+  }
   const filtered = useMemo(() => roles.filter((role) => `${role.name} ${role.permissions}`.toLowerCase().includes(query.toLowerCase())), [roles, query])
 
   return (
@@ -113,12 +129,12 @@ function RolesPage() {
                         </span>
                       ) : (
                         <div className="admin-icon-actions">
-{can('edit roles') && <button onClick={() => setEditing(role)} aria-label="Edit role">
+{can('edit roles') && <button onClick={() => handleEdit(role)} aria-label="Edit role">
                              <AdminIcon name="edit" />
                            </button>}
                            {can('delete roles') && <button
                              className="admin-role-delete-action"
-                            onClick={() => window.confirm(`Hapus role ${role.name}?`) && deleteRole(role.id)}
+                            onClick={() => handleDelete(role)}
                             aria-label="Hapus role"
                             title="Hapus role"
                           >

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AdminDataContext } from './AdminDataContext.jsx'
-import { getPermissions, createPermission, updatePermission, deletePermission, getRoles, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
+import { getPermissions, createPermission, updatePermission, deletePermission, getRoles, getRole as getRoleRequest, createRole as createRoleRequest, updateRole as updateRoleRequest, deleteRole as deleteRoleRequest } from '../api/adminPanel.js'
 import { listUsers, storeAdministrator, updateAdministratorStatus } from '../api/superadmin.js'
 
 const ROLE_BAWAAN = ['super_admin', 'administrator', 'akun_bem', 'akun_hmj_ukm', 'anggota']
@@ -60,6 +60,7 @@ export function AdminDataProvider({ children }) {
      organizations: [],
      loading,
      refreshUsers: refresh,
+    fetchRole: async (id) => normalizeRole((await getRoleRequest(id))?.data?.role ?? {}),
     createRole: async (input) => {
       const result = await createRoleRequest({
         ...input,

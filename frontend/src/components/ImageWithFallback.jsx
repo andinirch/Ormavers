@@ -26,7 +26,13 @@ function ImageWithFallback({
   ...props 
 }) {
   const [imageState, setImageState] = useState('loading') // 'loading' | 'loaded' | 'error'
-  const [imageSrc, setImageSrc] = useState(src)
+  const [loadedSrc, setLoadedSrc] = useState(src)
+
+  // Saat src berganti, kembali ke status loading untuk gambar yang baru
+  if (src !== loadedSrc) {
+    setLoadedSrc(src)
+    setImageState('loading')
+  }
 
   const handleLoad = () => {
     setImageState('loaded')
@@ -35,12 +41,6 @@ function ImageWithFallback({
   const handleError = () => {
     setImageState('error')
     console.warn(`[ImageWithFallback] Failed to load image: ${src}`)
-  }
-
-  // Update imageSrc ketika src prop berubah
-  if (src !== imageSrc && imageState !== 'loading') {
-    setImageSrc(src)
-    setImageState('loading')
   }
 
   // Show fallback jika error
@@ -97,7 +97,7 @@ function ImageWithFallback({
 
       {/* Actual image (hidden saat loading) */}
       <img
-        src={imageSrc}
+        src={src}
         alt={alt}
         className={className}
         style={{

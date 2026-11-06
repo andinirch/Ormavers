@@ -72,16 +72,21 @@ export default function VerifikasiHmjPage() {
 
   const loadData = async () => {
     setLoading(true)
-    const res = await listMemberRequests()
-    const list = res.data ?? []
-    setItems(list)
-    if (list.length > 0) {
-      setSelectedId((current) => (current && list.some((it) => it.id === current) ? current : list[0].id))
-    } else {
-      setSelectedId(null)
-      setSelectedDetail(null)
+    try {
+      const res = await listMemberRequests()
+      const list = res.data ?? []
+      setItems(list)
+      if (list.length > 0) {
+        setSelectedId((current) => (current && list.some((it) => it.id === current) ? current : list[0].id))
+      } else {
+        setSelectedId(null)
+        setSelectedDetail(null)
+      }
+    } catch (error) {
+      setToastMessage(error.response?.data?.message ?? 'Daftar permintaan gagal dimuat.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -95,26 +100,34 @@ export default function VerifikasiHmjPage() {
     }
     let cancelled = false
     const fetchDetail = async () => {
-        setDetailLoading(true)
-      const res = await getMemberRequestDetail(selectedId)
-      if (!cancelled) {
-        setSelectedDetail(res.data ?? null)
-        getMemberKtm(selectedId).then((response) => {
-          if (cancelled) return
-          const url = URL.createObjectURL(response.data)
-          setKtmPreviewUrl((previous) => {
-            if (previous) URL.revokeObjectURL(previous)
-            return url
+      setDetailLoading(true)
+      try {
+        const res = await getMemberRequestDetail(selectedId)
+        if (!cancelled) {
+          setSelectedDetail(res.data ?? null)
+          getMemberKtm(selectedId).then((response) => {
+            if (cancelled) return
+            const url = URL.createObjectURL(response.data)
+            setKtmPreviewUrl((previous) => {
+              if (previous) URL.revokeObjectURL(previous)
+              return url
+            })
+          }).catch((error) => {
+            if (!cancelled) {
+              setKtmPreviewUrl(null)
+              setToastMessage(error.response?.data?.message ?? 'Foto KTM gagal dimuat.')
+            }
           })
-        }).catch((error) => {
-          if (!cancelled) {
-            setKtmPreviewUrl(null)
-            setToastMessage(error.response?.data?.message ?? 'Foto KTM gagal dimuat.')
-          }
-        })
-        setRejectionReason('')
-        setRejectionError('')
-        setDetailLoading(false)
+          setRejectionReason('')
+          setRejectionError('')
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSelectedDetail(null)
+          setToastMessage(error.response?.data?.message ?? 'Detail permintaan gagal dimuat.')
+        }
+      } finally {
+        if (!cancelled) setDetailLoading(false)
       }
     }
     queueMicrotask(fetchDetail)
@@ -166,6 +179,9 @@ export default function VerifikasiHmjPage() {
       setConfirmDialog(null)
       setRejectionReason('')
       await loadData()
+    } catch (error) {
+      setConfirmDialog(null)
+      setToastMessage(error.response?.data?.message ?? 'Aksi verifikasi gagal diproses.')
     } finally {
       setActionLoading(false)
     }

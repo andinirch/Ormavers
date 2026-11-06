@@ -54,9 +54,9 @@ function OrganizationListPage() {
   // Pencarian dilakukan di backend (/organisasi/cari), dengan debounce 300 ms
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setError('')
     const timer = setTimeout(() => {
+      setLoading(true)
+      setError('')
       searchOrganizations({ keyword: query, id_universitas: universityId, jenis_organisasi: type, id_bidang: field })
         .then((items) => { if (active) setOrganizations(items) })
         .catch((requestError) => {

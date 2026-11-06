@@ -1,10 +1,9 @@
 import api, { assetUrl, responseData } from '../api/api.js'
-import { getFromCache, setInCache } from './cacheService.js'
+import { clearCache, clearCacheByPrefix, getFromCache, setInCache } from './cacheService.js'
 
 // Cache TTLs (dalam milliseconds)
 const CACHE_TTL_UNIVERSITAS = 10 * 60 * 1000 // 10 menit
 const CACHE_TTL_BEM = 10 * 60 * 1000 // 10 menit
-const CACHE_TTL_HMJ_UKM = 5 * 60 * 1000 // 5 menit (lebih sering update)
 const CACHE_TTL_DIRECTORY_COUNTS = 5 * 60 * 1000
 
 function normalizeOrganizationOption(option) {
@@ -25,6 +24,15 @@ function normalizeOrganizationOption(option) {
 }
 
 export const DIRECTORY_PER_PAGE = 8
+
+// Dipanggil setelah data organisasi/universitas berubah (identitas, logo, verifikasi).
+export function clearOrganizationCaches() {
+  clearCache('directory_universities_v2')
+  clearCache('universitas_v2')
+  clearCache('verified_bem')
+  clearCacheByPrefix('hmj_ukm_')
+  clearCacheByPrefix('directory_count_')
+}
 
 export async function getDirectoryUniversities(search = '', page = 1) {
   const keyword = search?.trim() ?? ''
@@ -174,52 +182,6 @@ export async function getVerifiedBem() {
   return data
 }
 
-export async function getVerifiedHmjUkm(bemId) {
-  // Try cache first
-  const cacheKey = `hmj_ukm_${bemId}`
-  const cached = getFromCache(cacheKey, CACHE_TTL_HMJ_UKM)
-  if (cached) {
-    console.log(`[orgApi] Using cached HMJ/UKM data for BEM ${bemId}`)
-    return cached
-  }
-
-  // Fetch dari API
-  console.log(`[orgApi] Fetching HMJ/UKM for BEM ${bemId} from API`)
-  const result = await api.get(`/public/bem/${bemId}/organisasi`).then(responseData)
-  const items = result?.data?.organisasi ?? result?.organisasi ?? []
-  const data = { data: items.map(normalizeOrganizationOption) }
-
-  // Save to cache
-  setInCache(cacheKey, data)
-  return data
-}
-
-export async function getOrganizationDirectory(universityId, universitiesData = null, bemData = null) {
-  // Reuse data jika sudah di-pass (avoid duplicate API calls)
-  const universities = universitiesData || await getUniversitas()
-  const university = universities.find((item) => String(item.value) === String(universityId))
-  if (!university) throw new Error('Universitas tidak ditemukan.')
-
-  const bemResult = bemData || await getVerifiedBem()
-  const bems = bemResult.data.filter((bem) => String(bem.university_id) === String(universityId))
-  const results = await Promise.all(bems.map((bem) => getVerifiedHmjUkm(bem.organization_id)))
-  const organizations = results.flatMap((result) => result.data).map((organization) => ({
-    id: organization.organization_id,
-    name: organization.label,
-    type: String(organization.organization_type ?? '').toUpperCase(),
-    deskripsi: organization.deskripsi ?? '', // Ready for when backend sends it
-    logo: organization.logo ?? null, // Ready for when backend sends it
-  }))
-
-  return { university, organizations }
-}
-
-/**
- * BEM induk sebuah HMJ/UKM: BEM aktif dengan id_universitas yang sama.
- * Sesuai skema baru (relasi lewat id_universitas, bukan id_organisasi_induk).
- * @param {number|string} universityId id_universitas organisasi
- * @returns {Promise<{name: string, universityName: string|null}|null>}
- */
 export async function findBemIndukInfo({ universityId = null, universityName = null } = {}) {
   if (!universityId && !universityName) return null
   const bemResult = await getVerifiedBem()
@@ -252,7 +214,7 @@ export async function getUniversitasAktif() {
  */
 export async function getOrganisasiByUniversitasAktif(universityId) {
   if (!universityId) return []
-  let items = []
+  let items
   try {
     const result = await api.get(`/public/universitas/${universityId}/organisasi-lengkap`).then(responseData)
     items = Array.isArray(result?.data?.organisasi)
@@ -277,15 +239,3 @@ export async function getOrganisasiByUniversitasAktif(universityId) {
  * Hitungan organisasi per universitas. Sementara hanya BEM aktif (sumber HMJ/UKM
  * belum tersedia dari backend). Titik ganti: fungsi ini saja.
  */
-export async function getUniversityOrganizationCounts(universities, bemData = null) {
-  const bemResult = bemData || await getVerifiedBem()
-  const counts = new Map(universities.map((university) => [university.value, 0]))
-
-  bemResult.data.forEach((bem) => {
-    const universityId = universities.find((university) => String(university.value) === String(bem.university_id))?.value
-    if (universityId == null) return
-    counts.set(universityId, (counts.get(universityId) ?? 0) + 1)
-  })
-
-  return counts
-}

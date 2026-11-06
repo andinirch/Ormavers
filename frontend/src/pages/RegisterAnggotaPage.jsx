@@ -4,7 +4,6 @@ import TextInput from '../components/form/TextInput.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
 import SelectInput from '../components/form/SelectInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
-import FormMessage from '../components/form/FormMessage.jsx'
 import OrmaLogo from '../components/OrmaLogo.jsx'
 import Footer from '../components/Footer.jsx'
 import { getOrganisasiByUniversitasAktif, getUniversitasAktif } from '../services/orgApi.js'
@@ -68,7 +67,6 @@ function RegisterAnggotaPage() {
   const navigate = useNavigate()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState('idle')
   const [universitasOptions, setUniversitasOptions] = useState([])
   const [universitasLoading, setUniversitasLoading] = useState(true)
   const [orgResult, setOrgResult] = useState({ forUniversitas: null, options: [], error: null })
@@ -136,7 +134,6 @@ function RegisterAnggotaPage() {
     if (fotoError) nextErrors.fotoKtm = fotoError
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
-      setStatus('idle')
       return
     }
     const formData = new FormData()
@@ -160,7 +157,6 @@ function RegisterAnggotaPage() {
         messages[0],
       ]))
       setErrors(mappedErrors)
-      setStatus('error')
     }
   }
 

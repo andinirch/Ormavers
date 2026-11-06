@@ -1,8 +1,8 @@
-export const PDF_MIME = 'application/pdf'
-export const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
-export const MAX_DOCUMENT_LABEL = '2 MB'
-export const MAX_PHOTO_BYTES = 1 * 1024 * 1024
-export const MAX_PHOTO_LABEL = '1 MB'
+const PDF_MIME = 'application/pdf'
+const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
+const MAX_DOCUMENT_LABEL = '2 MB'
+const MAX_PHOTO_BYTES = 1 * 1024 * 1024
+const MAX_PHOTO_LABEL = '1 MB'
 
 export function isNonEmpty(value) {
   if (typeof value === 'string') {
@@ -15,7 +15,7 @@ export function requiredError(label) {
   return `${label} wajib diisi.`
 }
 
-export function isPdfFile(file) {
+function isPdfFile(file) {
   if (!file) return false
   const byMime = file.type === PDF_MIME
   const byExtension =
@@ -36,7 +36,7 @@ export function validateDocumentFile(file, label = 'Dokumen') {
   return null
 }
 
-export function isJpegFile(file) {
+function isJpegFile(file) {
   if (!file) return false
   if (file.type === 'image/jpeg') return true
   const name = typeof file.name === 'string' ? file.name.toLowerCase() : ''

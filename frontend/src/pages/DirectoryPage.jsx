@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCachedDirectoryCounts, getDirectoryOrganizationCounts, getDirectoryUniversities } from '../services/orgApi.js'
 import { DirectorySkeleton } from '../components/skeletons'
@@ -53,8 +53,9 @@ function DirectoryPage() {
   const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const requestId = useRef(0)
+  const retryRef = useRef(null)
 
-  const loadData = async (search = keyword, targetPage = 1) => {
+  const loadData = useCallback(async (search, targetPage = 1) => {
     const currentId = ++requestId.current
     setError('')
     if (!search.trim() && targetPage === 1) setLoading(true)
@@ -100,23 +101,31 @@ function DirectoryPage() {
       // Show better error alerts
       if (requestError.response?.status === 429) {
         // Rate limit error
-        showRateLimitError(() => loadData())
+        showRateLimitError(() => retryRef.current?.(search, targetPage))
       } else if (requestError.response?.status >= 500) {
         // Server error
-        showError('Server sedang bermasalah. Silakan coba lagi nanti.', () => loadData())
+        showError('Server sedang bermasalah. Silakan coba lagi nanti.', () => retryRef.current?.(search, targetPage))
       } else if (!requestError.response) {
         // Network error
-        showError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', () => loadData())
+        showError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', () => retryRef.current?.(search, targetPage))
       }
     }
-  }
-
-  useEffect(() => {
-    loadData('', 1)
   }, [])
+  useEffect(() => {
+    retryRef.current = loadData
+  }, [loadData])
 
   useEffect(() => {
-    if (loading) return undefined
+    queueMicrotask(() => loadData('', 1))
+  }, [loadData])
+
+  const keywordMounted = useRef(false)
+  useEffect(() => {
+    // Lewati pemicu pertama (sudah ditangani loadData awal)
+    if (!keywordMounted.current) {
+      keywordMounted.current = true
+      return undefined
+    }
     const timer = setTimeout(() => {
       loadData(keyword, 1)
     }, 300)

@@ -7,7 +7,7 @@ import { assetUrl } from '../api/api.js'
 function normalizePortfolioItems(items) {
   return items.map((item) => ({ ...item, dokumentasi: assetUrl(item.dokumentasi) }))
 }
-import { listOrganizationPortfolios, createOrganizationPortfolio, updateOrganizationPortfolio, deleteOrganizationPortfolio } from '../api/organizationManagement.js'
+import { listOrganizationPortfolios, getOrganizationPortfolio, createOrganizationPortfolio, updateOrganizationPortfolio, deleteOrganizationPortfolio } from '../api/organizationManagement.js'
 import '../styles/organization-portfolio.css'
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
@@ -119,11 +119,19 @@ function OrganizationPortfolioPage() {
     setFile(chosen)
   }
 
-  const startEdit = (item) => {
-    setEditing(item)
-    setForm({ judul: item.judul ?? '', tahun: String(item.tahun ?? ''), deskripsi: item.deskripsi ?? '' })
+  const startEdit = async (item) => {
     setFile(null)
     setFieldError('')
+    try {
+      // Ambil detail terbaru dari backend; bila gagal, pakai data dari daftar.
+      const result = await getOrganizationPortfolio(item.id_portofolio)
+      const normalized = normalizePortfolioItems([result?.data ?? item])[0]
+      setEditing(normalized)
+      setForm({ judul: normalized.judul ?? '', tahun: String(normalized.tahun ?? ''), deskripsi: normalized.deskripsi ?? '' })
+    } catch {
+      setEditing(item)
+      setForm({ judul: item.judul ?? '', tahun: String(item.tahun ?? ''), deskripsi: item.deskripsi ?? '' })
+    }
   }
 
   const submit = async (event) => {

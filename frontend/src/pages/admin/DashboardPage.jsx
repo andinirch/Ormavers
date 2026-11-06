@@ -14,13 +14,22 @@ function DashboardPage() {
     getSummary().then((result) => setSummary(result?.data ?? result)).catch(() => setSummary(null))
   }, [])
 
-  const data = summary ?? {
+  const fallback = {
     total_pengguna: users.length,
     administrator_aktif: activeAdminCount,
     role_terdefinisi: roles.length,
     permission: permissions?.length || 0,
     aktivitas_terbaru: [],
   }
+  const data = {
+    ...fallback,
+    ...Object.fromEntries(Object.entries(summary ?? {}).filter(([, value]) => value != null)),
+  }
+  data.total_pengguna = Number(data.total_pengguna) || 0
+  data.administrator_aktif = Number(data.administrator_aktif) || 0
+  data.role_terdefinisi = Number(data.role_terdefinisi) || 0
+  data.permission = Number(data.permission) || 0
+  data.aktivitas_terbaru = Array.isArray(data.aktivitas_terbaru) ? data.aktivitas_terbaru : []
 
   return (
     <main className="admin-page admin-dashboard-page">
