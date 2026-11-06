@@ -12,6 +12,7 @@ import {
   StatusBadge,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
+import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
 
 function FileTextIcon() {
   return (
@@ -68,6 +69,8 @@ export default function VerifikasiAdministratorPage() {
   const [error, setError] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
   const [rejectionError, setRejectionError] = useState('')
+  const [dokumenDitolak, setDokumenDitolak] = useState([])
+  const [dokumenError, setDokumenError] = useState('')
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
@@ -111,6 +114,8 @@ export default function VerifikasiAdministratorPage() {
           setSelectedDetail(res?.data?.pendaftaran ?? null)
           setRejectionReason('')
           setRejectionError('')
+          setDokumenDitolak([])
+          setDokumenError('')
         }
       } catch (err) {
         if (!cancelled) {
@@ -158,7 +163,12 @@ export default function VerifikasiAdministratorPage() {
     }
   }
 
+  // Verifikator sudah mengisi alasan atau memilih dokumen: berarti menolak, Setujui dinonaktifkan.
+  const hasRejectIntent = Boolean(rejectionReason.trim()) || dokumenDitolak.length > 0
+  const approveTitle = hasRejectIntent ? 'Kosongkan alasan penolakan dan pilihan dokumen untuk menyetujui.' : undefined
+
   const handleApprove = () => {
+    if (hasRejectIntent) return
     setConfirmDialog({
       type: 'approve',
       title: 'Setujui Registrasi BEM',
@@ -173,7 +183,12 @@ export default function VerifikasiAdministratorPage() {
       setRejectionError('Alasan penolakan wajib diisi.')
       return
     }
+    if (dokumenDitolak.length === 0) {
+      setDokumenError('Pilih minimal satu dokumen yang perlu diperbaiki.')
+      return
+    }
     setRejectionError('')
+    setDokumenError('')
     setConfirmDialog({
       type: 'reject',
       title: 'Tolak Registrasi BEM',
@@ -191,11 +206,12 @@ export default function VerifikasiAdministratorPage() {
         await approveBemRegistration(selectedId)
         setToastMessage('Pendaftaran BEM berhasil disetujui.')
       } else {
-        await rejectBemRegistration(selectedId, rejectionReason.trim())
+        await rejectBemRegistration(selectedId, rejectionReason.trim(), dokumenDitolak)
         setToastMessage('Pendaftaran BEM telah ditolak.')
       }
       setConfirmDialog(null)
       setRejectionReason('')
+      setDokumenDitolak([])
       await loadList()
     } catch (err) {
       setToastMessage(err?.response?.data?.message ?? 'Aksi verifikasi gagal diproses.')
@@ -415,12 +431,23 @@ export default function VerifikasiAdministratorPage() {
                 {rejectionError && <div className="verification-error">{rejectionError}</div>}
               </div>
 
+              <RejectDocumentOptions
+                value={dokumenDitolak}
+                onChange={(next) => {
+                  setDokumenDitolak(next)
+                  if (dokumenError) setDokumenError('')
+                }}
+                error={dokumenError}
+                disabled={actionLoading}
+              />
+
               <div className="verification-actions">
                 <button
                   type="button"
                   className="verification-button verification-button--approve"
                   onClick={handleApprove}
-                  disabled={actionLoading}
+                  disabled={actionLoading || hasRejectIntent}
+                  title={approveTitle}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <CheckIcon />

@@ -18,6 +18,7 @@ import {
   DocumentModal,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
+import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
 
 function EyeIcon() {
   return (
@@ -90,6 +91,8 @@ export default function VerifikasiBemPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [rejectionError, setRejectionError] = useState('')
+  const [dokumenDitolak, setDokumenDitolak] = useState([])
+  const [dokumenError, setDokumenError] = useState('')
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [previewDoc, setPreviewDoc] = useState(null)
@@ -141,6 +144,8 @@ export default function VerifikasiBemPage() {
           setSelectedDetail(res.data ?? null)
           setRejectionReason('')
           setRejectionError('')
+          setDokumenDitolak([])
+          setDokumenError('')
         }
       } catch (error) {
         if (!cancelled) {
@@ -220,7 +225,12 @@ export default function VerifikasiBemPage() {
     }
   }
 
+  // Verifikator sudah mengisi alasan atau memilih dokumen: berarti menolak, Setujui dinonaktifkan.
+  const hasRejectIntent = Boolean(rejectionReason.trim()) || (!isMemberMode && dokumenDitolak.length > 0)
+  const approveTitle = hasRejectIntent ? 'Kosongkan alasan penolakan dan pilihan dokumen untuk menyetujui.' : undefined
+
   const handleApprove = () => {
+    if (hasRejectIntent) return
     const targetName = isMemberMode ? selectedDetail?.namaLengkap : selectedDetail?.namaOrganisasi
     setConfirmDialog({
       type: 'approve',
@@ -236,7 +246,12 @@ export default function VerifikasiBemPage() {
       setRejectionError('Alasan penolakan wajib diisi.')
       return
     }
+    if (!isMemberMode && dokumenDitolak.length === 0) {
+      setDokumenError('Pilih minimal satu dokumen yang perlu diperbaiki.')
+      return
+    }
     setRejectionError('')
+    setDokumenError('')
     const targetName = isMemberMode ? selectedDetail?.namaLengkap : selectedDetail?.namaOrganisasi
     setConfirmDialog({
       type: 'reject',
@@ -257,11 +272,12 @@ export default function VerifikasiBemPage() {
         setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} berhasil disetujui.`)
       } else {
         if (isMemberMode) await rejectMemberRequest(selectedId, rejectionReason.trim())
-        else await rejectHmjRegistration(selectedId, rejectionReason.trim())
+        else await rejectHmjRegistration(selectedId, rejectionReason.trim(), dokumenDitolak)
         setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} telah ditolak.`)
       }
       setConfirmDialog(null)
       setRejectionReason('')
+      setDokumenDitolak([])
       setRefreshIndex((idx) => idx + 1)
     } finally {
       setActionLoading(false)
@@ -476,7 +492,8 @@ export default function VerifikasiBemPage() {
                   type="button"
                   className="verification-button verification-button--approve"
                   onClick={handleApprove}
-                  disabled={actionLoading}
+                  disabled={actionLoading || hasRejectIntent}
+                  title={approveTitle}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <CheckIcon />
@@ -606,12 +623,23 @@ export default function VerifikasiBemPage() {
                 {rejectionError && <div className="verification-error">{rejectionError}</div>}
               </div>
 
+              <RejectDocumentOptions
+                value={dokumenDitolak}
+                onChange={(next) => {
+                  setDokumenDitolak(next)
+                  if (dokumenError) setDokumenError('')
+                }}
+                error={dokumenError}
+                disabled={actionLoading}
+              />
+
               <div className="verification-actions">
                 <button
                   type="button"
                   className="verification-button verification-button--approve"
                   onClick={handleApprove}
-                  disabled={actionLoading}
+                  disabled={actionLoading || hasRejectIntent}
+                  title={approveTitle}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <CheckIcon />

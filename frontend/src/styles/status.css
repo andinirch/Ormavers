@@ -26,8 +26,10 @@
   gap: 1.5rem;
   max-width: none;
   margin: 0;
+  height: var(--orma-logo-band);
   min-height: var(--orma-logo-band);
-  padding: 0.75rem var(--orma-logo-inset);
+  padding: 0 var(--orma-logo-inset);
+  box-sizing: border-box;
 }
 
 .app-brand {
@@ -115,6 +117,11 @@
   width: 100%;
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
+}
+
+/* Status registrasi: rapatkan jarak atas konten dengan topbar */
+.app-main:has(> .status-page) {
+  padding-top: 1rem;
 }
 
 /* --- Page Header --- */
@@ -578,7 +585,6 @@
 
 @media (max-width: 768px) {
   .app-header__inner {
-    flex-wrap: wrap;
     gap: 0.75rem;
   }
 
@@ -618,5 +624,41 @@
 
   .status-card {
     padding: 1.25rem;
+  }
+}
+
+/* --- Kotak unggah ulang (satu kartu, satu tombol kirim) --- */
+
+.status-card--wide {
+  width: fit-content;
+  min-width: 360px;
+  max-width: min(1180px, 100%);
+}
+
+.resubmit-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.resubmit-box {
+  flex: 0 0 360px;
+  max-width: 100%;
+}
+
+.resubmit-box .upload-dropzone {
+  margin-bottom: 0.5rem;
+}
+
+.resubmit-form .status-btn-primary {
+  width: 100%;
+  margin: 1.25rem 0 0;
+}
+
+@media (max-width: 768px) {
+  .resubmit-box {
+    flex-basis: 100%;
   }
 }

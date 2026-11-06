@@ -85,8 +85,8 @@ export async function approveHmjRegistration(id) {
   return api.post(`/org/registrations/hmj-ukm/${id}/approve`)
 }
 
-export async function rejectHmjRegistration(id, alasan) {
-  return api.post(`/org/registrations/hmj-ukm/${id}/reject`, { alasan })
+export async function rejectHmjRegistration(id, alasan, dokumenDitolak = []) {
+  return api.post(`/org/registrations/hmj-ukm/${id}/reject`, { alasan, dokumen_ditolak: dokumenDitolak })
 }
 
 export async function getHmjDocument(id, jenis) {

@@ -1,14 +1,21 @@
 import api from '../api/api.js'
 
+// Kotak unggah ulang mengikuti urutan tetap; hanya dokumen yang ditandai verifikator (dokumen_ditolak).
+export const DOKUMEN_UNGGAH_ULANG = {
+  foto_ktm: { jenis: 'foto_ktm', label: 'Foto KTM', accept: '.jpg,.jpeg,image/jpeg', ukuranLabel: '1 MB', kind: 'foto' },
+  sk_organisasi: { jenis: 'sk_organisasi', label: 'SK Organisasi', accept: 'application/pdf', ukuranLabel: '2 MB', kind: 'dokumen' },
+  sk_kepengurusan: { jenis: 'sk_kepengurusan', label: 'SK Kepengurusan', accept: 'application/pdf', ukuranLabel: '2 MB', kind: 'dokumen' },
+}
+const URUTAN_DOKUMEN = ['foto_ktm', 'sk_organisasi', 'sk_kepengurusan']
+
 function normalizeStatus(result) {
   const data = result?.data ?? result
   const status = data?.status_pendaftaran ?? 'menunggu'
   const jenisPendaftar = data?.pendaftar?.jenis_pendaftar ?? 'organisasi'
-  const dokumenDitolak = data?.dokumen?.find((item) => item.jenis_dokumen === 'sk_organisasi' || item.jenis_dokumen === 'sk_kepengurusan')
-  const labelDokumen = {
-    sk_organisasi: 'SK Organisasi',
-    sk_kepengurusan: 'SK Kepengurusan',
-  }
+  const dokumenDitolak = Array.isArray(data?.dokumen_ditolak) ? data.dokumen_ditolak : []
+  const dokumenDiunggahUlang = status === 'ditolak'
+    ? URUTAN_DOKUMEN.filter((jenis) => dokumenDitolak.includes(jenis)).map((jenis) => DOKUMEN_UNGGAH_ULANG[jenis])
+    : []
 
   return {
     jenisPendaftar,
@@ -17,8 +24,8 @@ function normalizeStatus(result) {
     tanggalKirim: data?.tanggal_pendaftaran ?? null,
     status,
     alasanPenolakan: data?.alasan_penolakan ?? null,
-    jenisDokumenDitolak: dokumenDitolak?.jenis_dokumen ?? null,
-    namaDokumenDitolak: labelDokumen[dokumenDitolak?.jenis_dokumen] ?? null,
+    dokumenDitolak,
+    dokumenDiunggahUlang,
     dokumen: data?.dokumen ?? [],
     organisasiDetail: data?.organisasi ?? null,
     bisaUnggahUlang: Boolean(data?.bisa_unggah_ulang),
@@ -30,9 +37,9 @@ function normalizeStatus(result) {
  * @typedef {Object} RegistrationStatusData
  * @property {'organisasi'|'anggota'} jenisPendaftar
  * @property {string} namaPendaftar
- * @property {string} tanggalKirim - ISO date string (YYYY-MM-DD)
+ * @property {string|null} tanggalKirim - ISO 8601 (dari backend) atau YYYY-MM-DD (statusAwal)
  * @property {'menunggu'|'disetujui'|'ditolak'} status
- * @property {string|null} namaDokumenDitolak
+ * @property {Array<{jenis:string,label:string}>} dokumenDiunggahUlang
  * @property {string|null} alasanPenolakan
  */
 
@@ -73,13 +80,15 @@ export async function ajukanUlangFotoKtm(file) {
 }
 
 /**
- * @param {File} file
- * @param {'sk_organisasi'|'sk_kepengurusan'} documentType
+ * Unggah ulang satu atau beberapa dokumen organisasi dalam satu request.
+ * @param {{foto_ktm?: File, sk_organisasi?: File, sk_kepengurusan?: File}} filesMap
  * @returns {Promise<{ok: boolean, error: string|null}>}
  */
-export async function resubmitSk(file, documentType = 'sk_kepengurusan') {
+export async function resubmitSk(filesMap) {
   const formData = new FormData()
-  formData.append(documentType, file)
+  for (const jenis of URUTAN_DOKUMEN) {
+    if (filesMap?.[jenis]) formData.append(jenis, filesMap[jenis])
+  }
 
   try {
     await api.post('/registration/resubmit-sk', formData, {

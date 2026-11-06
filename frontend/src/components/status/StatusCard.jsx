@@ -1,11 +1,13 @@
 import StatusPill from './StatusPill.jsx'
 import RejectionReason from './RejectionReason.jsx'
-import SkResubmitForm from './SkResubmitForm.jsx'
+import ResubmitDocumentsForm from './ResubmitDocumentsForm.jsx'
 import { Link } from 'react-router-dom'
 
-function formatDate(isoDate) {
-  if (!isoDate) return 'Tanggal tidak tersedia'
-  const date = new Date(isoDate + 'T00:00:00')
+function formatDate(value) {
+  if (!value) return 'Tanggal tidak tersedia'
+  // Tanggal saja (YYYY-MM-DD) dibaca sebagai waktu lokal; ISO penuh dari backend langsung diparse.
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value
+  const date = new Date(normalized)
   if (Number.isNaN(date.getTime())) return 'Tanggal tidak tersedia'
   return 'Dikirim ' + new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
@@ -31,16 +33,14 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
     namaPendaftar,
     tanggalKirim,
     alasanPenolakan,
-    jenisPendaftar,
-    namaDokumenDitolak,
-    jenisDokumenDitolak,
+    dokumenDiunggahUlang,
     bisaUnggahUlang,
   } = data
-  const isOrganisasi = jenisPendaftar === 'organisasi'
   const isDitolak = status === 'ditolak'
+  const canResubmit = isDitolak && bisaUnggahUlang && dokumenDiunggahUlang.length > 0
 
   return (
-    <div className="status-card">
+    <div className={`status-card${canResubmit ? ' status-card--wide' : ''}`}>
       <div className="status-card__header">
         <div style={{ minWidth: 0, flex: 1 }}>
           <h2 className="status-card__name">{namaPendaftar}</h2>
@@ -55,13 +55,13 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
           <p className="status-body__text">
             Registrasi kamu sedang diperiksa oleh verifikator. Cek lagi nanti.
           </p>
-           <div className="status-info-box status-info-box--amber">
-             <span className="status-info-box__icon" aria-hidden="true">
-               <svg viewBox="0 0 20 20" className="status-info-box__svg">
-                 <path d="M5.5 3.5h9M5.5 16.5h9M6.5 4c0 2.7 1.6 4.2 3.5 6-1.9 1.8-3.5 3.3-3.5 6M13.5 4c0 2.7-1.6 4.2-3.5 6 1.9 1.8 3.5 3.3 3.5 6" />
-               </svg>
-             </span>
-             <div className="status-info-box__content">
+          <div className="status-info-box status-info-box--amber">
+            <span className="status-info-box__icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" className="status-info-box__svg">
+                <path d="M5.5 3.5h9M5.5 16.5h9M6.5 4c0 2.7 1.6 4.2 3.5 6-1.9 1.8-3.5 3.3-3.5 6M13.5 4c0 2.7-1.6 4.2-3.5 6 1.9 1.8 3.5 3.3 3.5 6" />
+              </svg>
+            </span>
+            <div className="status-info-box__content">
               <strong>Estimasi Peninjauan</strong>
               Proses verifikasi berkas umumnya memakan waktu 1&ndash;2 hari kerja.
             </div>
@@ -84,54 +84,25 @@ function StatusCard({ data, onResubmit, onApprovedLogin, submitting, submitResul
         <>
           <RejectionReason reason={alasanPenolakan} />
 
-          {bisaUnggahUlang && !isOrganisasi && (
-            <>
-              {submitResult?.ok && (
-                <div className="status-info-box status-info-box--amber" style={{ marginBottom: '1rem' }} role="status" aria-live="polite">
-                  <span className="status-info-box__icon" aria-hidden="true">{'\u2705'}</span>
-                  <div className="status-info-box__content">
-                    <strong>Foto KTM terkirim</strong>
-                    Registrasi kamu kembali berstatus Menunggu untuk diverifikasi ulang.
-                  </div>
-                </div>
-              )}
-              {submitResult?.error && (
-                <p className="upload-error" role="alert" aria-live="assertive">{submitResult.error}</p>
-              )}
-              {!submitResult?.ok && (
-                <SkResubmitForm
-                  mode="foto"
-                  onSubmit={onResubmit}
-                  submitting={submitting}
-                  documentName="Foto KTM"
-                />
-              )}
-            </>
+          {submitResult?.ok && (
+            <div className="status-info-box status-info-box--amber" style={{ marginBottom: '1rem' }} role="status" aria-live="polite">
+              <span className="status-info-box__icon" aria-hidden="true">{'\u2705'}</span>
+              <div className="status-info-box__content">
+                <strong>Dokumen terkirim</strong>
+                Registrasi kamu kembali berstatus Menunggu untuk diverifikasi ulang.
+              </div>
+            </div>
+          )}
+          {submitResult?.error && (
+            <p className="upload-error" role="alert" aria-live="assertive">{submitResult.error}</p>
           )}
 
-          {isOrganisasi && (
-            <>
-              {submitResult?.ok && (
-                <div className="status-info-box status-info-box--amber" style={{ marginBottom: '1rem' }} role="status" aria-live="polite">
-                  <span className="status-info-box__icon" aria-hidden="true">{'\u2705'}</span>
-                  <div className="status-info-box__content">
-                    <strong>Dokumen terkirim</strong>
-                    Registrasi kamu kembali berstatus Menunggu untuk diverifikasi ulang.
-                  </div>
-                </div>
-              )}
-              {submitResult?.error && (
-                <p className="upload-error" role="alert" aria-live="assertive">{submitResult.error}</p>
-              )}
-              {bisaUnggahUlang && !submitResult?.ok && (
-                <SkResubmitForm
-                  onSubmit={onResubmit}
-                  submitting={submitting}
-                  documentName={namaDokumenDitolak || 'Dokumen SK'}
-                  documentType={jenisDokumenDitolak || undefined}
-                />
-              )}
-            </>
+          {canResubmit && !submitResult?.ok && (
+            <ResubmitDocumentsForm
+              documents={dokumenDiunggahUlang}
+              submitting={submitting}
+              onSubmit={onResubmit}
+            />
           )}
         </>
       )}

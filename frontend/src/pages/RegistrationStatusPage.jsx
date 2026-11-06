@@ -40,18 +40,18 @@ function RegistrationStatusPage() {
     }
   }, [user])
 
-  const handleResubmit = useCallback(async (file, documentType) => {
+  const handleResubmit = useCallback(async (filesMap) => {
     setSubmitting(true)
     setSubmitResult(null)
     try {
       const result = displayedData?.jenisPendaftar === 'anggota'
-        ? await ajukanUlangFotoKtm(file)
-        : await resubmitSk(file, documentType)
+        ? await ajukanUlangFotoKtm(filesMap.foto_ktm)
+        : await resubmitSk(filesMap)
 
       setSubmitResult(result)
 
       if (result.ok && displayedData) {
-        setData({ ...displayedData, status: 'menunggu', alasanPenolakan: null, namaDokumenDitolak: null })
+        setData({ ...displayedData, status: 'menunggu', alasanPenolakan: null, dokumenDitolak: [], dokumenDiunggahUlang: [] })
       }
       return result.ok
     } catch {
