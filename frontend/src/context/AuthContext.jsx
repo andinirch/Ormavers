@@ -65,8 +65,14 @@ export function AuthProvider({ children }) {
       return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
     }
     const limitedAccess = localStorage.getItem(LIMITED_ACCESS_KEY) === 'true'
+    if (limitedAccess) {
+      // Token akses terbatas (menunggu/ditolak) tidak boleh memanggil /auth/me (403).
+      // Pertahankan token dan sesi terbatas agar user tetap bisa melihat status registrasi.
+      queueMicrotask(() => setSession({ user: null, roles: [], permissions: [], aksesTerbatas: true, loading: false }))
+      return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
+    }
     me()
-      .then((result) => applySession(result, limitedAccess))
+      .then((result) => applySession(result, false))
       .catch(() => handleUnauthorized())
     return () => window.removeEventListener('ormavers:unauthorized', handleUnauthorized)
   }, [])

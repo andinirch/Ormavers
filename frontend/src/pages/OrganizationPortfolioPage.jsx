@@ -13,10 +13,6 @@ import '../styles/organization-portfolio.css'
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const EMPTY_FORM = { judul: '', tahun: '', deskripsi: '' }
 
-function BackIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
-}
-
 function toList(result) {
   const data = result?.data
   if (Array.isArray(data)) return data
@@ -196,7 +192,6 @@ function OrganizationPortfolioPage() {
 
   return <main className="organization-portfolio-page">
     <header className="organization-portfolio-heading">
-      <a className="organization-portfolio-back" href="/verifikasi/profil-organisasi" aria-label="Kembali ke profil organisasi"><BackIcon /></a>
       <div>
         <h1>Portofolio organisasi</h1>
         <p>Riwayat kegiatan dan pencapaian yang tampil di profil organisasi, disusun per tahun.</p>
