@@ -11,9 +11,26 @@ import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/organization-management.css'
 
 const CONTACT_TYPES = { wa: 'WhatsApp', instagram: 'Instagram', email: 'Email', tiktok: 'TikTok' }
+// Nilai "Lainnya" (bidang kustom) sesuai kontrak backend IdentitasOrganisasiRequest.
+const CUSTOM_BIDANG = 'lainnya'
 
-function BackIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
+function isCustomBidang(draft) {
+  return String(draft?.id_bidang ?? '').trim().toLowerCase() === CUSTOM_BIDANG
+}
+
+function isBidangValid(draft) {
+  if (isCustomBidang(draft)) return Boolean(String(draft?.nama_bidang_kustom ?? '').trim())
+  return Boolean(draft?.id_bidang)
+}
+
+function appendBidang(payload, draft) {
+  if (isCustomBidang(draft)) {
+    payload.append('id_bidang', CUSTOM_BIDANG)
+    payload.append('is_custom_bidang', '1')
+    payload.append('nama_bidang_kustom', String(draft.nama_bidang_kustom ?? '').trim())
+  } else {
+    payload.append('id_bidang', draft.id_bidang ?? '')
+  }
 }
 
 function OrganizationManagementPage() {
@@ -58,6 +75,10 @@ function OrganizationManagementPage() {
         ...identityData,
         logo: assetUrl(identityData.logo),
         logo_universitas: assetUrl(identityData.logo_universitas),
+      }
+      if (identityData.is_custom_bidang) {
+        normalizedIdentity.id_bidang = CUSTOM_BIDANG
+        normalizedIdentity.nama_bidang_kustom = identityData.nama_bidang_kustom ?? identityData.nama_bidang ?? ''
       }
       setIdentity(normalizedIdentity)
       setIdentityDraft(normalizedIdentity)
@@ -188,7 +209,7 @@ function OrganizationManagementPage() {
       return
     }
 
-    if (!identityDraft?.id_bidang || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
+    if (!isBidangValid(identityDraft) || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
       await Swal.fire({ icon: 'warning', title: 'Lengkapi identitas organisasi', text: 'Bidang, alamat, dan periode SK wajib diisi sebelum foto dijadikan logo organisasi.', confirmButtonColor: '#2563eb' })
       input.value = ''
       return
@@ -197,7 +218,7 @@ function OrganizationManagementPage() {
     setSaving(true)
     try {
       const identityPayload = new FormData()
-      identityPayload.append('id_bidang', identityDraft.id_bidang)
+      appendBidang(identityPayload, identityDraft)
       identityPayload.append('alamat', identityDraft.alamat)
       identityPayload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk)
       identityPayload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk)
@@ -242,7 +263,7 @@ function OrganizationManagementPage() {
       return
     }
 
-    if (!identityDraft?.id_bidang || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
+    if (!isBidangValid(identityDraft) || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
       await Swal.fire({ icon: 'warning', title: 'Lengkapi identitas organisasi', text: 'Bidang, alamat, dan periode SK wajib diisi sebelum mengunggah logo universitas.', confirmButtonColor: '#2563eb' })
       input.value = ''
       return
@@ -251,7 +272,7 @@ function OrganizationManagementPage() {
     setSaving(true)
     try {
       const payload = new FormData()
-      payload.append('id_bidang', identityDraft.id_bidang)
+      appendBidang(payload, identityDraft)
       payload.append('alamat', identityDraft.alamat)
       payload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk)
       payload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk)
@@ -281,14 +302,14 @@ function OrganizationManagementPage() {
   }
 
   const saveIdentity = async () => {
-    if (!identityDraft?.id_bidang || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
+    if (!isBidangValid(identityDraft) || !identityDraft?.alamat || !identityDraft?.tanggal_mulai_sk || !identityDraft?.tanggal_berakhir_sk) {
       await Swal.fire({ icon: 'warning', title: 'Data belum lengkap', text: 'Bidang, alamat, dan periode SK wajib diisi.', confirmButtonColor: '#2563eb' })
       return
     }
     setSaving(true)
     try {
       const payload = new FormData()
-      payload.append('id_bidang', identityDraft.id_bidang ?? '')
+      appendBidang(payload, identityDraft)
       payload.append('alamat', identityDraft.alamat ?? '')
       payload.append('tanggal_mulai_sk', identityDraft.tanggal_mulai_sk ?? '')
       payload.append('tanggal_berakhir_sk', identityDraft.tanggal_berakhir_sk ?? '')
@@ -327,7 +348,7 @@ function OrganizationManagementPage() {
   const completenessPercent = Math.round((completenessItems.filter((item) => item.done).length / completenessItems.length) * 100)
 
   return <main className="organization-management-page">
-    <header className="organization-management-heading"><a className="organization-management-back" href="/verifikasi/direktori" aria-label="Kembali ke direktori"><BackIcon /></a><div><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
+    <header className="organization-management-heading"><div><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
     {loading && <div className="organization-management-state">Memuat profil organisasi...</div>}
     {!loading && error && <div className="organization-management-state organization-management-state--error">{error}</div>}
     {!loading && !error && <div className="organization-management-layout">
@@ -394,11 +415,17 @@ function OrganizationManagementPage() {
             <label className="organization-identity-field">
               <span>Bidang organisasi</span>
               <div className="organization-identity-input-wrap">
-<select value={identityDraft?.id_bidang ?? ''} onChange={(event) => setIdentityDraft((current) => ({ ...current, id_bidang: event.target.value }))} disabled={!editingIdentity || saving}>
+<select value={identityDraft?.id_bidang ?? ''} onChange={(event) => setIdentityDraft((current) => ({ ...current, id_bidang: event.target.value, nama_bidang_kustom: event.target.value === CUSTOM_BIDANG ? current?.nama_bidang_kustom : '' }))} disabled={!editingIdentity || saving}>
                    <option value="">Pilih bidang organisasi</option>
                    {bidangOptions.map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
+                   <option value={CUSTOM_BIDANG}>Lainnya</option>
                  </select>
                </div>
+               {isCustomBidang(identityDraft) && (
+                 <div className="organization-identity-input-wrap" style={{ marginTop: '8px' }}>
+                   <input type="text" maxLength={100} placeholder="Tulis nama bidang organisasi" value={identityDraft?.nama_bidang_kustom ?? ''} onChange={(event) => setIdentityDraft((current) => ({ ...current, nama_bidang_kustom: event.target.value }))} disabled={!editingIdentity || saving} />
+                 </div>
+               )}
                {bidangError && <small className="organization-identity-error">{bidangError}</small>}
               </label>
 
