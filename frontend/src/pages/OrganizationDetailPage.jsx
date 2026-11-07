@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import ImageWithFallback from '../components/ImageWithFallback.jsx'
@@ -55,13 +55,14 @@ function OrganizationDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const portfolioGroups = groupPortfolioByYear(organization?.portfolio)
-  const directoryPath = pathname.startsWith('/superadmin/')
-    ? `/superadmin/direktori/universitas/${universityId}`
+  const directoryRoot = pathname.startsWith('/superadmin/')
+    ? '/superadmin/direktori'
     : pathname.startsWith('/admin/')
-      ? `/admin/direktori/universitas/${universityId}`
+      ? '/admin/direktori'
       : pathname.startsWith('/verifikasi/')
-        ? `/verifikasi/direktori/universitas/${universityId}`
-        : `/direktori/universitas/${universityId}`
+        ? '/verifikasi/direktori'
+        : '/direktori'
+  const directoryPath = `${directoryRoot}/universitas/${universityId}`
 
   useEffect(() => {
     let active = true
@@ -82,7 +83,13 @@ function OrganizationDetailPage() {
 
   return (
     <main className="organization-detail-main">
-      <div className="organization-directory-breadcrumb">Direktori Organisasi <span>/</span> {university?.label ?? 'Kampus'} <span>/</span> {organization?.name ?? 'Organisasi'}</div>
+      <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
+        <Link to={directoryRoot}>Direktori Organisasi</Link>
+        <span aria-hidden="true">/</span>
+        <Link to={directoryPath}>{university?.label ?? 'Kampus'}</Link>
+        <span aria-hidden="true">/</span>
+        <span className="is-current" aria-current="page">{organization?.name ?? 'Organisasi'}</span>
+      </nav>
       <div className="organization-detail-heading">
         <a className="organization-directory-back" href={directoryPath} aria-label="Kembali ke daftar organisasi"><BackIcon /></a>
         <div className="organization-detail-profile">

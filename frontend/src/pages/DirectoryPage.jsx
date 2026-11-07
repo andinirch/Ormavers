@@ -139,6 +139,9 @@ function DirectoryPage() {
       
       {!loading && (
         <main className="directory-main">
+          <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
+            <span className="is-current" aria-current="page">Direktori Organisasi</span>
+          </nav>
           <div className="directory-heading">
             <h1>Direktori Organisasi</h1>
             <p>Pilih universitas untuk melihat organisasi mahasiswa PTMA Jawa Timur.</p>

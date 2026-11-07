@@ -81,9 +81,9 @@ function OrganizationListPage() {
 
   return (
     <main className="organization-directory-main">
-      <nav className="organization-list-breadcrumb" aria-label="Breadcrumb">
+      <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
         <Link to={directoryPath}>Direktori Organisasi</Link>
-        <span aria-hidden="true">&gt;</span>
+        <span aria-hidden="true">/</span>
         <span className="is-current" aria-current="page">{university?.label ?? (loading ? 'Memuat...' : 'Kampus')}</span>
       </nav>
       <div className="organization-directory-heading">
@@ -137,12 +137,12 @@ function OrganizationListPage() {
           {organizations.map((organization) => (
             <article className="organization-directory-card" key={organization.id}>
                <div className="organization-directory-card__icon" aria-hidden="true">
-                 <AdminIcon name={organization.type === 'BEM' ? 'building' : 'users'} size={22} />
+                 <AdminIcon name={organization.type === 'BEM' ? 'landmark' : 'user-group'} size={22} />
                </div>
               <span className="organization-directory-card__type">{organization.type}</span>
               <span className="organization-directory-card__verified">Terverifikasi</span>
                <h2>{organization.name ?? organization.label ?? 'Organisasi'}</h2>
-               <p className="organization-directory-card__field">{organization.field_name || 'Bidang belum tersedia'}</p>
+               <p className="organization-directory-card__field"><AdminIcon name="building" size={16} /> {organization.field_name || 'Bidang belum tersedia'}</p>
               <Link className="organization-directory-card__profile-link" to={organizationPath(organization.id)}>Lihat profil <span aria-hidden="true">→</span></Link>
             </article>
           ))}
