@@ -756,3 +756,21 @@
     width: 100%;
   }
 }
+
+/* Layar laptop: layout 2 kolom disusun vertikal; padding konten bersarang dihapus (gutter dari shell) */
+.organization-management-content {
+  padding: 0;
+}
+@media (max-width: 1024px) {
+  .organization-management-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 900px) {
+  .organization-identity-dates {
+    grid-template-columns: 1fr;
+  }
+  .organization-contact-list > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

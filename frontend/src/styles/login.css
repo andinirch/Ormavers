@@ -443,3 +443,10 @@
     min-height: 54px;
   }
 }
+
+/* Layar laptop pendek: halaman boleh digulir agar kartu & tautan bawah tidak terpotong */
+@media (max-height: 720px) and (min-width: 861px) {
+  .login-page {
+    overflow: auto;
+  }
+}

@@ -371,3 +371,7 @@
     padding-inline: 1.25rem;
   }
 }
+
+.admin-role-table {
+  min-width: 56rem;
+}

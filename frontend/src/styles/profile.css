@@ -21,6 +21,11 @@
   box-sizing: border-box;
 }
 
+/* Di dalam shell verifikasi, jarak samping ditangani shell (konsisten dengan menu lain) */
+.verification-content .profile-page {
+  padding-inline: 0;
+}
+
 .profile-page__heading {
   margin-bottom: 2rem;
 }

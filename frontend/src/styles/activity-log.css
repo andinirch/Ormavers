@@ -126,7 +126,7 @@ html:has(.admin-shell) {
 }
 
 .activity-log-page .admin-activity-table {
-  min-width: 0;
+  min-width: 52rem;
   table-layout: fixed;
 }
 
@@ -360,4 +360,13 @@ html:has(.admin-shell) {
   .activity-log-page .activity-security-note {
     align-items: flex-start;
   }
+}
+
+.activity-log-page .activity-pagination {
+  flex-wrap: wrap;
+}
+.activity-log-page .activity-pagination-controls {
+  flex-wrap: wrap;
+  max-width: 100%;
+  overflow-x: auto;
 }

@@ -73,3 +73,5 @@
   .ranggota-section-heading { align-items: flex-start; gap: 10px; }
   .ranggota-section-heading span { padding: 6px 10px; }
 }
+
+.ranggota-upload__filename{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

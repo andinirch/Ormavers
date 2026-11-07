@@ -72,8 +72,16 @@ function VerificationShell() {
   const canUsePermission = (permission) => isSuperAdmin || !permission || permissions.includes(permission)
   const [organizationName, setOrganizationName] = useState(null)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const bellRef = useRef(null)
   const notifications = useNotifications()
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     if (contextKey !== 'bem' && contextKey !== 'hmj') return undefined
@@ -117,6 +125,7 @@ function VerificationShell() {
 
   return <div className="verification-shell">
     <header className="verification-header">
+      <button className="verification-menu-button" type="button" aria-label="Buka menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><AdminIcon name="menu" /></button>
        <OrmaLogo to={defaultLink} variant="verification" className="verification-brand" />
       <div className="verification-account">
         <button ref={bellRef} type="button" className="verification-bell notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" size={20} />{notifications.unread > 0 && <i />}</button>
@@ -124,7 +133,7 @@ function VerificationShell() {
         <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
       </div>
     </header>
-    <Sidebar groups={groups} logoTo={defaultLink} ariaLabel="Navigasi verifikasi" showBrand variant="verification" />
+    <Sidebar groups={groups} open={menuOpen} onClose={() => setMenuOpen(false)} logoTo={defaultLink} ariaLabel="Navigasi verifikasi" showBrand variant="verification" />
     <main className="verification-main">
       <div className="verification-content">
         <Outlet />

@@ -923,3 +923,7 @@
   padding-left: 0;
   padding-right: 0;
 }
+
+.organization-detail-main {
+  overflow-x: clip;
+}

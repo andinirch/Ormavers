@@ -3,7 +3,7 @@
 .organization-portfolio-back{display:flex;align-items:center;margin-top:8px;color:#0f172a;text-decoration:none}
 .organization-portfolio-heading h1{margin:8px 0 5px;font-family:var(--font-ui);font-size:28px;font-weight:750;line-height:1.15;letter-spacing:-1.3px;color:#0f172a}
 .organization-portfolio-heading p{margin:0;color:#273047;font-size:15px}
-.organization-portfolio-layout{display:grid;grid-template-columns:minmax(0,1fr) 460px;gap:24px;align-items:start}
+.organization-portfolio-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,34vw,460px);gap:24px;align-items:start}
 .organization-portfolio-main{display:grid;gap:18px;align-content:start;min-width:0}
 .organization-portfolio-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#fff;border:1px solid #e5e7f4;border-radius:14px;box-shadow:0 8px 24px rgba(31,35,75,.04);font-size:.82rem}
 .organization-portfolio-filter>span{display:inline-flex;align-items:center;gap:8px;color:#334155}

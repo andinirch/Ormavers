@@ -18,6 +18,10 @@
   --heading: var(--font-ui);
   --mono: ui-monospace, Consolas, monospace;
 
+  /* Shell: lebar sidebar & batas lebar konten (satu sumber) */
+  --app-sidebar-w: 16.25rem;
+  --content-max: 90rem;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -106,4 +110,15 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Lebar konten seragam antar-shell (cap 90rem, gutter dari shell) */
+.directory-main,
+.organization-directory-main,
+.organization-detail-main,
+.organization-management-page,
+.organization-portfolio-page,
+.profile-page {
+  max-width: var(--content-max);
+  margin-inline: auto;
 }

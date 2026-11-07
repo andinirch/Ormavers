@@ -235,3 +235,7 @@
     flex: 1;
   }
 }
+
+.admin-user-table {
+  min-width: 60rem;
+}
