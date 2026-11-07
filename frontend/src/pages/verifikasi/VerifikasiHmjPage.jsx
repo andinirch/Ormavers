@@ -11,6 +11,7 @@ import {
   ConfirmationModal,
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
+import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
 
 function EyeIcon() {
   return (
@@ -66,6 +67,8 @@ export default function VerifikasiHmjPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [rejectionError, setRejectionError] = useState('')
+  const [dokumenDitolak, setDokumenDitolak] = useState([])
+  const [dokumenError, setDokumenError] = useState('')
   const [toastMessage, setToastMessage] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [ktmPreviewUrl, setKtmPreviewUrl] = useState(null)
@@ -140,7 +143,11 @@ export default function VerifikasiHmjPage() {
     }
   }, [selectedId])
 
+  const hasRejectIntent = Boolean(rejectionReason.trim()) || dokumenDitolak.length > 0
+  const approveTitle = hasRejectIntent ? 'Kosongkan alasan penolakan dan pilihan Foto KTM untuk menyetujui.' : undefined
+
   const handleApprove = () => {
+    if (hasRejectIntent) return
     setConfirmDialog({
       type: 'approve',
       title: 'Setujui Permintaan Anggota',
@@ -155,7 +162,12 @@ export default function VerifikasiHmjPage() {
       setRejectionError('Alasan penolakan wajib diisi.')
       return
     }
+    if (dokumenDitolak.length === 0) {
+      setDokumenError('Pilih Foto KTM sebagai dokumen yang perlu diperbaiki.')
+      return
+    }
     setRejectionError('')
+    setDokumenError('')
     setConfirmDialog({
       type: 'reject',
       title: 'Tolak Permintaan Anggota',
@@ -173,12 +185,13 @@ export default function VerifikasiHmjPage() {
         await approveMemberRequest(selectedId)
         setToastMessage('Permintaan keanggotaan berhasil disetujui.')
       } else {
-        await rejectMemberRequest(selectedId, rejectionReason.trim())
+        await rejectMemberRequest(selectedId, rejectionReason.trim(), dokumenDitolak)
         setToastMessage('Permintaan keanggotaan telah ditolak.')
       }
-      setConfirmDialog(null)
-      setRejectionReason('')
-      await loadData()
+       setConfirmDialog(null)
+       setRejectionReason('')
+       setDokumenDitolak([])
+       await loadData()
     } catch (error) {
       setConfirmDialog(null)
       setToastMessage(error.response?.data?.message ?? 'Aksi verifikasi gagal diproses.')
@@ -344,6 +357,17 @@ export default function VerifikasiHmjPage() {
                 {rejectionError && <div className="verification-error">{rejectionError}</div>}
               </div>
 
+              <RejectDocumentOptions
+                value={dokumenDitolak}
+                documents={[{ value: 'foto_ktm', label: 'Foto KTM' }]}
+                onChange={(next) => {
+                  setDokumenDitolak(next)
+                  if (dokumenError) setDokumenError('')
+                }}
+                error={dokumenError}
+                disabled={actionLoading}
+              />
+
               <div className="verification-actions is-member">
                 <button
                   type="button"
@@ -359,7 +383,8 @@ export default function VerifikasiHmjPage() {
                   type="button"
                   className="verification-button verification-button--approve"
                   onClick={handleApprove}
-                  disabled={actionLoading}
+                  disabled={actionLoading || hasRejectIntent}
+                  title={approveTitle}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <CheckIcon />

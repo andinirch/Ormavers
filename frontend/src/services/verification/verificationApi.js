@@ -126,6 +126,6 @@ export async function getMemberRequestDetail(id) {
 }
 
 export async function approveMemberRequest(id) { return api.post(`/org/member-requests/${id}/approve`) }
-export async function rejectMemberRequest(id, alasan) { return api.post(`/org/member-requests/${id}/reject`, { alasan }) }
+export async function rejectMemberRequest(id, alasan, dokumenDitolak = []) { return api.post(`/org/member-requests/${id}/reject`, { alasan, dokumen_ditolak: dokumenDitolak }) }
 export async function getMemberKtm(id) { return api.get(`/org/member-requests/${id}/dokumen/ktm`, { responseType: 'blob' }) }
 

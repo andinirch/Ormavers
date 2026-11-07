@@ -234,7 +234,7 @@ export default function VerifikasiBemPage() {
   }
 
   // Verifikator sudah mengisi alasan atau memilih dokumen: berarti menolak, Setujui dinonaktifkan.
-  const hasRejectIntent = Boolean(rejectionReason.trim()) || (!isMemberMode && dokumenDitolak.length > 0)
+  const hasRejectIntent = Boolean(rejectionReason.trim()) || dokumenDitolak.length > 0
   const approveTitle = hasRejectIntent ? 'Kosongkan alasan penolakan dan pilihan dokumen untuk menyetujui.' : undefined
 
   const handleApprove = () => {
@@ -254,8 +254,8 @@ export default function VerifikasiBemPage() {
       setRejectionError('Alasan penolakan wajib diisi.')
       return
     }
-    if (!isMemberMode && dokumenDitolak.length === 0) {
-      setDokumenError('Pilih minimal satu dokumen yang perlu diperbaiki.')
+    if (dokumenDitolak.length === 0) {
+      setDokumenError(isMemberMode ? 'Pilih Foto KTM sebagai dokumen yang perlu diperbaiki.' : 'Pilih minimal satu dokumen yang perlu diperbaiki.')
       return
     }
     setRejectionError('')
@@ -279,7 +279,7 @@ export default function VerifikasiBemPage() {
         else await approveHmjRegistration(selectedId)
         setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} berhasil disetujui.`)
       } else {
-        if (isMemberMode) await rejectMemberRequest(selectedId, rejectionReason.trim())
+        if (isMemberMode) await rejectMemberRequest(selectedId, rejectionReason.trim(), dokumenDitolak)
         else await rejectHmjRegistration(selectedId, rejectionReason.trim(), dokumenDitolak)
         setToastMessage(`${isMemberMode ? 'Permintaan anggota' : 'Registrasi HMJ/UKM'} telah ditolak.`)
       }
@@ -488,6 +488,17 @@ export default function VerifikasiBemPage() {
                 />
                 {rejectionError && <div className="verification-error">{rejectionError}</div>}
               </div>
+
+              <RejectDocumentOptions
+                value={dokumenDitolak}
+                documents={[{ value: 'foto_ktm', label: 'Foto KTM' }]}
+                onChange={(next) => {
+                  setDokumenDitolak(next)
+                  if (dokumenError) setDokumenError('')
+                }}
+                error={dokumenError}
+                disabled={actionLoading}
+              />
 
               <div className="verification-actions is-member">
                 <button
