@@ -697,18 +697,18 @@
 }
 
 .organization-detail-portfolio-item {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
   background: #f8f9ff;
-  border-radius: 12px;
+  border-radius: 16px;
 }
 
 .organization-detail-portfolio-thumb {
-  width: 150px;
-  height: 112px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -721,10 +721,23 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .organization-detail-portfolio-copy {
   min-width: 0;
+  padding: 0;
+}
+
+.organization-detail-portfolio-year-badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  color: #2563eb;
+  background: #e0e7ff;
+  border-radius: 6px;
+  font-size: .72rem;
+  font-weight: 700;
 }
 
 .organization-detail-portfolio-copy h4 {
@@ -736,11 +749,39 @@
   line-height: 1.3;
 }
 
-.organization-detail-portfolio-copy p {
+.organization-detail-portfolio-desc p {
   margin: 0;
   color: #475569;
   font-size: 14px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  text-align: justify;
+}
+
+.organization-detail-portfolio-desc p.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.organization-detail-portfolio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  margin-top: 6px;
+  color: #2563eb;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.organization-detail-portfolio-toggle:hover {
+  text-decoration: underline;
 }
 
 /* ---------- Responsif (layout & ukuran avatar/thumbnail saja) ---------- */
@@ -834,18 +875,6 @@
     width: 56px;
     height: 56px;
     font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .organization-detail-portfolio-item {
-    grid-template-columns: 96px minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .organization-detail-portfolio-thumb {
-    width: 96px;
-    height: 84px;
   }
 }
 

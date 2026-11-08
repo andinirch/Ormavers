@@ -26,6 +26,30 @@ function errorMessage(error, fallback) {
   return first ?? error.response?.data?.message ?? fallback
 }
 
+function PortfolioDescription({ text }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!text) return null
+
+  return (
+    <div className="organization-portfolio-card__desc">
+      <p className={isExpanded ? '' : 'is-clamped'}>
+        {text}
+      </p>
+      {text.length > 120 && (
+        <button
+          type="button"
+          className="organization-portfolio-card__toggle"
+          onClick={() => setIsExpanded((prev) => !prev)}
+        >
+          {isExpanded ? 'Sembunyikan' : 'Selengkapnya'}
+          <AdminIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={12} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Thumbnail({ url, title }) {
   const imageUrl = assetUrl(url)
   const isImage = Boolean(imageUrl)
@@ -229,9 +253,9 @@ function OrganizationPortfolioPage() {
           {group.items.map((item) => <article className="organization-portfolio-card" key={item.id_portofolio}>
             <Thumbnail url={item.dokumentasi} title={item.judul} />
             <div className="organization-portfolio-card__body">
-              <h3>{item.judul}</h3>
               <span className="organization-portfolio-card__year">Tahun {item.tahun}</span>
-              <p>{item.deskripsi}</p>
+              <h3>{item.judul}</h3>
+              <PortfolioDescription text={item.deskripsi} />
               <div className="organization-portfolio-card__actions">
                 <button type="button" onClick={() => startEdit(item)} disabled={saving}><AdminIcon name="edit" size={13} /> Ubah</button>
                 <button type="button" className="is-danger" onClick={() => remove(item)} disabled={deletingId === item.id_portofolio}><AdminIcon name="trash" size={13} /> Hapus</button>

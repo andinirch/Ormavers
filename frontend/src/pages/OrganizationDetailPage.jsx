@@ -42,6 +42,30 @@ function groupPortfolioByYear(items = []) {
   }, []).sort((a, b) => Number(b.year) - Number(a.year))
 }
 
+function DetailPortfolioDescription({ text }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!text) return null
+
+  return (
+    <div className="organization-detail-portfolio-desc">
+      <p className={isExpanded ? '' : 'is-clamped'}>
+        {text}
+      </p>
+      {text.length > 120 && (
+        <button
+          type="button"
+          className="organization-detail-portfolio-toggle"
+          onClick={() => setIsExpanded((prev) => !prev)}
+        >
+          {isExpanded ? 'Sembunyikan' : 'Selengkapnya'}
+          <AdminIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={12} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 function OrganizationDetailPage() {
   const openContact = (contact) => {
     const url = normalizeContactUrl(contact?.tautan)
@@ -145,8 +169,11 @@ function OrganizationDetailPage() {
                             />
                           </div>
                           <div className="organization-detail-portfolio-copy">
+                            <span className="organization-detail-portfolio-year-badge">
+                              {item.tahun}
+                            </span>
                             <h4>{item.judul}</h4>
-                            <p>{item.deskripsi}</p>
+                            <DetailPortfolioDescription text={item.deskripsi} />
                           </div>
                         </article>
                       ))}

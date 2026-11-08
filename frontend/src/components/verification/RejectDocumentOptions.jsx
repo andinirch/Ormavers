@@ -4,7 +4,7 @@ const REJECTABLE_DOCUMENTS = [
   { value: 'sk_kepengurusan', label: 'SK Kepengurusan' },
 ]
 
-export default function RejectDocumentOptions({ value = [], onChange, error = '', disabled = false }) {
+export default function RejectDocumentOptions({ value = [], onChange, error = '', disabled = false, documents = REJECTABLE_DOCUMENTS }) {
   const toggle = (key) => {
     onChange(value.includes(key) ? value.filter((item) => item !== key) : [...value, key])
   }
@@ -13,7 +13,7 @@ export default function RejectDocumentOptions({ value = [], onChange, error = ''
     <div className="verification-doc-options">
       <span className="verification-doc-options__title">Dokumen yang perlu diperbaiki</span>
       <div className="verification-doc-options__list">
-        {REJECTABLE_DOCUMENTS.map((doc) => {
+        {documents.map((doc) => {
           const checked = value.includes(doc.value)
           return (
             <label key={doc.value} className={`verification-doc-option${checked ? ' is-checked' : ''}`}>
