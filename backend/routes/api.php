@@ -16,11 +16,15 @@ use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\AjakanController;
 use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\DirektoriOrganisasiController;
 use App\Http\Controllers\PencarianProfilOrganisasiController;
+use App\Http\Controllers\JelajahEventController;
+use App\Http\Controllers\PortofolioEventController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -28,6 +32,9 @@ Route::get('/master/universitas', [MasterDataController::class, 'universitas'])
     ->middleware('throttle:300,1');
 
 Route::get('/master/bidang-organisasi', [MasterDataController::class, 'bidangOrganisasi'])
+    ->middleware('throttle:300,1');
+
+Route::get('/master/kategori-event', [MasterDataController::class, 'kategoriEvent'])
     ->middleware('throttle:300,1');
 
 Route::get('/universitas', [UniversitasController::class, 'index'])
@@ -86,6 +93,14 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
     Route::get('/organisasi/cari', [PencarianProfilOrganisasiController::class, 'cari']);
     Route::get('/organisasi/{id_organisasi}', [PencarianProfilOrganisasiController::class, 'show'])
         ->whereNumber('id_organisasi');
+
+    // Jelajah Event, Cari & Filter, Detail, dan Bagikan (ORMV-1-30, ORMV-1-31, ORMV-1-32, ORMV-1-33)
+    Route::get('/events', [JelajahEventController::class, 'index']);
+    Route::get('/events/{id}', [JelajahEventController::class, 'show'])
+        ->whereNumber('id');
+    Route::post('/events/{id}/bagikan', [JelajahEventController::class, 'bagikan'])
+        ->whereNumber('id');
+    Route::get('/events/share/{token}', [JelajahEventController::class, 'bukaSharelink']);
 });
 
 // Super Admin
@@ -174,6 +189,50 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
         Route::match(['put', 'patch'], '/kontak/{id}', [KontakController::class, 'update'])
             ->whereNumber('id');
         Route::delete('/kontak/{id}', [KontakController::class, 'destroy'])
+            ->whereNumber('id');
+
+        // Manajemen Event (ORMV-1-21, ORMV-1-24, ORMV-1-25, ORMV-1-26)
+        Route::get('/event', [EventController::class, 'index']);
+        Route::post('/event', [EventController::class, 'store']);
+        Route::get('/event/{id}', [EventController::class, 'show'])
+            ->whereNumber('id');
+        Route::match(['put', 'patch', 'post'], '/event/{id}', [EventController::class, 'update'])
+            ->whereNumber('id');
+        Route::delete('/event/{id}', [EventController::class, 'destroy'])
+            ->whereNumber('id');
+
+        // Ajakan Kolaborasi & Undangan Event (ORMV-1-22, ORMV-1-23)
+        Route::get('/event/{id}/organisasi-tersedia', [AjakanController::class, 'organisasiTersedia'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/ajak-kolaborasi', [AjakanController::class, 'ajakKolaborasi'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/kolaborasi/{id_ajakan}/batalkan', [AjakanController::class, 'batalkanKolaborasi'])
+            ->whereNumber('id')->whereNumber('id_ajakan');
+
+        Route::post('/event/{id}/undang', [AjakanController::class, 'undangOrganisasi'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/undangan/{id_ajakan}/batalkan', [AjakanController::class, 'batalkanUndangan'])
+            ->whereNumber('id')->whereNumber('id_ajakan');
+
+        Route::get('/event/{id}/ajakan', [AjakanController::class, 'ajakanEvent'])
+            ->whereNumber('id');
+
+        // Kartu Ajakan & Undangan Masuk, Lihat Detail, dan Jawab (ORMV-1-28, ORMV-1-29)
+        Route::get('/ajakan-masuk', [AjakanController::class, 'indexAjakanMasuk']);
+        Route::get('/ajakan-masuk/{id_ajakan}', [AjakanController::class, 'showAjakanMasuk'])
+            ->whereNumber('id_ajakan');
+        Route::post('/ajakan-masuk/{id_ajakan}/jawab', [AjakanController::class, 'jawab'])
+            ->whereNumber('id_ajakan');
+
+        // Tambah Event ke Portofolio (ORMV-1-27)
+        Route::get('/events-selesai', [PortofolioEventController::class, 'eventSelesai']);
+        Route::get('/events-selesai/{id}/prefill', [PortofolioEventController::class, 'prefill'])
+            ->whereNumber('id');
+        Route::post('/events-selesai/{id}/portofolio', [PortofolioEventController::class, 'store'])
+            ->whereNumber('id');
+        Route::get('/events/{id}/prefill-portofolio', [PortofolioEventController::class, 'prefill'])
+            ->whereNumber('id');
+        Route::post('/events/{id}/portofolio', [PortofolioEventController::class, 'store'])
             ->whereNumber('id');
     });
 

@@ -90,4 +90,24 @@ class Organisasi extends Model
     {
         return $this->hasOne(TambahBidangOrganisasi::class, 'id_organisasi', 'id_organisasi');
     }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class, 'id_organisasi', 'id_organisasi');
+    }
+
+    public function ajakanDikirim(): HasMany
+    {
+        return $this->hasMany(Ajakan::class, 'id_organisasi_pengirim', 'id_organisasi');
+    }
+
+    public function ajakanDiterima(): HasMany
+    {
+        return $this->hasMany(Ajakan::class, 'id_organisasi_tujuan', 'id_organisasi');
+    }
+
+    public function notifikasi(): HasMany
+    {
+        return $this->hasMany(Notifikasi::class, 'id_organisasi', 'id_organisasi');
+    }
 }

@@ -18,6 +18,7 @@ class Portofolio extends Model
 
     protected $fillable = [
         'id_organisasi',
+        'id_event',
         'judul',
         'tahun',
         'deskripsi',
@@ -27,12 +28,18 @@ class Portofolio extends Model
     protected function casts(): array
     {
         return [
-            'tahun' => 'integer',
+            'id_event' => 'integer',
+            'tahun'    => 'integer',
         ];
     }
 
     public function organisasi(): BelongsTo
     {
         return $this->belongsTo(Organisasi::class, 'id_organisasi', 'id_organisasi');
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class, 'id_event', 'id');
     }
 }
