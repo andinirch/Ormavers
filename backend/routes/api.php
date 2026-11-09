@@ -17,6 +17,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AjakanController;
 use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
@@ -189,6 +190,29 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
             ->whereNumber('id');
         Route::delete('/event/{id}', [EventController::class, 'destroy'])
             ->whereNumber('id');
+
+        // Ajakan Kolaborasi & Undangan Event (ORMV-1-22, ORMV-1-23)
+        Route::get('/event/{id}/organisasi-tersedia', [AjakanController::class, 'organisasiTersedia'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/ajak-kolaborasi', [AjakanController::class, 'ajakKolaborasi'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/kolaborasi/{id_ajakan}/batalkan', [AjakanController::class, 'batalkanKolaborasi'])
+            ->whereNumber('id')->whereNumber('id_ajakan');
+
+        Route::post('/event/{id}/undang', [AjakanController::class, 'undangOrganisasi'])
+            ->whereNumber('id');
+        Route::post('/event/{id}/undangan/{id_ajakan}/batalkan', [AjakanController::class, 'batalkanUndangan'])
+            ->whereNumber('id')->whereNumber('id_ajakan');
+
+        Route::get('/event/{id}/ajakan', [AjakanController::class, 'ajakanEvent'])
+            ->whereNumber('id');
+
+        // Kartu Ajakan & Undangan Masuk, Lihat Detail, dan Jawab (ORMV-1-28, ORMV-1-29)
+        Route::get('/ajakan-masuk', [AjakanController::class, 'indexAjakanMasuk']);
+        Route::get('/ajakan-masuk/{id_ajakan}', [AjakanController::class, 'showAjakanMasuk'])
+            ->whereNumber('id_ajakan');
+        Route::post('/ajakan-masuk/{id_ajakan}/jawab', [AjakanController::class, 'jawab'])
+            ->whereNumber('id_ajakan');
     });
 
 // Admin Panel — Manajemen Role & Permission & Ringkasan

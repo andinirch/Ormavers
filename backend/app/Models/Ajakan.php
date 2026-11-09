@@ -24,7 +24,35 @@ class Ajakan extends Model
         'jenis',
         'status',
         'alasan_penolakan',
+        'djawab_pada',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'djawab_pada' => 'datetime',
+        ];
+    }
+
+    public function scopeMenunggu($query)
+    {
+        return $query->where('status', 'menunggu');
+    }
+
+    public function scopeDiterima($query)
+    {
+        return $query->where('status', 'diterima');
+    }
+
+    public function scopeKolaborator($query)
+    {
+        return $query->where('jenis', 'kolaborator');
+    }
+
+    public function scopeUndangan($query)
+    {
+        return $query->where('jenis', 'undangan');
+    }
 
     public function event(): BelongsTo
     {
