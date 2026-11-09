@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             BidangOrganisasiSeeder::class,
             SuperAdminSeeder::class,
             RolePermissionSeeder::class,
+            KategoriEventSeeder::class,
         ]);
     }
 }

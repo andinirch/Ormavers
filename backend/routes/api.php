@@ -16,6 +16,7 @@ use App\Http\Controllers\VerifikasiHmjUkmController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfilOrganisasiController;
 use App\Http\Controllers\PortofolioController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\IdentitasOrganisasiController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
@@ -28,6 +29,9 @@ Route::get('/master/universitas', [MasterDataController::class, 'universitas'])
     ->middleware('throttle:300,1');
 
 Route::get('/master/bidang-organisasi', [MasterDataController::class, 'bidangOrganisasi'])
+    ->middleware('throttle:300,1');
+
+Route::get('/master/kategori-event', [MasterDataController::class, 'kategoriEvent'])
     ->middleware('throttle:300,1');
 
 Route::get('/universitas', [UniversitasController::class, 'index'])
@@ -174,6 +178,16 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
         Route::match(['put', 'patch'], '/kontak/{id}', [KontakController::class, 'update'])
             ->whereNumber('id');
         Route::delete('/kontak/{id}', [KontakController::class, 'destroy'])
+            ->whereNumber('id');
+
+        // Manajemen Event (ORMV-1-21, ORMV-1-24, ORMV-1-25, ORMV-1-26)
+        Route::get('/event', [EventController::class, 'index']);
+        Route::post('/event', [EventController::class, 'store']);
+        Route::get('/event/{id}', [EventController::class, 'show'])
+            ->whereNumber('id');
+        Route::match(['put', 'patch', 'post'], '/event/{id}', [EventController::class, 'update'])
+            ->whereNumber('id');
+        Route::delete('/event/{id}', [EventController::class, 'destroy'])
             ->whereNumber('id');
     });
 
