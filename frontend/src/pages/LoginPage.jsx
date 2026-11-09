@@ -5,6 +5,7 @@ import PasswordInput from '../components/form/PasswordInput.jsx'
 import SubmitButton from '../components/form/SubmitButton.jsx'
 import FormMessage from '../components/form/FormMessage.jsx'
 import OrmaLogo from '../components/OrmaLogo.jsx'
+import PlatformLogo from '../components/PlatformLogo.jsx'
 import { isNonEmpty, requiredError } from '../validation/rules.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/login.css'
@@ -103,82 +104,87 @@ function LoginPage() {
 
   return (
     <div className="login-page">
-      <header className="login-header">
-        <OrmaLogo to="/" className="login-header__brand login-logo" />
-      </header>
+      <div className="login-container">
+        <header className="login-header">
+          <Link to="/" className="login-header__brand login-logo" aria-label="Beranda Ormavers">
+            <PlatformLogo variant="auth" alt="Ormavers" />
+            <span className="login-header__brand-text">Ormavers</span>
+          </Link>
+        </header>
 
-      <main className="login-main">
-        <section className="login-hero" aria-label="Tentang Ormavers">
-          <div className="login-hero__dots" aria-hidden="true" />
-          <span className="login-hero__badge">PTMA JAWA TIMUR</span>
-          <div className="login-hero__decor" aria-hidden="true">
-            <span className="login-hero__circle login-hero__circle--top" />
-            <span className="login-hero__square" />
-            <span className="login-hero__pill" />
-            <span className="login-hero__circle login-hero__circle--bottom" />
-          </div>
-          <div className="login-hero__copy">
-            <h1 className="login-hero__title">
-              Satu platform<br />
-              untuk organisasi<br />
-              mahasiswa PTMA<br />
-              Jawa Timur
-            </h1>
-            <p className="login-hero__description">
-              Kolaborasi terintegrasi, transparan, dan terpercaya bagi BEM,<br />
-              HMJ, dan UKM di lingkungan Perguruan Tinggi Muhammadiyah<br />
-              &amp; &apos;Aisyiyah Jawa Timur.
-            </p>
-          </div>
-          <div className="login-hero__footer">
-            <VerifiedMark />
-            <span>Platform Digital Resmi Ormawa PTMA Jatim</span>
-          </div>
-        </section>
-
-        <section className="login-side">
-          <div className="login-card">
-            <h1 className="login-card__title">Masuk ke Ormavers</h1>
-            <p className="login-card__subtitle">
-              Platform organisasi mahasiswa PTMA Jawa Timur
-            </p>
-            <form className="auth-form login-form" onSubmit={handleSubmit} noValidate>
-              <TextInput
-                id="username"
-                name="username"
-                label="Username"
-                placeholder="Masukkan username"
-                value={values.username}
-                onChange={handleChange}
-                required
-                autoComplete="username"
-                error={errors.username}
-              />
-              <PasswordInput
-                id="password"
-                name="password"
-                label="Password"
-                placeholder="Masukkan kata sandi"
-                value={values.password}
-                onChange={handleChange}
-                required
-                autoComplete="current-password"
-                error={errors.password}
-              />
-              {status === 'error' && <FormMessage variant="error">{message}</FormMessage>}
-              <div className="form-actions">
-                <SubmitButton>Masuk</SubmitButton>
-              </div>
-            </form>
-            <p className="login-card__alternative">Belum punya akun?</p>
-            <div className="login-register-links">
-              <Link to="/registrasi/bem">Daftar BEM</Link>
-              <Link to="/registrasi/hmj-ukm">Daftar<br />HMJ/UKM</Link>
-              <Link to="/registrasi/anggota">Daftar<br />anggota</Link>
+        <main className="login-main">
+          <section className="login-hero" aria-label="Tentang Ormavers">
+            <div className="login-hero__dots" aria-hidden="true" />
+            <span className="login-hero__badge">PTMA JAWA TIMUR</span>
+            <div className="login-hero__decor" aria-hidden="true">
+              <span className="login-hero__circle login-hero__circle--top" />
+              <span className="login-hero__square" />
+              <span className="login-hero__pill" />
+              <span className="login-hero__circle login-hero__circle--bottom" />
             </div>
-          </div>
-        </section>
-      </main>
+            <div className="login-hero__copy">
+              <h1 className="login-hero__title">
+                Satu platform<br />
+                untuk organisasi<br />
+                mahasiswa PTMA<br />
+                Jawa Timur
+              </h1>
+              <p className="login-hero__description">
+                Kolaborasi terintegrasi, transparan, dan terpercaya bagi BEM,<br />
+                HMJ, dan UKM di lingkungan Perguruan Tinggi Muhammadiyah<br />
+                &amp; &apos;Aisyiyah Jawa Timur.
+              </p>
+            </div>
+            <div className="login-hero__footer">
+              <VerifiedMark />
+              <span>Platform Digital Resmi Ormawa PTMA Jatim</span>
+            </div>
+          </section>
+
+          <section className="login-side">
+            <div className="login-card">
+              <h1 className="login-card__title">Masuk ke Ormavers</h1>
+              <p className="login-card__subtitle">
+                Platform organisasi mahasiswa PTMA Jawa Timur
+              </p>
+              <form className="auth-form login-form" onSubmit={handleSubmit} noValidate>
+                <TextInput
+                  id="username"
+                  name="username"
+                  label="Username"
+                  placeholder="Masukkan username"
+                  value={values.username}
+                  onChange={handleChange}
+                  required
+                  autoComplete="username"
+                  error={errors.username}
+                />
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  label="Password"
+                  placeholder="Masukkan kata sandi"
+                  value={values.password}
+                  onChange={handleChange}
+                  required
+                  autoComplete="current-password"
+                  error={errors.password}
+                />
+                {status === 'error' && <FormMessage variant="error">{message}</FormMessage>}
+                <div className="form-actions">
+                  <SubmitButton>Masuk</SubmitButton>
+                </div>
+              </form>
+              <p className="login-card__alternative">Belum punya akun?</p>
+              <div className="login-register-links">
+                <Link to="/registrasi/bem">Daftar BEM</Link>
+                <Link to="/registrasi/hmj-ukm">Daftar<br />HMJ/UKM</Link>
+                <Link to="/registrasi/anggota">Daftar<br />anggota</Link>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   )
 }
