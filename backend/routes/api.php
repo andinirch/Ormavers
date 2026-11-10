@@ -25,6 +25,7 @@ use App\Http\Controllers\DirektoriOrganisasiController;
 use App\Http\Controllers\PencarianProfilOrganisasiController;
 use App\Http\Controllers\JelajahEventController;
 use App\Http\Controllers\PortofolioEventController;
+use App\Http\Controllers\NotifikasiController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -233,6 +234,13 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
         Route::get('/events/{id}/prefill-portofolio', [PortofolioEventController::class, 'prefill'])
             ->whereNumber('id');
         Route::post('/events/{id}/portofolio', [PortofolioEventController::class, 'store'])
+            ->whereNumber('id');
+
+        // Notifikasi Organisasi (ORMV-1-34)
+        Route::get('/notifikasi', [NotifikasiController::class, 'index']);
+        Route::get('/notifikasi/unread-count', [NotifikasiController::class, 'unreadCount']);
+        Route::post('/notifikasi/baca-semua', [NotifikasiController::class, 'markAllAsRead']);
+        Route::match(['post', 'patch', 'put'], '/notifikasi/{id}/baca', [NotifikasiController::class, 'markAsRead'])
             ->whereNumber('id');
     });
 
