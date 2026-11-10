@@ -7,6 +7,7 @@ use App\Models\Organisasi;
 use App\Models\Pengguna;
 use App\Models\TambahBidangOrganisasi;
 use Illuminate\Http\UploadedFile;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -208,8 +209,8 @@ class IdentitasOrganisasiService
             'alamat'              => $organisasi->alamat,
             'logo'                => $logoUrl,
             'logo_universitas'    => $logoUnivUrl,
-            'tanggal_mulai_sk'    => $organisasi->tanggal_mulai_sk?->format('Y-m-d'),
-            'tanggal_berakhir_sk' => $organisasi->tanggal_berakhir_sk?->format('Y-m-d'),
+            'tanggal_mulai_sk'    => $organisasi->tanggal_mulai_sk ? Carbon::parse($organisasi->tanggal_mulai_sk)->format('Y-m-d') : null,
+            'tanggal_berakhir_sk' => $organisasi->tanggal_berakhir_sk ? Carbon::parse($organisasi->tanggal_berakhir_sk)->format('Y-m-d') : null,
             'status_organisasi'   => $organisasi->status_organisasi,
         ];
     }
