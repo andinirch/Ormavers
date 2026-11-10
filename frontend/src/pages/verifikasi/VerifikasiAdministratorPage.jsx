@@ -14,6 +14,7 @@ import {
 } from '../../components/verification/VerificationPanel.jsx'
 import { clearOrganizationCaches } from '../../services/orgApi.js'
 import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
+import PageHeader from '../../components/PageHeader.jsx'
 
 function FileTextIcon() {
   return (
@@ -238,17 +239,12 @@ export default function VerifikasiAdministratorPage() {
   return (
     <main className="admin-page verification-admin-page verification-administrator-page">
       <div className="verification-page">
-      <div className="verification-page__heading">
-        <div className="verification-eyebrow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <polyline points="9 12 11 14 15 10" />
-          </svg>
-          PANEL KURASI & VALIDASI
-        </div>
-        <h1>Daftar registrasi BEM</h1>
-        <p>Verifikasi pendaftaran BEM dari seluruh kampus</p>
-      </div>
+      <PageHeader
+        title="Daftar Registrasi BEM"
+        subtitle="Verifikasi pendaftaran BEM dari seluruh kampus"
+        breadcrumb={['Panel Kurasi & Validasi', 'Registrasi BEM']}
+        icon="shield-check"
+      />
 
       {error && <div className="verification-error" style={{ marginBottom: '18px' }}>{error}</div>}
 

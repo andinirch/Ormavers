@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCachedDirectoryCounts, getDirectoryOrganizationCounts, getDirectoryUniversities } from '../services/orgApi.js'
 import { DirectorySkeleton } from '../components/skeletons'
+import PageHeader from '../components/PageHeader.jsx'
 import { showError, showRateLimitError } from '../utils/alerts.js'
 import '../styles/directory.css'
 
@@ -139,13 +140,12 @@ function DirectoryPage() {
       
       {!loading && (
         <main className="directory-main">
-          <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
-            <span className="is-current" aria-current="page">Direktori Organisasi</span>
-          </nav>
-          <div className="directory-heading">
-            <h1>Direktori Organisasi</h1>
-            <p>Pilih universitas untuk melihat organisasi mahasiswa PTMA Jawa Timur.</p>
-          </div>
+          <PageHeader
+            title="Direktori Organisasi"
+            subtitle="Pilih universitas untuk melihat organisasi mahasiswa PTMA Jawa Timur."
+            breadcrumb={['Direktori Organisasi']}
+            icon="university"
+          />
 
           <section className="directory-search" aria-label="Cari organisasi">
             <span className="directory-search__title">

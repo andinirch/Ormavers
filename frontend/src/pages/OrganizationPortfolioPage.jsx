@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import ImageWithFallback from '../components/ImageWithFallback.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { assetUrl } from '../api/api.js'
 
 function normalizePortfolioItems(items) {
@@ -223,12 +224,12 @@ function OrganizationPortfolioPage() {
   }
 
   return <main className="organization-portfolio-page">
-    <header className="organization-portfolio-heading">
-      <div>
-        <h1>Portofolio organisasi</h1>
-        <p>Riwayat kegiatan dan pencapaian yang tampil di profil organisasi, disusun per tahun.</p>
-      </div>
-    </header>
+    <PageHeader
+      title="Portofolio Organisasi"
+      subtitle="Riwayat kegiatan dan pencapaian yang tampil di profil organisasi, disusun per tahun."
+      breadcrumb={['Organisasi', 'Portofolio']}
+      icon="folder-special"
+    />
 
     <div className="organization-portfolio-layout">
       <section className="organization-portfolio-main">

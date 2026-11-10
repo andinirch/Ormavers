@@ -20,6 +20,7 @@ import {
 } from '../../components/verification/VerificationPanel.jsx'
 import { clearOrganizationCaches } from '../../services/orgApi.js'
 import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
+import PageHeader from '../../components/PageHeader.jsx'
 
 function EyeIcon() {
   return (
@@ -311,14 +312,16 @@ export default function VerifikasiBemPage() {
 
   return (
     <div className="verification-page verification-bem-page">
-      <div className="verification-page__heading">
-        <h1>{isMemberMode ? 'Daftar permintaan anggota' : 'Daftar registrasi HMJ/UKM'}</h1>
-        <p>
-          {isMemberMode
+      <PageHeader
+        title={isMemberMode ? 'Daftar Permintaan Anggota' : 'Daftar Registrasi HMJ/UKM'}
+        subtitle={
+          isMemberMode
             ? 'Verifikasi permintaan keanggotaan di organisasi BEM kamu'
-            : 'Verifikasi pendaftaran HMJ/UKM yang memilih BEM kamu sebagai induk'}
-        </p>
-      </div>
+            : 'Verifikasi pendaftaran HMJ/UKM yang memilih BEM kamu sebagai induk'
+        }
+        breadcrumb={['Verifikasi', isMemberMode ? 'Permintaan Anggota' : 'Registrasi HMJ/UKM']}
+        icon={isMemberMode ? 'users' : 'shield'}
+      />
 
       <div className="verification-layout">
         <section className="verification-list-card" aria-label={isMemberMode ? 'Daftar permintaan anggota' : 'Daftar permohonan registrasi HMJ/UKM'}>

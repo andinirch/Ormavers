@@ -115,25 +115,27 @@ function LoginPage() {
         <main className="login-main">
           <section className="login-hero" aria-label="Tentang Ormavers">
             <div className="login-hero__dots" aria-hidden="true" />
-            <span className="login-hero__badge">PTMA JAWA TIMUR</span>
             <div className="login-hero__decor" aria-hidden="true">
               <span className="login-hero__circle login-hero__circle--top" />
               <span className="login-hero__square" />
               <span className="login-hero__pill" />
               <span className="login-hero__circle login-hero__circle--bottom" />
             </div>
-            <div className="login-hero__copy">
-              <h1 className="login-hero__title">
-                Satu platform<br />
-                untuk organisasi<br />
-                mahasiswa PTMA<br />
-                Jawa Timur
-              </h1>
-              <p className="login-hero__description">
-                Kolaborasi terintegrasi, transparan, dan terpercaya bagi BEM,<br />
-                HMJ, dan UKM di lingkungan Perguruan Tinggi Muhammadiyah<br />
-                &amp; &apos;Aisyiyah Jawa Timur.
-              </p>
+            <div className="login-hero__content">
+              <span className="login-hero__badge">PTMA JAWA TIMUR</span>
+              <div className="login-hero__copy">
+                <h1 className="login-hero__title">
+                  Satu platform<br />
+                  untuk organisasi<br />
+                  mahasiswa PTMA<br />
+                  Jawa Timur
+                </h1>
+                <p className="login-hero__description">
+                  Kolaborasi terintegrasi, transparan, dan terpercaya bagi BEM,<br />
+                  HMJ, dan UKM di lingkungan Perguruan Tinggi Muhammadiyah<br />
+                  &amp; &apos;Aisyiyah Jawa Timur.
+                </p>
+              </div>
             </div>
             <div className="login-hero__footer">
               <VerifiedMark />
