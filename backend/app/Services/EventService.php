@@ -453,8 +453,8 @@ class EventService
 
         $now = now();
         $formatted = $rawEvents->map(function ($ev) use ($posters, $fallbackPosters, $kategoriList, $now) {
-            $mulai = $ev->periode_mulai ? \Carbon\Carbon::parse($ev->periode_mulai) : null;
-            $selesai = $ev->periode_selesai ? \Carbon\Carbon::parse($ev->periode_selesai) : null;
+            $mulai = $ev->periode_mulai ? Carbon::parse($ev->periode_mulai) : null;
+            $selesai = $ev->periode_selesai ? Carbon::parse($ev->periode_selesai) : null;
 
             if ($mulai && $now->lt($mulai)) {
                 $statusPendaftaran = 'Belum Dibuka';
@@ -704,6 +704,7 @@ class EventService
         $events = $query->orderBy('tanggal_event', 'desc')->get();
 
         $accessibleEvents = $events->filter(function ($ev) use ($pengguna) {
+            /** @var Event $ev */
             return $this->cekAksesPengguna($pengguna, $ev);
         })->values();
 
@@ -821,11 +822,11 @@ class EventService
             'id'                  => (int) $event->id,
             'judul'               => $event->judul,
             'deskripsi'           => $event->deskripsi,
-            'tanggal_event'       => $event->tanggal_event?->format('Y-m-d') ?? (string) $event->tanggal_event,
+            'tanggal_event'       => $event->tanggal_event ? Carbon::parse($event->tanggal_event)->format('Y-m-d') : null,
             'tag'                 => $event->tag,
             'tautan_pendaftaran'  => $event->tautan_pendaftaran,
-            'periode_mulai'       => $event->periode_mulai?->format('Y-m-d H:i:s') ?? (string) $event->periode_mulai,
-            'periode_selesai'     => $event->periode_selesai?->format('Y-m-d H:i:s') ?? (string) $event->periode_selesai,
+            'periode_mulai'       => $event->periode_mulai ? Carbon::parse($event->periode_mulai)->format('Y-m-d H:i:s') : null,
+            'periode_selesai'     => $event->periode_selesai ? Carbon::parse($event->periode_selesai)->format('Y-m-d H:i:s') : null,
             'status_pendaftaran'  => $event->status_pendaftaran,
             'jangkauan_publikasi' => $event->jangkauan_publikasi,
             'token_sharelink'     => $event->token_sharelink,
@@ -969,7 +970,7 @@ class EventService
                 'id'                     => (int) $ev->id,
                 'judul'                  => $ev->judul,
                 'deskripsi'              => $ev->deskripsi,
-                'tanggal_event'          => $ev->tanggal_event?->format('Y-m-d') ?? (string) $ev->tanggal_event,
+                'tanggal_event'          => $ev->tanggal_event ? Carbon::parse($ev->tanggal_event)->format('Y-m-d') : null,
                 'tahun'                  => (int) Carbon::parse($ev->tanggal_event)->year,
                 'id_kategori'            => $ev->id_kategori,
                 'nama_kategori'          => $ev->kategori?->nama_kategori,
