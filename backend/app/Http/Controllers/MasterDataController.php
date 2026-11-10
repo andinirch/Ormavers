@@ -37,4 +37,19 @@ class MasterDataController extends Controller
             'data'    => $bidang,
         ]);
     }
+
+    /**
+     * Mendapatkan daftar kategori event untuk dropdown/pilihan form event.
+     */
+    public function kategoriEvent(): JsonResponse
+    {
+        $kategori = \App\Models\KategoriEvent::select('id', 'nama_kategori')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $kategori,
+        ]);
+    }
 }
