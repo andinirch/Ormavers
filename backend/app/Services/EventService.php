@@ -5,6 +5,12 @@ namespace App\Services;
 use App\Models\Ajakan;
 use App\Models\Event;
 use App\Models\EventPoster;
+use App\Models\Keanggotaan;
+use App\Models\Notifikasi;
+use App\Models\Organisasi;
+use App\Models\Pengguna;
+use App\Models\Portofolio;
+use Carbon\Carbon;
 use App\Models\Notifikasi;
 use App\Models\Organisasi;
 use App\Models\Pengguna;
@@ -548,5 +554,554 @@ class EventService
         if ($relativeStoragePath && Storage::disk('public')->exists($relativeStoragePath)) {
             Storage::disk('public')->delete($relativeStoragePath);
         }
+    }
+
+    /**
+     * Cek hak akses pengguna terhadap event berdasarkan jangkauan publikasi & relasi.
+     */
+    public function cekAksesPengguna(Pengguna $pengguna, Event $event): bool
+    {
+        // 1. Super Admin dan Administrator memiliki hak akses penuh ke seluruh event
+        if ($pengguna->peran === 'administrator' || $pengguna->peran === 'super_admin'
+            || $pengguna->hasRole('super_admin') || $pengguna->hasRole('administrator')) {
+            return true;
+        }
+
+        // 2. Multi Universitas: dapat diakses seluruh pengguna terverifikasi aktif
+        if ($event->jangkauan_publikasi === 'multi_universitas') {
+            return true;
+        }
+
+        // Ambil universitas dan ID organisasi milik pengguna
+        $idUnivPengguna = null;
+        $idOrgPengguna = null;
+
+        if ($pengguna->peran === 'anggota') {
+            $pengguna->loadMissing('profilAnggota');
+            $idUnivPengguna = $pengguna->profilAnggota?->id_universitas;
+        } elseif ($pengguna->peran === 'akun_organisasi') {
+            $pengguna->loadMissing('organisasi');
+            $idUnivPengguna = $pengguna->organisasi?->id_universitas;
+            $idOrgPengguna = $pengguna->organisasi?->id_organisasi;
+        }
+
+        // Ambil data organisasi pembuat event dan kolaborator/undangan yang diterima
+        $event->loadMissing(['organisasi.universitas', 'ajakan.organisasiTujuan']);
+        $hostOrg = $event->organisasi;
+        $hostUnivId = $hostOrg?->id_universitas;
+
+        $ajakanDiterima = $event->ajakan->where('status', 'diterima');
+        $kolaboratorOrgIds = $ajakanDiterima->pluck('id_organisasi_tujuan')->all();
+        $allowedOrgIds = array_unique(array_merge([$event->id_organisasi], $kolaboratorOrgIds));
+
+        // 3. Satu Universitas:
+        if ($event->jangkauan_publikasi === 'satu_universitas') {
+            // Jika universitas pengguna cocok dengan universitas penyelenggara
+            if ($idUnivPengguna && $idUnivPengguna === $hostUnivId) {
+                return true;
+            }
+
+            // Jika ada kolaborator yang diterima dari universitas pengguna
+            if ($idUnivPengguna && ! empty($kolaboratorOrgIds)) {
+                $adaUnivKolaborator = Organisasi::whereIn('id_organisasi', $kolaboratorOrgIds)
+                    ->where('id_universitas', $idUnivPengguna)
+                    ->exists();
+                if ($adaUnivKolaborator) {
+                    return true;
+                }
+            }
+
+            // Jika organisasi pengguna adalah pembuat atau kolaborator diterima
+            if ($idOrgPengguna && in_array($idOrgPengguna, $allowedOrgIds, true)) {
+                return true;
+            }
+
+            // Jika pengguna adalah anggota dari organisasi pembuat atau kolaborator diterima
+            if ($pengguna->peran === 'anggota') {
+                $isAnggota = Keanggotaan::where('id_pengguna', $pengguna->id_pengguna)
+                    ->whereIn('status_keanggotaan', ['disetujui', 'diterima'])
+                    ->whereIn('id_organisasi', $allowedOrgIds)
+                    ->exists();
+                if ($isAnggota) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // 4. Internal:
+        if ($event->jangkauan_publikasi === 'internal') {
+            // Jika pengguna adalah akun organisasi pembuat atau kolaborator yang diterima
+            if ($idOrgPengguna && in_array($idOrgPengguna, $allowedOrgIds, true)) {
+                return true;
+            }
+
+            // Jika pengguna adalah anggota terverifikasi dari organisasi pembuat atau kolaborator diterima
+            if ($pengguna->peran === 'anggota') {
+                return Keanggotaan::where('id_pengguna', $pengguna->id_pengguna)
+                    ->whereIn('status_keanggotaan', ['disetujui', 'diterima'])
+                    ->whereIn('id_organisasi', $allowedOrgIds)
+                    ->exists();
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * ORMV-1-30 & ORMV-1-31: Jelajah Event, Cari & Filter
+     */
+    public function getJelajahEvent(Pengguna $pengguna, array $filters = []): array
+    {
+        $query = Event::with([
+            'organisasi:id_organisasi,nama_organisasi,logo,id_universitas',
+            'organisasi.universitas:id_universitas,nama_universitas',
+            'kategori:id,nama_kategori',
+            'posters',
+            'posterUtama',
+            'ajakan.organisasiTujuan:id_organisasi,nama_organisasi,logo,id_universitas',
+        ]);
+
+        if (! empty($filters['q'])) {
+            $keyword = trim($filters['q']);
+            $query->where(function ($q) use ($keyword) {
+                $q->where('judul', 'like', "%{$keyword}%")
+                    ->orWhere('deskripsi', 'like', "%{$keyword}%")
+                    ->orWhere('tag', 'like', "%{$keyword}%");
+            });
+        }
+
+        if (! empty($filters['id_kategori'])) {
+            $query->where('id_kategori', $filters['id_kategori']);
+        } elseif (! empty($filters['kategori'])) {
+            $kat = $filters['kategori'];
+            $query->where(function ($q) use ($kat) {
+                if (is_numeric($kat)) {
+                    $q->where('id_kategori', (int) $kat);
+                } else {
+                    $q->whereHas('kategori', function ($kq) use ($kat) {
+                        $kq->where('nama_kategori', 'like', "%{$kat}%");
+                    });
+                }
+            });
+        }
+
+        if (! empty($filters['tanggal_mulai'])) {
+            $query->where('tanggal_event', '>=', $filters['tanggal_mulai']);
+        }
+        if (! empty($filters['tanggal_selesai'])) {
+            $query->where('tanggal_event', '<=', $filters['tanggal_selesai']);
+        }
+
+        $events = $query->orderBy('tanggal_event', 'desc')->get();
+
+        $accessibleEvents = $events->filter(function ($ev) use ($pengguna) {
+            return $this->cekAksesPengguna($pengguna, $ev);
+        })->values();
+
+        $isFiltered = ! empty($filters['q']) || ! empty($filters['kategori']) || ! empty($filters['id_kategori'])
+            || ! empty($filters['tanggal_mulai']) || ! empty($filters['tanggal_selesai']);
+
+        if ($accessibleEvents->isEmpty()) {
+            return [
+                'message' => $isFiltered ? 'Event tidak ditemukan' : 'Belum ada event',
+                'data'    => [],
+            ];
+        }
+
+        $data = $accessibleEvents->map(function ($ev) {
+            $posterUtama = $ev->posterUtama ?? $ev->posters->firstWhere('is_utama', true) ?? $ev->posters->first();
+
+            $kolaboratorDiterima = $ev->ajakan
+                ->where('status', 'diterima')
+                ->where('jenis', 'kolaborator')
+                ->map(function ($aj) {
+                    return [
+                        'id_organisasi'   => $aj->id_organisasi_tujuan,
+                        'nama_organisasi' => $aj->organisasiTujuan?->nama_organisasi,
+                        'logo'            => $aj->organisasiTujuan?->logo,
+                    ];
+                })->values();
+
+            return [
+                'id'                  => (int) $ev->id,
+                'judul'               => $ev->judul,
+                'deskripsi'           => $ev->deskripsi,
+                'tanggal_event'       => $ev->tanggal_event?->format('Y-m-d') ?? (string) $ev->tanggal_event,
+                'id_kategori'         => $ev->id_kategori,
+                'kategori'            => $ev->kategori?->nama_kategori,
+                'nama_kategori'       => $ev->kategori?->nama_kategori,
+                'status_pendaftaran'  => $ev->status_pendaftaran,
+                'periode_mulai'       => $ev->periode_mulai?->format('Y-m-d H:i:s') ?? (string) $ev->periode_mulai,
+                'periode_selesai'     => $ev->periode_selesai?->format('Y-m-d H:i:s') ?? (string) $ev->periode_selesai,
+                'jangkauan_publikasi' => $ev->jangkauan_publikasi,
+                'tautan_pendaftaran'  => $ev->tautan_pendaftaran,
+                'token_sharelink'     => $ev->token_sharelink,
+                'organisasi'          => [
+                    'id_organisasi'   => $ev->organisasi?->id_organisasi,
+                    'nama_organisasi' => $ev->organisasi?->nama_organisasi,
+                    'logo'            => $ev->organisasi?->logo,
+                ],
+                'poster_utama'        => $posterUtama ? [
+                    'id'             => $posterUtama->id,
+                    'nama_file_asli' => $posterUtama->nama_file_asli,
+                    'path_file'      => $posterUtama->path_file,
+                    'url'            => $posterUtama->url,
+                ] : null,
+                'kolaborator'         => $kolaboratorDiterima,
+            ];
+        });
+
+        return [
+            'message' => 'Daftar event berhasil diambil',
+            'data'    => $data,
+        ];
+    }
+
+    /**
+     * ORMV-1-32: Lihat Detail Event Lengkap Publik
+     */
+    public function getDetailEventPublik(Pengguna $pengguna, int $idEvent, bool $enforceAkses = true): array
+    {
+        $event = Event::with([
+            'organisasi:id_organisasi,nama_organisasi,logo,id_universitas',
+            'organisasi.universitas:id_universitas,nama_universitas',
+            'kategori:id,nama_kategori',
+            'posters',
+            'posterUtama',
+            'ajakan.organisasiTujuan:id_organisasi,nama_organisasi,logo,id_universitas',
+        ])->find($idEvent);
+
+        if (! $event) {
+            return [
+                'error'  => 'Event tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if ($enforceAkses && ! $this->cekAksesPengguna($pengguna, $event)) {
+            return [
+                'error'  => 'Event tidak dapat diakses',
+                'status' => 403,
+            ];
+        }
+
+        $posterUtama = $event->posterUtama ?? $event->posters->firstWhere('is_utama', true) ?? $event->posters->first();
+
+        $kolaboratorDiterima = $event->ajakan
+            ->where('status', 'diterima')
+            ->where('jenis', 'kolaborator')
+            ->map(function ($aj) {
+                return [
+                    'id_organisasi'   => $aj->id_organisasi_tujuan,
+                    'nama_organisasi' => $aj->organisasiTujuan?->nama_organisasi,
+                    'logo'            => $aj->organisasiTujuan?->logo,
+                ];
+            })->values();
+
+        $galeriPoster = $event->posters->map(function ($p) {
+            return [
+                'id'             => $p->id,
+                'nama_file_asli' => $p->nama_file_asli,
+                'path_file'      => $p->path_file,
+                'url'            => $p->url,
+                'is_utama'       => (bool) $p->is_utama,
+            ];
+        });
+
+        $data = [
+            'id'                  => (int) $event->id,
+            'judul'               => $event->judul,
+            'deskripsi'           => $event->deskripsi,
+            'tanggal_event'       => $event->tanggal_event?->format('Y-m-d') ?? (string) $event->tanggal_event,
+            'tag'                 => $event->tag,
+            'tautan_pendaftaran'  => $event->tautan_pendaftaran,
+            'periode_mulai'       => $event->periode_mulai?->format('Y-m-d H:i:s') ?? (string) $event->periode_mulai,
+            'periode_selesai'     => $event->periode_selesai?->format('Y-m-d H:i:s') ?? (string) $event->periode_selesai,
+            'status_pendaftaran'  => $event->status_pendaftaran,
+            'jangkauan_publikasi' => $event->jangkauan_publikasi,
+            'token_sharelink'     => $event->token_sharelink,
+            'id_kategori'         => $event->id_kategori,
+            'nama_kategori'       => $event->kategori?->nama_kategori,
+            'kategori'            => $event->kategori ? [
+                'id'            => $event->kategori->id,
+                'nama_kategori' => $event->kategori->nama_kategori,
+            ] : null,
+            'organisasi'          => [
+                'id_organisasi'   => $event->organisasi?->id_organisasi,
+                'nama_organisasi' => $event->organisasi?->nama_organisasi,
+                'logo'            => $event->organisasi?->logo,
+                'universitas'     => $event->organisasi?->universitas?->nama_universitas,
+            ],
+            'poster_utama'        => $posterUtama ? [
+                'id'             => $posterUtama->id,
+                'nama_file_asli' => $posterUtama->nama_file_asli,
+                'path_file'      => $posterUtama->path_file,
+                'url'            => $posterUtama->url,
+            ] : null,
+            'posters'             => $galeriPoster,
+            'galeri_poster'       => $galeriPoster,
+            'kolaborator'         => $kolaboratorDiterima,
+        ];
+
+        return [
+            'data' => $data,
+        ];
+    }
+
+    /**
+     * ORMV-1-33: Bagikan Event (Dapatkan Token & Sharelink)
+     */
+    public function bagikanEvent(Pengguna $pengguna, int $idEvent): array
+    {
+        $event = Event::find($idEvent);
+        if (! $event) {
+            return [
+                'error'  => 'Event tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if (! $this->cekAksesPengguna($pengguna, $event)) {
+            return [
+                'error'  => 'Event tidak dapat diakses',
+                'status' => 403,
+            ];
+        }
+
+        if (empty($event->token_sharelink)) {
+            $event->update([
+                'token_sharelink' => Str::random(32),
+            ]);
+            $event->refresh();
+        }
+
+        return [
+            'data' => [
+                'token_sharelink' => $event->token_sharelink,
+                'sharelink'       => url("/api/events/share/{$event->token_sharelink}"),
+                'share_url'       => url("/api/events/share/{$event->token_sharelink}"),
+            ],
+        ];
+    }
+
+    /**
+     * ORMV-1-33: Buka Event melalui Sharelink
+     */
+    public function bukaSharelink(Pengguna $pengguna, string $token): array
+    {
+        $event = Event::where('token_sharelink', $token)->first();
+        if (! $event) {
+            return [
+                'error'  => 'Event tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        // Penerima yang login dan terverifikasi berhak melihat event via sharelink
+        return $this->getDetailEventPublik($pengguna, $event->id, false);
+    }
+
+    /**
+     * ORMV-1-27: Ambil Daftar Event Selesai Organisasi (Pembuat / Kolaborator Diterima)
+     */
+    public function getEventSelesaiUntukPortofolio(Pengguna $pengguna): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $idOrg = $organisasi->id_organisasi;
+        $today = now()->toDateString();
+
+        // 1. Pembuat event berstatus selesai
+        $eventsDibuat = Event::where('id_organisasi', $idOrg)
+            ->whereDate('tanggal_event', '<', $today)
+            ->with(['kategori', 'posters', 'posterUtama'])
+            ->get()
+            ->map(function ($ev) {
+                $ev->peran_organisasi = 'pembuat';
+                return $ev;
+            });
+
+        // 2. Kolaborator dengan status ajakan 'diterima'
+        $eventIdsKolaborator = Ajakan::where('id_organisasi_tujuan', $idOrg)
+            ->where('jenis', 'kolaborator')
+            ->where('status', 'diterima')
+            ->pluck('id_event')
+            ->all();
+
+        $eventsKolaborasi = Event::whereIn('id', $eventIdsKolaborator)
+            ->whereDate('tanggal_event', '<', $today)
+            ->with(['kategori', 'posters', 'posterUtama'])
+            ->get()
+            ->map(function ($ev) {
+                $ev->peran_organisasi = 'kolaborator';
+                return $ev;
+            });
+
+        $allEvents = $eventsDibuat->concat($eventsKolaborasi)
+            ->unique('id')
+            ->sortByDesc('tanggal_event')
+            ->values();
+
+        $portofolioEventIds = Portofolio::where('id_organisasi', $idOrg)
+            ->whereNotNull('id_event')
+            ->pluck('id_event')
+            ->all();
+
+        $formatted = $allEvents->map(function ($ev) use ($portofolioEventIds) {
+            $posterUtama = $ev->posterUtama ?? $ev->posters->firstWhere('is_utama', true) ?? $ev->posters->first();
+
+            return [
+                'id'                     => (int) $ev->id,
+                'judul'                  => $ev->judul,
+                'deskripsi'              => $ev->deskripsi,
+                'tanggal_event'          => $ev->tanggal_event?->format('Y-m-d') ?? (string) $ev->tanggal_event,
+                'tahun'                  => (int) Carbon::parse($ev->tanggal_event)->year,
+                'id_kategori'            => $ev->id_kategori,
+                'nama_kategori'          => $ev->kategori?->nama_kategori,
+                'peran_organisasi'       => $ev->peran_organisasi,
+                'sudah_masuk_portofolio' => in_array($ev->id, $portofolioEventIds, true),
+                'poster_utama'           => $posterUtama?->url,
+            ];
+        });
+
+        return [
+            'data' => $formatted,
+        ];
+    }
+
+    /**
+     * ORMV-1-27: Data Prefill Formulir Portofolio dari Event
+     */
+    public function getPrefillPortofolio(Pengguna $pengguna, int $idEvent): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $event = Event::find($idEvent);
+        if (! $event) {
+            return [
+                'error'  => 'Event tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gte(today())) {
+            return [
+                'error'  => 'Event belum selesai',
+                'status' => 422,
+            ];
+        }
+
+        $isPembuat = ($event->id_organisasi === $organisasi->id_organisasi);
+        $isKolaborator = Ajakan::where('id_event', $event->id)
+            ->where('id_organisasi_tujuan', $organisasi->id_organisasi)
+            ->where('jenis', 'kolaborator')
+            ->where('status', 'diterima')
+            ->exists();
+
+        if (! $isPembuat && ! $isKolaborator) {
+            return [
+                'error'  => 'Anda bukan pembuat atau kolaborator event ini',
+                'status' => 403,
+            ];
+        }
+
+        return [
+            'data' => [
+                'id_event'  => (int) $event->id,
+                'judul'     => $event->judul,
+                'tahun'     => (int) Carbon::parse($event->tanggal_event)->year,
+                'deskripsi' => $event->deskripsi,
+            ],
+        ];
+    }
+
+    /**
+     * ORMV-1-27: Tambah Event ke Portofolio Organisasi
+     */
+    public function tambahEventKePortofolio(Pengguna $pengguna, int $idEvent, array $data, ?UploadedFile $dokumentasiFile = null): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+        if (! $organisasi) {
+            return [
+                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        $event = Event::find($idEvent);
+        if (! $event) {
+            return [
+                'error'  => 'Event tidak ditemukan',
+                'status' => 404,
+            ];
+        }
+
+        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gte(today())) {
+            return [
+                'error'  => 'Event belum selesai',
+                'status' => 422,
+            ];
+        }
+
+        $isPembuat = ($event->id_organisasi === $organisasi->id_organisasi);
+        $isKolaborator = Ajakan::where('id_event', $event->id)
+            ->where('id_organisasi_tujuan', $organisasi->id_organisasi)
+            ->where('jenis', 'kolaborator')
+            ->where('status', 'diterima')
+            ->exists();
+
+        if (! $isPembuat && ! $isKolaborator) {
+            return [
+                'error'  => 'Anda bukan pembuat atau kolaborator event ini',
+                'status' => 403,
+            ];
+        }
+
+        $dokumentasi = $data['dokumentasi'] ?? null;
+        if ($dokumentasiFile instanceof UploadedFile) {
+            $path = $dokumentasiFile->store('portofolio', 'public');
+            $dokumentasi = Storage::disk('public')->url($path);
+        }
+
+        if (empty($dokumentasi)) {
+            return [
+                'error'  => 'Dokumentasi portofolio wajib diisi',
+                'status' => 422,
+            ];
+        }
+
+        Portofolio::create([
+            'id_organisasi' => $organisasi->id_organisasi,
+            'id_event'      => $event->id,
+            'judul'         => ! empty($data['judul']) ? $data['judul'] : $event->judul,
+            'tahun'         => ! empty($data['tahun']) ? (int) $data['tahun'] : (int) Carbon::parse($event->tanggal_event)->year,
+            'deskripsi'     => ! empty($data['deskripsi']) ? $data['deskripsi'] : $event->deskripsi,
+            'dokumentasi'   => $dokumentasi,
+        ]);
+
+        $daftarPortofolio = Portofolio::where('id_organisasi', $organisasi->id_organisasi)
+            ->orderBy('tahun', 'desc')
+            ->orderBy('id_portofolio', 'desc')
+            ->get();
+
+        return [
+            'data' => $daftarPortofolio,
+        ];
     }
 }

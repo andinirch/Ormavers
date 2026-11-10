@@ -16,6 +16,7 @@ class StorePortofolioRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
+            'id_event'  => ['nullable', 'integer', 'exists:event,id'],
             'judul'     => ['required', 'string', 'max:200'],
             'tahun'     => ['required', 'integer', 'min:2000', 'max:2100'],
             'deskripsi' => ['required', 'string'],

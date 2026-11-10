@@ -23,6 +23,8 @@ use App\Http\Controllers\KontakController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\DirektoriOrganisasiController;
 use App\Http\Controllers\PencarianProfilOrganisasiController;
+use App\Http\Controllers\JelajahEventController;
+use App\Http\Controllers\PortofolioEventController;
 use Illuminate\Support\Facades\Route;
 
 // Publik
@@ -91,6 +93,14 @@ Route::middleware(['auth:sanctum', 'akun.aktif'])->group(function () {
     Route::get('/organisasi/cari', [PencarianProfilOrganisasiController::class, 'cari']);
     Route::get('/organisasi/{id_organisasi}', [PencarianProfilOrganisasiController::class, 'show'])
         ->whereNumber('id_organisasi');
+
+    // Jelajah Event, Cari & Filter, Detail, dan Bagikan (ORMV-1-30, ORMV-1-31, ORMV-1-32, ORMV-1-33)
+    Route::get('/events', [JelajahEventController::class, 'index']);
+    Route::get('/events/{id}', [JelajahEventController::class, 'show'])
+        ->whereNumber('id');
+    Route::post('/events/{id}/bagikan', [JelajahEventController::class, 'bagikan'])
+        ->whereNumber('id');
+    Route::get('/events/share/{token}', [JelajahEventController::class, 'bukaSharelink']);
 });
 
 // Super Admin
@@ -213,6 +223,17 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:akun_organisasi'])
             ->whereNumber('id_ajakan');
         Route::post('/ajakan-masuk/{id_ajakan}/jawab', [AjakanController::class, 'jawab'])
             ->whereNumber('id_ajakan');
+
+        // Tambah Event ke Portofolio (ORMV-1-27)
+        Route::get('/events-selesai', [PortofolioEventController::class, 'eventSelesai']);
+        Route::get('/events-selesai/{id}/prefill', [PortofolioEventController::class, 'prefill'])
+            ->whereNumber('id');
+        Route::post('/events-selesai/{id}/portofolio', [PortofolioEventController::class, 'store'])
+            ->whereNumber('id');
+        Route::get('/events/{id}/prefill-portofolio', [PortofolioEventController::class, 'prefill'])
+            ->whereNumber('id');
+        Route::post('/events/{id}/portofolio', [PortofolioEventController::class, 'store'])
+            ->whereNumber('id');
     });
 
 // Admin Panel — Manajemen Role & Permission & Ringkasan

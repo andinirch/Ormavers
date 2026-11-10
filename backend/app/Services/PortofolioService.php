@@ -44,8 +44,11 @@ class PortofolioService
             $dokumentasi = Storage::disk('public')->url($path);
         }
 
+        $idEvent = isset($data['id_event']) ? (int) $data['id_event'] : null;
+
         Portofolio::create([
             'id_organisasi' => $organisasi->id_organisasi,
+            'id_event'      => $idEvent,
             'judul'         => $data['judul'],
             'tahun'         => (int) $data['tahun'],
             'deskripsi'     => $data['deskripsi'],

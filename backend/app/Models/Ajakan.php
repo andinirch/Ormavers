@@ -69,6 +69,16 @@ class Ajakan extends Model
         return $this->belongsTo(Organisasi::class, 'id_organisasi_tujuan', 'id_organisasi');
     }
 
+    public function organisasiPengirim(): BelongsTo
+    {
+        return $this->pengirim();
+    }
+
+    public function organisasiTujuan(): BelongsTo
+    {
+        return $this->tujuan();
+    }
+
     public function notifikasi(): HasMany
     {
         return $this->hasMany(Notifikasi::class, 'id_ajakan', 'id');
