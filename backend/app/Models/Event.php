@@ -35,6 +35,7 @@ class Event extends Model
 
     protected $appends = [
         'status_pendaftaran',
+        'has_kolaborasi',
     ];
 
     protected function casts(): array
@@ -65,6 +66,32 @@ class Event extends Model
         }
 
         return 'Dibuka';
+    }
+
+    public function getHasKolaborasiAttribute(): bool
+    {
+        if ($this->relationLoaded('kolaborator')) {
+            return $this->kolaborator->isNotEmpty();
+        }
+
+        return $this->kolaborator()->exists();
+    }
+
+    /**
+     * Scope untuk event yang terlihat oleh suatu organisasi:
+     * - Dibuat oleh organisasi tersebut, ATAU
+     * - Diterima sebagai kolaborator, ATAU
+     * - Diterima sebagai undangan.
+     */
+    public function scopeVisibelUntukOrganisasi($query, int $idOrganisasi)
+    {
+        return $query->where(function ($q) use ($idOrganisasi) {
+            $q->where('id_organisasi', $idOrganisasi)
+                ->orWhereHas('ajakan', function ($sub) use ($idOrganisasi) {
+                    $sub->where('id_organisasi_tujuan', $idOrganisasi)
+                        ->where('status', 'diterima');
+                });
+        });
     }
 
     public function organisasi(): BelongsTo
