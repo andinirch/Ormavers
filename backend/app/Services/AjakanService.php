@@ -236,9 +236,11 @@ class AjakanService
 
                 Notifikasi::create([
                     'id_organisasi' => $tid,
+                    'jenis'         => $jenis === 'kolaborator' ? 'ajakan' : 'undangan',
                     'id_event'      => $event->id,
                     'id_ajakan'     => $ajakan->id,
                     'pesan'         => "Organisasi {$organisasi->nama_organisasi} mengirimkan {$labelNotif} sebagai {$labelPeran} dalam event: {$event->judul}",
+                    'sudah_baca'    => false,
                 ]);
 
                 $ajakan->load(['tujuan:id_organisasi,nama_organisasi,logo,jenis_organisasi']);
@@ -501,9 +503,11 @@ class AjakanService
                 // Kirim notifikasi ke organisasi pengirim beserta alasan
                 Notifikasi::create([
                     'id_organisasi' => $ajakan->id_organisasi_pengirim,
+                    'jenis'         => 'jawaban',
                     'id_event'      => $event?->id,
                     'id_ajakan'     => $ajakan->id,
                     'pesan'         => "Organisasi {$organisasi->nama_organisasi} telah menolak {$labelJenis} untuk event: '{$event?->judul}'. Alasan: {$alasan}",
+                    'sudah_baca'    => false,
                 ]);
 
                 return [
@@ -527,9 +531,11 @@ class AjakanService
                 // Kirim notifikasi ke organisasi pengirim
                 Notifikasi::create([
                     'id_organisasi' => $ajakan->id_organisasi_pengirim,
+                    'jenis'         => 'jawaban',
                     'id_event'      => $event?->id,
                     'id_ajakan'     => $ajakan->id,
                     'pesan'         => "Organisasi {$organisasi->nama_organisasi} telah menerima {$labelJenis} untuk event: '{$event?->judul}'",
+                    'sudah_baca'    => false,
                 ]);
 
                 return [

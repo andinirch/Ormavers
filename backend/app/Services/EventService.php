@@ -125,9 +125,11 @@ class EventService
                     $labelPeran = $jenis === 'kolaborator' ? 'kolaborator' : 'undangan';
                     Notifikasi::create([
                         'id_organisasi' => $idTujuan,
+                        'jenis'         => $jenis === 'kolaborator' ? 'ajakan' : 'undangan',
                         'id_event'      => $event->id,
                         'id_ajakan'     => $ajakan->id,
                         'pesan'         => "Organisasi {$organisasi->nama_organisasi} mengajak Anda sebagai {$labelPeran} dalam event: {$event->judul}",
+                        'sudah_baca'    => false,
                     ]);
                 }
             }
@@ -266,9 +268,11 @@ class EventService
                         $labelPeran = $jenis === 'kolaborator' ? 'kolaborator' : 'undangan';
                         Notifikasi::create([
                             'id_organisasi' => $idTujuan,
+                            'jenis'         => $jenis === 'kolaborator' ? 'ajakan' : 'undangan',
                             'id_event'      => $event->id,
                             'id_ajakan'     => $ajakan->id,
                             'pesan'         => "Organisasi {$organisasi->nama_organisasi} mengajak Anda sebagai {$labelPeran} dalam event: {$event->judul}",
+                            'sudah_baca'    => false,
                         ]);
                     }
                 }
@@ -282,9 +286,11 @@ class EventService
             foreach ($ajakanDiterima as $ajakan) {
                 Notifikasi::create([
                     'id_organisasi' => $ajakan->id_organisasi_tujuan,
+                    'jenis'         => 'perubahan_event',
                     'id_event'      => $event->id,
                     'id_ajakan'     => $ajakan->id,
                     'pesan'         => "Event \"{$event->judul}\" telah diperbarui oleh {$organisasi->nama_organisasi}.",
+                    'sudah_baca'    => false,
                 ]);
             }
 
@@ -336,9 +342,11 @@ class EventService
             foreach ($ajakanDiterima as $ajakan) {
                 Notifikasi::create([
                     'id_organisasi' => $ajakan->id_organisasi_tujuan,
+                    'jenis'         => 'penghapusan_event',
                     'id_event'      => null, // event akan terhapus
                     'id_ajakan'     => null,
                     'pesan'         => "Event \"{$judulEvent}\" telah dihapus oleh pembuat ({$organisasi->nama_organisasi}).",
+                    'sudah_baca'    => false,
                 ]);
             }
 
