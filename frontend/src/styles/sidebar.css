@@ -1,4 +1,6 @@
-.app-sidebar {
+.app-sidebar,
+.sidebar,
+.admin-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   z-index: 5;
@@ -12,7 +14,7 @@
   overscroll-behavior: contain;
   color: #0f172a;
   background: #fff;
-  border-right: 1px solid #e3e6f4;
+  border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
 .app-sidebar__brand {
@@ -23,13 +25,22 @@
   margin-bottom: 0;
 }
 
-.app-sidebar__nav {
+.app-sidebar__nav,
+.sidebar__nav {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 6px;
 }
 
-.app-sidebar__group > p {
+.app-sidebar__group,
+.sidebar__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.app-sidebar__group > p,
+.sidebar__group > p {
   margin: 1rem 0.75rem 0.4rem;
   color: #7b8194;
   font-size: 0.68rem;
@@ -37,7 +48,8 @@
   letter-spacing: 0.04em;
 }
 
-.app-sidebar__link {
+.app-sidebar__link,
+.sidebar__item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -45,31 +57,56 @@
   box-sizing: border-box;
   padding: 0.7rem 0.75rem;
   color: #4a5061;
-  border-radius: 0.5rem;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 400;
   text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.app-sidebar__link .admin-icon {
+.app-sidebar__link .admin-icon,
+.sidebar__item .admin-icon {
   width: 1.25rem;
   flex: 0 0 1.25rem;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.app-sidebar__link:hover {
-  color: #2563eb;
-  background: #f1f5ff;
+.app-sidebar__link:hover:not(.is-active),
+.sidebar__item:hover:not(.sidebar__item--active):not(.active) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  transform: translateX(3px);
+  border-radius: 10px;
 }
 
-.app-sidebar__link.is-active {
-  color: #fff;
-  background: #2563eb;
-  font-weight: 700;
+.app-sidebar__link.is-active,
+.sidebar__item.active,
+.sidebar__item--active {
+  background-color: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border-left: 3px solid #2563eb !important;
 }
 
+.app-sidebar__link.is-active .admin-icon,
+.sidebar__item.active .admin-icon,
+.sidebar__item--active .admin-icon {
+  color: #2563eb !important;
+  stroke: #2563eb !important;
+}
+
+.sidebar__footer,
 .app-sidebar > .platform-logout {
+  border-top: 1px solid #e2e8f0;
   margin-top: auto;
-  transform: translateY(0.5rem);
+  padding-top: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar__footer .platform-logout {
+  width: 100%;
 }
 
 @media (max-height: 40rem) {

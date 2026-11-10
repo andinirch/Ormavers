@@ -6,6 +6,7 @@ import { getMyRegistrationStatus } from '../services/registrationStatusApi.js'
 import { getOrganizationIdentity, updateOrganizationIdentity, getBidangOrganisasi, getOrganizationDescription, updateOrganizationDescription, listOrganizationContacts, createOrganizationContact, updateOrganizationContact, deleteOrganizationContact } from '../api/organizationManagement.js'
 import { clearOrganizationCaches, getUniversitas } from '../services/orgApi.js'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import '../styles/organization-management.css'
 
@@ -88,8 +89,11 @@ function OrganizationManagementPage() {
         const bidangItems = Array.isArray(bidangResponse?.data)
           ? bidangResponse.data
           : bidangResponse?.data?.bidang ?? bidangResponse?.data?.data ?? []
-        setBidangOptions(Array.isArray(bidangItems) ? bidangItems : [])
-        setBidangError(Array.isArray(bidangItems) && bidangItems.length ? '' : 'Belum ada data bidang organisasi.')
+        const filteredBidang = Array.isArray(bidangItems)
+          ? bidangItems.filter((item) => String(item.nama_bidang ?? '').trim().toLowerCase() !== 'lainnya')
+          : []
+        setBidangOptions(filteredBidang)
+        setBidangError(filteredBidang.length ? '' : 'Belum ada data bidang organisasi.')
       } else {
         setBidangOptions([])
         setBidangError('Daftar bidang organisasi gagal dimuat.')
@@ -329,7 +333,12 @@ function OrganizationManagementPage() {
   const completenessPercent = Math.round((completenessItems.filter((item) => item.done).length / completenessItems.length) * 100)
 
   return <main className="organization-management-page">
-    <header className="organization-management-heading"><div><h1>Profil Organisasi</h1><p>Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi.</p></div></header>
+    <PageHeader
+      title="Profil Organisasi"
+      subtitle="Kelola deskripsi, kontak, dan identitas yang tampil di Direktori Organisasi."
+      breadcrumb={['Organisasi', 'Profil Organisasi']}
+      icon="building"
+    />
     {loading && <div className="organization-management-state">Memuat profil organisasi...</div>}
     {!loading && error && <div className="organization-management-state organization-management-state--error">{error}</div>}
     {!loading && !error && <div className="organization-management-layout">
@@ -398,7 +407,9 @@ function OrganizationManagementPage() {
               <div className="organization-identity-input-wrap">
 <select value={identityDraft?.id_bidang ?? ''} onChange={(event) => setIdentityDraft((current) => ({ ...current, id_bidang: event.target.value, nama_bidang_kustom: event.target.value === CUSTOM_BIDANG ? current?.nama_bidang_kustom : '' }))} disabled={!editingIdentity || saving}>
                    <option value="">Pilih bidang organisasi</option>
-                   {bidangOptions.map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
+                   {bidangOptions
+                     .filter((item) => String(item.nama_bidang ?? '').trim().toLowerCase() !== 'lainnya')
+                     .map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
                    <option value={CUSTOM_BIDANG}>Lainnya</option>
                  </select>
                </div>

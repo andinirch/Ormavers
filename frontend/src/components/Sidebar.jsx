@@ -6,11 +6,11 @@ import LogoutButton from './LogoutButton.jsx'
 function Sidebar({ groups, open = false, onClose, logoTo = '/', ariaLabel = 'Navigasi', showBrand = true, variant = '' }) {
   return (
     <>
-      <aside className={`app-sidebar${variant ? ` app-sidebar--${variant}` : ''}${open ? ' is-open' : ''}`}>
+      <aside className={`app-sidebar sidebar admin-sidebar${variant ? ` app-sidebar--${variant}` : ''}${open ? ' is-open' : ''}`}>
         {showBrand && <OrmaLogo to={logoTo} onClick={onClose} variant="sidebar" className="app-sidebar__brand" />}
-        <nav className="app-sidebar__nav" aria-label={ariaLabel}>
+        <nav className="app-sidebar__nav sidebar__nav" aria-label={ariaLabel}>
           {groups.map((group) => (
-            <div className="app-sidebar__group" key={group.label}>
+            <div className="app-sidebar__group sidebar__group" key={group.label}>
               <p>{group.label}</p>
               {group.items.map((item) => (
                 <NavLink
@@ -20,7 +20,7 @@ function Sidebar({ groups, open = false, onClose, logoTo = '/', ariaLabel = 'Nav
                   onClick={onClose}
                   className={({ isActive }) => {
                     const active = item.isActive ? item.isActive(isActive) : isActive
-                    return `app-sidebar__link${active ? ' is-active' : ''}`
+                    return `app-sidebar__link sidebar__item${active ? ' is-active active sidebar__item--active' : ''}`
                   }}
                 >
                   <AdminIcon name={item.icon} />
@@ -30,7 +30,9 @@ function Sidebar({ groups, open = false, onClose, logoTo = '/', ariaLabel = 'Nav
             </div>
           ))}
         </nav>
-        <LogoutButton />
+        <div className="sidebar__footer">
+          <LogoutButton />
+        </div>
       </aside>
       {open && <button className="app-sidebar__overlay" type="button" aria-label="Tutup menu" onClick={onClose} />}
     </>

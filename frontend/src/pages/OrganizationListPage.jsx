@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { getBidangOrganisasi } from '../api/organizationManagement.js'
 import { getDirectoryOrganizations, searchOrganizations } from '../services/orgApi.js'
 import '../styles/organization-directory.css'
@@ -81,20 +82,15 @@ function OrganizationListPage() {
 
   return (
     <main className="organization-directory-main">
-      <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
-        <Link to={directoryPath}>Direktori Organisasi</Link>
-        <span aria-hidden="true">/</span>
-        <span className="is-current" aria-current="page">{university?.label ?? (loading ? 'Memuat...' : 'Kampus')}</span>
-      </nav>
-      <div className="organization-directory-heading">
-        <div className="organization-list-title">
-          <Link className="organization-list-back" to={directoryPath} aria-label="Kembali ke direktori">
-            <BackIcon />
-          </Link>
-          <h1>Organisasi di {university?.label ?? (loading ? 'Memuat...' : 'Kampus')}</h1>
-        </div>
-        <p>Pilih organisasi mahasiswa untuk melihat informasi yang tersedia.</p>
-      </div>
+      <PageHeader
+        title={`Organisasi di ${university?.label ?? (loading ? 'Memuat...' : 'Kampus')}`}
+        subtitle="Pilih organisasi mahasiswa untuk melihat informasi yang tersedia."
+        breadcrumb={[
+          { label: 'Direktori Organisasi', to: directoryPath },
+          university?.label ?? (loading ? 'Memuat...' : 'Kampus')
+        ]}
+        icon="building"
+      />
 
       <section className="organization-directory-filters" aria-label="Filter organisasi">
         <label>

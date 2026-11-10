@@ -12,6 +12,7 @@ import {
   Toast,
 } from '../../components/verification/VerificationPanel.jsx'
 import RejectDocumentOptions from '../../components/verification/RejectDocumentOptions.jsx'
+import PageHeader from '../../components/PageHeader.jsx'
 
 function EyeIcon() {
   return (
@@ -215,10 +216,12 @@ export default function VerifikasiHmjPage() {
 
   return (
     <div className="verification-page verification-hmj-page">
-      <div className="verification-page__heading">
-        <h1>Daftar permintaan anggota</h1>
-        <p>Verifikasi permintaan keanggotaan di organisasi kamu</p>
-      </div>
+      <PageHeader
+        title="Daftar Permintaan Anggota"
+        subtitle="Verifikasi permintaan keanggotaan di organisasi kamu"
+        breadcrumb={['Verifikasi', 'Permintaan Anggota']}
+        icon="users"
+      />
 
       <div className="verification-layout">
         <section className="verification-list-card" aria-label="Daftar permintaan keanggotaan">

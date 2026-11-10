@@ -7,6 +7,7 @@ import { findBemInduk, findBemIndukInfo, getOrganizationDetail } from '../servic
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PasswordInput from '../components/form/PasswordInput.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import '../styles/profile.css'
 
 function resolveAssetUrl(url) {
@@ -302,7 +303,12 @@ function OrganizationProfilePage() {
 
   const content = (
     <main className="admin-page profile-page">
-      <div className="profile-page__heading"><h1>Profil Saya</h1><p>Kelola data diri, password, dan foto profil</p></div>
+      <PageHeader
+        title="Profil Saya"
+        subtitle="Kelola data diri, password, dan foto profil"
+        breadcrumb={['Pengaturan', 'Profil Saya']}
+        icon="profile-bold"
+      />
       {(profileLoading || orgLoading) && (
         <div className="profile-layout">
           <div className="profile-side">

@@ -21,7 +21,7 @@ export default function LogoutButton() {
   }
 
   return (
-    <button className="platform-logout" type="button" onClick={handleLogout} disabled={loading}>
+    <button className="platform-logout sidebar__logout" type="button" onClick={handleLogout} disabled={loading}>
       <AdminIcon name="logout" />
       <span>Keluar</span>
     </button>

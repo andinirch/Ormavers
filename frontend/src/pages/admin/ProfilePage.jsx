@@ -1,4 +1,5 @@
 import { useAuth } from '../../context/AuthContext.jsx'
+import PageHeader from '../../components/PageHeader.jsx'
 import '../../styles/profile.css'
 
 function formatRole(value) {
@@ -22,10 +23,12 @@ function ProfilePage() {
 
   return (
     <main className="admin-page admin-profile-page">
-      <div className="profile-page__heading">
-        <h1>Profil Saya</h1>
-        <p>Informasi akun yang sedang digunakan pada Admin Panel.</p>
-      </div>
+      <PageHeader
+        title="Profil Saya"
+        subtitle="Informasi akun yang sedang digunakan pada Admin Panel."
+        breadcrumb={['Admin Panel', 'Profil Saya']}
+        icon="profile-bold"
+      />
 
       <section className="profile-card admin-profile-card">
         <div className="admin-profile-hero">

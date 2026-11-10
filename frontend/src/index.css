@@ -59,6 +59,19 @@ body {
   margin: 0;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('/images/bg-pattern.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position:top center;
+  opacity: 0.3; /* Sesuaikan tingkat kejelasan di sini */
+}
+
 #root {
   width: 100%;
   max-width: 100%;
@@ -122,3 +135,243 @@ code {
   max-width: var(--content-max);
   margin-inline: auto;
 }
+
+/* ==========================================================================
+   Global UI & Micro-interactions
+   ========================================================================== */
+
+/* 1. Auto-Apply Card Lift & Soft Elevation */
+.card,
+.admin-card,
+.verification-card,
+.dashboard-card,
+.panel,
+.admin-panel,
+.admin-filter-card,
+.admin-stat-card,
+.verification-list-card,
+.verification-detail-card,
+.status-card,
+.auth-card,
+.profile-card,
+.organization-portfolio-card,
+.organization-directory-card,
+.organization-detail-card,
+.organization-management-card,
+.organization-collaboration-card,
+.directory-university-card,
+.rhmj-card,
+.rbem-card,
+.ranggota-card {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s ease;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-top: 3px solid #2563eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+}
+
+.card:hover,
+.admin-card:hover,
+.verification-card:hover,
+.dashboard-card:hover,
+.panel:hover,
+.admin-panel:hover,
+.admin-filter-card:hover,
+.admin-stat-card:hover,
+.verification-list-card:hover,
+.verification-detail-card:hover,
+.status-card:hover,
+.auth-card:hover,
+.profile-card:hover,
+.organization-portfolio-card:hover,
+.organization-directory-card:hover,
+.organization-detail-card:hover,
+.organization-management-card:hover,
+.organization-collaboration-card:hover,
+.directory-university-card:hover,
+.rhmj-card:hover,
+.rbem-card:hover,
+.ranggota-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -4px rgba(37, 99, 235, 0.10);
+  border-color: #bfdbfe;
+}
+
+/* Skeleton & Static Card Overrides */
+.skeleton-card,
+.skeleton-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-top-width: 1px !important;
+}
+
+/* 2. Auto-Apply Focus Ring pada Kolom Input & Form */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+select,
+textarea,
+.form-control,
+.form-input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+select:focus,
+textarea:focus,
+.form-control:focus,
+.form-input:focus,
+.form-control:focus-within {
+  border-color: #2563eb !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* 3. Micro-interactions pada Semua Tombol */
+button,
+.btn,
+.admin-button,
+.profile-button,
+.verification-button {
+  transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled),
+.btn:hover:not(:disabled),
+.admin-button:hover:not(:disabled),
+.profile-button:hover:not(:disabled),
+.verification-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+button:active:not(:disabled),
+.btn:active:not(:disabled),
+.admin-button:active:not(:disabled),
+.profile-button:active:not(:disabled),
+.verification-button:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+button:disabled,
+.btn:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* 4. Proteksi Layout Login Page */
+body:has(.login-page)::before {
+  display: none !important;
+}
+
+.login-page {
+  background-color: #f8fafc !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   PageHeader Component
+   ========================================================================== */
+.page-header-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-left: 4px solid #2563eb !important;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.03);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  transform: none !important;
+}
+
+.page-header-card:hover {
+  transform: none !important;
+  box-shadow: 0 6px 20px -3px rgba(15, 23, 42, 0.06);
+}
+
+.page-header__breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.page-header__breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.page-header__breadcrumb-link {
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.page-header__breadcrumb-link:hover {
+  color: #2563eb;
+}
+
+.page-header__breadcrumb-separator {
+  margin: 0 8px;
+  color: #cbd5e1;
+}
+
+.page-header__breadcrumb-text.is-current {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.page-header__content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.page-header__icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #eff6ff;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.page-header__icon-badge svg {
+  color: #2563eb;
+  stroke: #2563eb;
+}
+
+.page-header__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header__title {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.page-header__subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+
