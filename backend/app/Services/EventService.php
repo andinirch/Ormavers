@@ -83,7 +83,7 @@ class EventService
             foreach ($posters as $idx => $file) {
                 if ($file instanceof UploadedFile) {
                     $path = $file->store('event/poster', 'public');
-                    $url = Storage::disk('public')->url($path);
+                    $url = asset('storage/' . $path);
 
                     EventPoster::create([
                         'id_event'       => $event->id,
@@ -209,7 +209,7 @@ class EventService
                 foreach ($posters as $file) {
                     if ($file instanceof UploadedFile) {
                         $path = $file->store('event/poster', 'public');
-                        $url = Storage::disk('public')->url($path);
+                        $url = asset('storage/' . $path);
 
                         EventPoster::create([
                             'id_event'       => $event->id,
@@ -1082,7 +1082,7 @@ class EventService
         $dokumentasi = $data['dokumentasi'] ?? null;
         if ($dokumentasiFile instanceof UploadedFile) {
             $path = $dokumentasiFile->store('portofolio', 'public');
-            $dokumentasi = Storage::disk('public')->url($path);
+            $dokumentasi = asset('storage/' . $path);
         }
 
         if (empty($dokumentasi)) {
