@@ -185,14 +185,14 @@ class IdentitasOrganisasiService
         $logoUrl = null;
         if ($organisasi->logo) {
             $logoUrl = Storage::disk('public')->exists($organisasi->logo)
-                ? Storage::disk('public')->url($organisasi->logo)
+                ? asset('storage/' . $organisasi->logo)
                 : null;
         }
 
         $logoUnivUrl = null;
         if ($organisasi->jenis_organisasi === 'bem' && $organisasi->universitas?->logo) {
             $logoUnivUrl = Storage::disk('public')->exists($organisasi->universitas->logo)
-                ? Storage::disk('public')->url($organisasi->universitas->logo)
+                ? asset('storage/' . $organisasi->universitas?->logo)
                 : null;
         }
 
