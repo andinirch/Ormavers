@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
-import Swal from 'sweetalert2'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { getBidangOrganisasi } from '../api/organizationManagement.js'
@@ -47,6 +46,7 @@ function CollaborationIcon() {
 }
 
 function OrganizationListPage() {
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const { universityId } = useParams()
   const directoryPath = pathname.startsWith('/superadmin/')
@@ -251,7 +251,7 @@ function OrganizationListPage() {
           <h2>Ingin Mengajukan Kolaborasi Antar-Kampus?</h2>
           <p>Hubungkan HMJ/UKM Anda dengan delegasi Universitas Muhammadiyah se-Jawa Timur.</p>
         </div>
-        <button type="button" onClick={() => Swal.fire({ icon: 'info', title: 'Fitur belum tersedia', text: 'Usulan kolaborasi antar-kampus menunggu integrasi layanan backend.', confirmButtonColor: '#2563eb' })}>
+        <button type="button" onClick={() => navigate('/verifikasi/kelola-event/baru')}>
           <CollaborationIcon /> Buat Usulan Kolaborasi
         </button>
       </section>
