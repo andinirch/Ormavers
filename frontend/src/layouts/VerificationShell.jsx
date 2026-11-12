@@ -25,6 +25,7 @@ const navigationByRole = {
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
+    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
@@ -33,6 +34,7 @@ const navigationByRole = {
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
+    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
@@ -84,6 +86,10 @@ function VerificationShell() {
       document.body.style.overflow = ''
     }
   }, [menuOpen])
+
+  useEffect(() => {
+    if (notifOpen) notifications.refresh()
+  }, [notifOpen, notifications.refresh])
 
   useEffect(() => {
     if (contextKey !== 'bem' && contextKey !== 'hmj') return undefined
@@ -142,7 +148,7 @@ function VerificationShell() {
       </div>
       <Footer variant="content" />
     </main>
-    <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} onReadAll={notifications.markAllRead} returnFocusRef={bellRef} />
+    <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} loading={notifications.loading} onReadAll={notifications.markAllRead} onItemClick={(item) => { notifications.markRead(item); setNotifOpen(false) }} returnFocusRef={bellRef} />
   </div>
 }
 
