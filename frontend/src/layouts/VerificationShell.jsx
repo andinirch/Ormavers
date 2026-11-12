@@ -24,6 +24,7 @@ const navigationByRole = {
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
+    { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
@@ -31,6 +32,7 @@ const navigationByRole = {
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
+    { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
