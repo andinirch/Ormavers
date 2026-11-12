@@ -5,8 +5,8 @@ import '../../styles/notification-panel.css'
 
 const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
-function NotificationItem({ icon, title, text, time, read }) {
-  return <article className={`notification-item${read ? '' : ' is-unread'}`}>
+function NotificationItem({ icon, title, text, time, read, onClick }) {
+  return <button type="button" className={`notification-item${read ? '' : ' is-unread'}`} onClick={onClick}>
     <span className="notification-item__icon"><AdminIcon name={icon} size={18} /></span>
     <div className="notification-item__body">
       <h3>{title}</h3>
@@ -14,18 +14,18 @@ function NotificationItem({ icon, title, text, time, read }) {
       <span className="notification-item__time"><AdminIcon name={read ? 'check-double' : 'clock'} size={12} /> {time}</span>
     </div>
     {!read && <span className="notification-item__dot" aria-label="Belum dibaca" />}
-  </article>
+  </button>
 }
 
-function NotificationSection({ label, aside, items }) {
+function NotificationSection({ label, aside, items, onItemClick }) {
   if (!items.length) return null
   return <section>
     <header className="notification-panel-section"><span>{label}</span>{aside && <span>{aside}</span>}</header>
-    <div className="notification-panel-items">{items.map((item) => <NotificationItem key={item.id} {...item} />)}</div>
+    <div className="notification-panel-items">{items.map((item) => <NotificationItem key={item.id} {...item} onClick={() => onItemClick?.(item)} />)}</div>
   </section>
 }
 
-function NotificationPanel({ open, onClose, items, unread, onReadAll, returnFocusRef }) {
+function NotificationPanel({ open, onClose, items, unread, onReadAll, onItemClick, loading = false, returnFocusRef }) {
   const [tab, setTab] = useState('all')
   const panelRef = useRef(null)
   const closeRef = useRef(null)
@@ -76,9 +76,7 @@ function NotificationPanel({ open, onClose, items, unread, onReadAll, returnFocu
         <button type="button" className="notification-panel-readall" onClick={onReadAll} disabled={unread === 0}>Tandai semua dibaca</button>
       </div>
       <div className="notification-panel-list">
-        <NotificationSection label="HARI INI" aside={today.length ? `${today.length} pesan terbaru` : ''} items={today} />
-        <NotificationSection label="SEBELUMNYA" items={earlier} />
-        {!visible.length && <p className="notification-panel-empty">Tidak ada notifikasi.</p>}
+        {loading ? <div className="notification-panel-items">{[1, 2, 3].map((item) => <div className="notification-item notification-item--skeleton" key={item} />)}</div> : <><NotificationSection label="HARI INI" aside={today.length ? `${today.length} pesan terbaru` : ''} items={today} onItemClick={onItemClick} /><NotificationSection label="SEBELUMNYA" items={earlier} onItemClick={onItemClick} />{!visible.length && <p className="notification-panel-empty">Tidak ada notifikasi.</p>}</>}
       </div>
     </aside>
   </>, document.body)

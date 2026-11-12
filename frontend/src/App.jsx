@@ -22,6 +22,8 @@ import OrganizationManagementPage from './pages/OrganizationManagementPage.jsx'
 import OrganizationPortfolioPage from './pages/OrganizationPortfolioPage.jsx'
 import OrganizationEventPage from './pages/event/OrganizationEventPage.jsx'
 import EventFormPage from './pages/event/EventFormPage.jsx'
+import EventExplorationPage from './pages/event/EventExplorationPage.jsx'
+import EventDetailPage from './pages/event/EventDetailPage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
 import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
 import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
@@ -72,8 +74,12 @@ function App() {
           <Route path="/superadmin/permission" element={<Navigate to="/admin-panel/permission" replace />} />
           <Route path="/admin/superadmin" element={<Navigate to="/superadmin" replace />} />
         </Route>
-        <Route element={<VerificationShell />}>
-          <Route element={<AccessGuard roles={['anggota', 'member']} permission="view profile" />}>
+      <Route element={<VerificationShell />}>
+           <Route element={<AccessGuard roles={['anggota', 'member', 'akun_bem', 'akun_organisasi', 'akun_hmj_ukm']} permission="view profile" />}>
+             <Route path="jelajah-event" element={<EventExplorationPage />} />
+             <Route path="jelajah-event/:id" element={<EventDetailPage />} />
+             <Route path="events/share/:token" element={<EventDetailPage shareToken />} />
+
             <Route path="direktori" element={<DirectoryPage />} />
             <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
             <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />

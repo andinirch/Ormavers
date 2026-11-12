@@ -20,7 +20,7 @@
 .notification-panel-section span:last-child:not(:first-child){font-weight:500;letter-spacing:0;font-size:.7rem}
 .notification-panel-items{display:grid;gap:8px}
 .notification-panel-empty{margin:24px 0;color:#64748b;font-size:.82rem;text-align:center}
-.notification-item{position:relative;display:flex;align-items:flex-start;gap:12px;min-width:0;padding:12px 28px 12px 12px;box-sizing:border-box;background:#fff;border:1px solid #e5e7f4;border-radius:12px;box-shadow:0 2px 8px rgba(31,35,75,.03)}
+.notification-item{position:relative;display:flex;align-items:flex-start;gap:12px;min-width:0;width:100%;padding:12px 28px 12px 12px;box-sizing:border-box;color:inherit;font:inherit;text-align:left;background:#fff;border:1px solid #e5e7f4;border-radius:12px;box-shadow:0 2px 8px rgba(31,35,75,.03);cursor:pointer}.notification-item--skeleton{height:78px;background:#e8edf7;animation:notification-pulse 1.4s ease-in-out infinite}@keyframes notification-pulse{50%{opacity:.45}}
 .notification-item.is-unread{background:#f5f8ff}
 .notification-item__icon{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;color:#2563eb;background:#eef0ff;border-radius:10px}
 .notification-item__body{flex:1 1 auto;display:grid;gap:3px;min-width:0}
