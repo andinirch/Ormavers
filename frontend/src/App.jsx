@@ -22,6 +22,7 @@ import OrganizationManagementPage from './pages/OrganizationManagementPage.jsx'
 import OrganizationPortfolioPage from './pages/OrganizationPortfolioPage.jsx'
 import OrganizationEventPage from './pages/event/OrganizationEventPage.jsx'
 import EventFormPage from './pages/event/EventFormPage.jsx'
+import OrganizationEventDetailPage from './pages/event/OrganizationEventDetailPage.jsx'
 import EventExplorationPage from './pages/event/EventExplorationPage.jsx'
 import EventDetailPage from './pages/event/EventDetailPage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
@@ -95,6 +96,7 @@ function App() {
             <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
             <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
             <Route path="kelola-event" element={<OrganizationEventPage />} />
+            <Route path="kelola-event/:eventId" element={<OrganizationEventDetailPage />} />
             <Route path="kelola-event/baru" element={<EventFormPage />} />
             <Route path="kelola-event/:eventId/edit" element={<EventFormPage />} />
             <Route path="direktori" element={<DirectoryPage />} />
@@ -109,6 +111,7 @@ function App() {
             <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
             <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
             <Route path="kelola-event" element={<OrganizationEventPage />} />
+            <Route path="kelola-event/:eventId" element={<OrganizationEventDetailPage />} />
             <Route path="kelola-event/baru" element={<EventFormPage />} />
             <Route path="kelola-event/:eventId/edit" element={<EventFormPage />} />
             <Route path="direktori" element={<DirectoryPage />} />

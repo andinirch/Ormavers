@@ -57,6 +57,8 @@ const icons = {
   mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
   'music-tiktok': <><path d="M10 18V6l7 2" /><circle cx="7.5" cy="18" r="2.5" /></>,
   'checkbox-checked': <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="m9 12 2 2 4-4" /></>,
+  share: <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></>,
+  link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
   'lock-refresh': <>
     <path d="M3.2 12a8.8 8.8 0 1 0 2.6-6.3" />
     <path d="M3 3.4v5.8h5.8" />

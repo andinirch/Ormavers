@@ -56,6 +56,7 @@ function EventCard({
   portfolioEligible = false,
   sudahMasukPortofolio = false,
   onAddToPortfolio,
+  detailTo,
 }) {
   const poster = resolvePoster(event.poster)
   const kategori = event.namaKategori || event.tag || 'Tanpa kategori'
@@ -71,7 +72,7 @@ function EventCard({
     <article className="event-card card">
       <div className="event-card__poster">
         {poster
-          ? <ImageWithFallback src={poster} alt={event.judul} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ? <ImageWithFallback src={poster} alt={event.judul} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           : <span className="event-card__poster-fallback"><AdminIcon name="image" size={26} /></span>}
       </div>
 
@@ -94,9 +95,7 @@ function EventCard({
 
         <div className="event-card__actions">
           <div className="event-card__actions-left">
-            <button type="button" className="event-card__btn is-neutral" disabled title="Detail event akan tersedia pada tahap berikutnya">
-              <AdminIcon name="eye" size={16} /> Detail
-            </button>
+            {detailTo ? <Link to={detailTo} className="event-card__btn is-neutral"><AdminIcon name="eye" size={16} /> Detail</Link> : <button type="button" className="event-card__btn is-neutral" disabled title="Detail event akan tersedia pada tahap berikutnya"><AdminIcon name="eye" size={16} /> Detail</button>}
             {isPembuat && (
               <Link to={`/verifikasi/kelola-event/${event.id}/edit`} className="event-card__btn is-neutral">
                 <AdminIcon name="edit" size={16} /> Ubah

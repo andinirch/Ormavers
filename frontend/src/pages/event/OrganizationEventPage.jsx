@@ -161,6 +161,11 @@ function OrganizationEventPage() {
                   portfolioEligible={Boolean(portfolioStatus[String(event.id)]?.eligible)}
                   sudahMasukPortofolio={Boolean(portfolioStatus[String(event.id)]?.sudahMasuk)}
                   onAddToPortfolio={(target) => setPortfolioTarget(target)}
+                  detailTo={
+                    event.peran === 'pembuat'
+                      ? `/verifikasi/kelola-event/${event.id}`
+                      : `/jelajah-event/${event.id}?from=kelola-event`
+                  }
                 />
               ))}
             </div>
