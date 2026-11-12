@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import AdminIcon from './admin/AdminIcon.jsx'
 
-function PageHeader({ title, subtitle, breadcrumb = [], icon }) {
+function PageHeader({ title, subtitle, breadcrumb = [], icon, action }) {
   return (
     <header className="page-header-card">
       {breadcrumb && breadcrumb.length > 0 && (
@@ -27,14 +27,21 @@ function PageHeader({ title, subtitle, breadcrumb = [], icon }) {
       )}
 
       <div className="page-header__content">
-        {icon && (
-          <div className="page-header__icon-badge" aria-hidden="true">
-            {typeof icon === 'string' ? <AdminIcon name={icon} size={22} /> : icon}
+        <div className="page-header__main">
+          {icon && (
+            <div className="page-header__icon-badge" aria-hidden="true">
+              {typeof icon === 'string' ? <AdminIcon name={icon} size={22} /> : icon}
+            </div>
+          )}
+          <div className="page-header__text">
+            <h1 className="page-header__title">{title}</h1>
+            {subtitle && <p className="page-header__subtitle">{subtitle}</p>}
+            {action && (
+              <div className="page-header__action">
+                {action}
+              </div>
+            )}
           </div>
-        )}
-        <div className="page-header__text">
-          <h1 className="page-header__title">{title}</h1>
-          {subtitle && <p className="page-header__subtitle">{subtitle}</p>}
         </div>
       </div>
     </header>

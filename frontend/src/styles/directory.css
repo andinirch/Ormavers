@@ -1,42 +1,412 @@
-.directory-shell{width:100%;min-height:100%;background:transparent;color:#0f172a;font-family:var(--font-ui)}.directory-main{width:100%;margin:0;padding:0 32px 28px;box-sizing:border-box;min-width:0;overflow-x:hidden}.organization-directory-breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;color:#64748b;font-size:13px}.organization-directory-breadcrumb a{color:#64748b;text-decoration:none}.organization-directory-breadcrumb a:hover{color:#2563eb}.organization-directory-breadcrumb .is-current{color:#2563eb;font-weight:600}.directory-heading{max-width:760px;margin-bottom:26px}.directory-eyebrow{color:#2563eb;font-size:.78rem;font-weight:750;letter-spacing:.08em}.directory-heading h1{margin:8px 0 5px;font-family:var(--font-ui);font-size:28px;font-weight:750;line-height:1.15;letter-spacing:-1.3px;color:#0f172a}.directory-heading p{margin:0;color:#273047;font-size:15px}.directory-university-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:16px;max-width:none;min-width:0}.directory-university-card{display:flex;flex-direction:column;min-width:0;padding:24px;background:#fff;border:1px solid #e5e7f4;border-radius:16px;box-shadow:0 8px 24px rgba(31,35,75,.05);text-align:center}.directory-university__logo{display:grid;place-items:center;width:88px;height:88px;margin:0 auto 20px;padding:0;box-sizing:border-box;background:transparent;border-radius:50%;overflow:hidden;color:#2563eb}.directory-university__logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}.directory-university__logo .directory-university__fallback{display:grid;place-items:center;width:100%;height:100%;background:#eef0ff;border-radius:50%}.directory-university__fallback{font-size:.82rem;font-weight:800;letter-spacing:.04em}.directory-university__copy{flex:1 1 auto}.directory-university__copy h2{margin:0;color:#0f172a;font-family:var(--font-ui);font-size:.95rem;font-weight:600;line-height:1.3}.directory-university__copy span{display:block;margin-top:6px;color:#64748b;font-size:.8rem}.directory-university__count{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;margin-top:22px;padding:.45rem .75rem;color:#475569;background:#eef0ff;border-radius:999px;font-size:.8rem;line-height:1.2}.directory-university__count-icon{width:.85rem;height:.85rem;flex:0 0 .85rem;color:#2563eb}.directory-state{padding:30px;background:#fff;border:1px solid #e5e7f4;border-radius:16px;color:#64748b}.directory-state--error{color:#b91c1c;background:#fff1f2;border-color:#fecdd3}@media(max-width:1100px){.directory-university-grid{gap:16px}}@media(max-width:700px){.directory-university-card{padding:20px}}.directory-university-card,.directory-university-card:hover,.directory-university-card:focus-visible,.directory-university-card *{text-decoration:none}@media(max-width:1024px){.directory-main{padding-inline:28px}.directory-university-grid{gap:18px}.directory-university-card{padding:20px}}@media(max-width:768px){.directory-main{padding-inline:18px}.directory-university-grid{gap:14px}.directory-university-card{padding:16px}.directory-university__logo{width:80px;height:80px;margin:0 auto 16px}.directory-university__count{margin-top:16px}}@media(max-width:480px){.directory-main{padding-inline:12px}.directory-university-grid{gap:10px}.directory-university-card{padding:14px}.directory-university__logo{width:70px;height:70px;margin:0 auto 12px;font-size:0.75rem}.directory-university__copy span{font-size:0.75rem}}@media(max-width:375px){.directory-main{padding-inline:10px}.directory-university-card{padding:12px}.directory-university__logo{width:64px;height:64px;margin:0 auto 10px}.directory-state{padding:20px}}@media(max-width:320px){.directory-main{padding-inline:8px}.directory-university-grid{gap:8px}.directory-university-card{padding:10px}.directory-university__logo{width:60px;height:60px;margin:0 auto 8px;font-size:0.7rem}.directory-university__count{font-size:0.7rem}}
+.directory-shell {
+  width: 100%;
+  min-height: 100%;
+  background: transparent;
+  color: #0f172a;
+  font-family: var(--font-ui);
+}
 
-.directory-search{display:grid;gap:10px;margin:0 0 16px;padding:14px 18px;background:#fff;border:1px solid #e5e7f4;border-radius:16px;box-shadow:0 8px 24px rgba(31,35,75,.04);box-sizing:border-box}
-.directory-search__title{display:inline-flex;align-items:center;gap:8px;color:#0f172a;font-size:.95rem;font-weight:700}
-.directory-search__title svg{width:18px;height:18px;color:#2563eb}
-.directory-search__field{position:relative;display:block}
-.directory-search__field svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#64748b;pointer-events:none}
-.directory-search__field input{width:100%;height:46px;padding:0 14px 0 42px;color:#0f172a;background:#eef0ff;border:1px solid transparent;border-radius:10px;box-sizing:border-box;font:inherit;font-size:.95rem;outline:0}
-.directory-search__field input::placeholder{color:#64748b}
-.directory-search__field input:focus{border-color:#2563eb}
-.directory-university-grid.is-searching{opacity:.55;transition:opacity .15s}
+.directory-main {
+  width: 100%;
+  margin: 0;
+  padding: 0 32px 28px;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-x: hidden;
+}
 
-.directory-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:12px 14px;background:#fff;border:1px solid #e5e7f4;border-radius:14px;box-sizing:border-box;color:#475569;font-size:.9rem}
-.directory-pagination__info strong{color:#0f172a}
-.directory-pagination__controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.directory-pagination__controls button{min-width:30px;height:28px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;line-height:1;text-align:center;color:#475569;background:#f1f5f9;border:0;border-radius:8px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
-.directory-pagination__controls button:hover:not(:disabled){background:#e0e7ff;color:#1d4ed8}
-.directory-pagination__controls button.is-active{color:#fff;background:#2563eb}
-.directory-pagination__controls button:disabled{opacity:.45;cursor:not-allowed}
+.organization-directory-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: #64748b;
+  font-size: 13px;
+}
 
-/* Direktori: jarak atas/bawah dirapatkan; padding horizontal (sidebar–konten) tetap dari breakpoint asal */
-/* Shell Verifikasi: pertahankan padding samping shell (konsisten dengan menu lain), hanya jarak bawah yang dirapatkan */
-.verification-content:has(> .directory-shell){padding-bottom:0}
-.verification-content > .directory-shell > .directory-main{padding-left:0;padding-right:0}
+.organization-directory-breadcrumb a {
+  color: #64748b;
+  text-decoration: none;
+}
 
+.organization-directory-breadcrumb a:hover {
+  color: #2563eb;
+}
 
-/* Pagination: tombol Sebelumnya/Berikutnya dan semua tombol halaman diperkecil */
+.organization-directory-breadcrumb .is-current {
+  color: #2563eb;
+  font-weight: 600;
+}
 
-/* Pagination: teks info seimbang dengan tombol */
-.directory-pagination__info{font-size:.85rem}
+.directory-heading {
+  max-width: 760px;
+  margin-bottom: 26px;
+}
 
-/* Grid universitas menyusut: 4 → 2 kolom (laptop) → 1 kolom */
+.directory-eyebrow {
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.directory-heading h1 {
+  margin: 8px 0 5px;
+  font-family: var(--font-ui);
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -1.3px;
+  color: #0f172a;
+}
+
+.directory-heading p {
+  margin: 0;
+  color: #273047;
+  font-size: 15px;
+}
+
+.directory-search {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid #e5e7f4;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(31, 35, 75, 0.04);
+  box-sizing: border-box;
+}
+
+.directory-search__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.directory-search__title svg {
+  width: 18px;
+  height: 18px;
+  color: #2563eb;
+}
+
+.directory-search__field {
+  position: relative;
+  display: block;
+}
+
+.directory-search__field svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.directory-search__field input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px 0 42px;
+  color: #0f172a;
+  background: #eef0ff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.95rem;
+  outline: 0;
+}
+
+.directory-search__field input::placeholder {
+  color: #64748b;
+}
+
+.directory-search__field input:focus {
+  border-color: #2563eb;
+}
+
+/* Grid universitas */
+.directory-university-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 18px;
+  max-width: none;
+  min-width: 0;
+}
+
+.directory-university-grid.is-searching {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+/* Kartu Universitas */
+.directory-card,
+.directory-university-card {
+  border-top: none !important;
+  overflow: hidden;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Top Blue Gradient Banner */
+.directory-card__banner {
+  height: 135px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 55%, #93c5fd 100%);
+  flex-shrink: 0;
+}
+
+.directory-card__banner::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.directory-card__banner::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 115px;
+  height: 100%;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.28) 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+  pointer-events: none;
+}
+
+/* Lingkaran badge logo di tengah banner */
+.directory-card__badge {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: transparent;
+  border: none !important;
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.directory-card__badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.directory-card__fallback {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  user-select: none;
+  letter-spacing: -0.5px;
+}
+
+/* Konten & Tombol Bawah Kartu */
+.directory-card__body {
+  padding: 18px 20px 20px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.directory-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Pill Jumlah Organisasi */
+.directory-card__count {
+  width: 100%;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+.directory-card__count svg {
+  color: #2563eb;
+  stroke: #2563eb;
+  transition: all 0.2s ease;
+}
+
+.directory-card:hover .directory-card__count,
+.directory-university-card:hover .directory-card__count {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.directory-card:hover .directory-card__count svg,
+.directory-university-card:hover .directory-card__count svg {
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+/* Kontainer Paginasi Bawah */
+.directory-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-top: 24px;
+  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.03);
+  box-sizing: border-box;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.directory-pagination__info {
+  font-size: 0.85rem;
+}
+
+.directory-pagination__info strong {
+  color: #0f172a;
+}
+
+.directory-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.directory-pagination__controls button {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
+  color: #475569;
+  background: #f1f5f9;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.directory-pagination__controls button:hover:not(:disabled) {
+  background: #e0e7ff;
+  color: #1d4ed8;
+}
+
+.directory-pagination__controls button.is-active {
+  color: #fff;
+  background: #2563eb;
+}
+
+.directory-pagination__controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Status state */
+.directory-state {
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #e5e7f4;
+  border-radius: 14px;
+  color: #64748b;
+  font-size: 14px;
+  text-align: center;
+}
+
+.directory-state--error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fee2e2;
+}
+
+/* Jarak shell verifikasi */
+.verification-content:has(> .directory-shell) {
+  padding-bottom: 0;
+}
+
+.verification-content > .directory-shell > .directory-main {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Responsif Grid universitas: 4 → 2 kolom (laptop) → 1 kolom (mobile) */
 @media (max-width: 1100px) {
   .directory-university-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 768px) {
+
+@media (max-width: 640px) {
   .directory-university-grid {
     grid-template-columns: 1fr;
+  }
+  .directory-main {
+    padding: 0 16px 20px;
   }
 }
