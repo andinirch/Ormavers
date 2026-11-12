@@ -160,6 +160,8 @@ code {
 .organization-management-card,
 .organization-collaboration-card,
 .directory-university-card,
+.directory-card,
+.org-list-card,
 .rhmj-card,
 .rbem-card,
 .ranggota-card {
@@ -192,6 +194,8 @@ code {
 .organization-management-card:hover,
 .organization-collaboration-card:hover,
 .directory-university-card:hover,
+.directory-card:hover,
+.org-list-card:hover,
 .rhmj-card:hover,
 .rbem-card:hover,
 .ranggota-card:hover {
@@ -331,8 +335,47 @@ body:has(.login-page)::before {
 
 .page-header__content {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header__main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header__action {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.page-header-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  text-decoration: none;
+  line-height: 1.2;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.page-header-back-btn:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #93c5fd;
 }
 
 .page-header__icon-badge {

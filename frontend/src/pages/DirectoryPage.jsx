@@ -9,8 +9,19 @@ import '../styles/directory.css'
 function UniversityLogo({ university }) {
   const [failed, setFailed] = useState(false)
 
+  const getAbbreviation = () => {
+    if (!university.label) return 'PTMA'
+    const bracketMatch = university.label.match(/\(([^)]+)\)/)
+    if (bracketMatch?.[1]) return bracketMatch[1]
+    const umMatch = university.label.match(/Universitas\s+Muhammadiyah\s+([A-Za-z]+)/i)
+    if (umMatch?.[1]) {
+      return `UM${umMatch[1].slice(0, 2).toUpperCase()}`
+    }
+    return 'PTMA'
+  }
+
   if (!university.logo || failed) {
-    return <span className="directory-university__fallback" aria-hidden="true">PTMA</span>
+    return <span className="directory-card__fallback" aria-hidden="true">{getAbbreviation()}</span>
   }
 
   return <img src={university.logo} alt="" onError={() => setFailed(true)} />
@@ -192,14 +203,23 @@ function DirectoryPage() {
           {!error && universities.length > 0 && (
             <section className={`directory-university-grid${searching ? ' is-searching' : ''}`} aria-label="Daftar universitas" aria-busy={searching}>
               {universities.map((university) => (
-                <Link className="directory-university-card" key={university.value} to={`universitas/${university.value}`}>
-                  <div className="directory-university__logo"><UniversityLogo university={university} /></div>
-                  <div className="directory-university__copy">
-                    <h2>{university.label}</h2>
+                <Link className="directory-card directory-university-card" key={university.value} to={`universitas/${university.value}`}>
+                  <div className="directory-card__banner">
+                    <div className="directory-card__badge">
+                      <UniversityLogo university={university} />
+                    </div>
                   </div>
-                <span className="directory-university__count">
-                  {university.organizationCount == null ? '… organisasi' : `${university.organizationCount} organisasi`}
-                </span>
+                  <div className="directory-card__body">
+                    <h2 className="directory-card__title">{university.label}</h2>
+                    <span className="directory-card__count">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="9" cy="8" r="3" />
+                        <path d="M3 19a6 6 0 0 1 12 0" />
+                        <path d="M16 6a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5" />
+                      </svg>
+                      {university.organizationCount == null ? '… Organisasi' : `${university.organizationCount} Organisasi`}
+                    </span>
+                  </div>
                 </Link>
               ))}
             </section>
