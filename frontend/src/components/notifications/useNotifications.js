@@ -52,6 +52,7 @@ export default function useNotifications() {
   const [items, setItems] = useState([])
   const [unreadFromApi, setUnreadFromApi] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const roleNames = roles.map((role) => typeof role === 'string' ? role : role?.name).filter(Boolean)
   const organizationRole = user?.peran === 'akun_organisasi' || roleNames.includes('akun_bem') || roleNames.includes('akun_hmj_ukm')
   const supported = organizationRole && (pathname.startsWith('/verifikasi') || pathname.startsWith('/jelajah-event')) && !pathname.includes('/administrator') && !pathname.includes('/admin')
@@ -60,18 +61,21 @@ export default function useNotifications() {
     if (!supported) {
       setItems([])
       setUnreadFromApi(0)
+      setError('')
       return
     }
     setLoading(true)
+    setError('')
     try {
       const result = await getNotifications()
       const payload = result?.data || result?.notifikasi || {}
       const list = Array.isArray(payload) ? payload : payload.notifikasi || []
       setItems(list.map(normalize))
       setUnreadFromApi(Number.isFinite(payload.unread_count) ? payload.unread_count : list.filter((item) => !item.sudah_baca).length)
-    } catch {
+    } catch (requestError) {
       setItems([])
       setUnreadFromApi(0)
+      setError(requestError.response?.data?.message || 'Notifikasi gagal dimuat. Periksa endpoint backend.')
     } finally {
       setLoading(false)
     }
@@ -94,5 +98,5 @@ export default function useNotifications() {
     try { await markAllNotificationsRead() } catch { load() }
   }
 
-  return { items, unread: unreadFromApi, loading, markRead, markAllRead, refresh: load }
+  return { items, unread: unreadFromApi, loading, error, markRead, markAllRead, refresh: load }
 }

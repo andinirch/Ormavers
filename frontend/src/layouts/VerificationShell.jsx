@@ -148,7 +148,7 @@ function VerificationShell() {
       </div>
       <Footer variant="content" />
     </main>
-    <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} loading={notifications.loading} onReadAll={notifications.markAllRead} onItemClick={(item) => { notifications.markRead(item); setNotifOpen(false) }} returnFocusRef={bellRef} />
+    <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifications.items} unread={notifications.unread} loading={notifications.loading} error={notifications.error} onReadAll={notifications.markAllRead} onItemClick={(item) => { notifications.markRead(item); setNotifOpen(false) }} returnFocusRef={bellRef} />
   </div>
 }
 

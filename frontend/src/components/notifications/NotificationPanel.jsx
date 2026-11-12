@@ -25,7 +25,7 @@ function NotificationSection({ label, aside, items, onItemClick }) {
   </section>
 }
 
-function NotificationPanel({ open, onClose, items, unread, onReadAll, onItemClick, loading = false, returnFocusRef }) {
+function NotificationPanel({ open, onClose, items, unread, onReadAll, onItemClick, loading = false, error = '', returnFocusRef }) {
   const [tab, setTab] = useState('all')
   const panelRef = useRef(null)
   const closeRef = useRef(null)
@@ -76,7 +76,7 @@ function NotificationPanel({ open, onClose, items, unread, onReadAll, onItemClic
         <button type="button" className="notification-panel-readall" onClick={onReadAll} disabled={unread === 0}>Tandai semua dibaca</button>
       </div>
       <div className="notification-panel-list">
-        {loading ? <div className="notification-panel-items">{[1, 2, 3].map((item) => <div className="notification-item notification-item--skeleton" key={item} />)}</div> : <><NotificationSection label="HARI INI" aside={today.length ? `${today.length} pesan terbaru` : ''} items={today} onItemClick={onItemClick} /><NotificationSection label="SEBELUMNYA" items={earlier} onItemClick={onItemClick} />{!visible.length && <p className="notification-panel-empty">Tidak ada notifikasi.</p>}</>}
+        {loading ? <div className="notification-panel-items">{[1, 2, 3].map((item) => <div className="notification-item notification-item--skeleton" key={item} />)}</div> : error ? <p className="notification-panel-error">{error}</p> : <><NotificationSection label="HARI INI" aside={today.length ? `${today.length} pesan terbaru` : ''} items={today} onItemClick={onItemClick} /><NotificationSection label="SEBELUMNYA" items={earlier} onItemClick={onItemClick} />{!visible.length && <p className="notification-panel-empty">Tidak ada notifikasi.</p>}</>}
       </div>
     </aside>
   </>, document.body)
