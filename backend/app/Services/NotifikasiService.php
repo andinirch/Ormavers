@@ -36,10 +36,9 @@ class NotifikasiService
         }
 
         $query = Notifikasi::with([
-            'event:id,judul,tanggal_event,status_pendaftaran',
+            'event:id,judul,tanggal_event,periode_mulai,periode_selesai',
             'ajakan:id,jenis,status',
-        ])
-        ->where('id_organisasi', $organisasi->id_organisasi);
+        ])->where('id_organisasi', $organisasi->id_organisasi);
 
         // Filter berdasarkan status baca jika diberikan ('1' / '0')
         if (isset($filters['sudah_baca']) && $filters['sudah_baca'] !== '') {
