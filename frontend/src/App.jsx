@@ -20,6 +20,8 @@ import OrganizationListPage from './pages/OrganizationListPage.jsx'
 import OrganizationDetailPage from './pages/OrganizationDetailPage.jsx'
 import OrganizationManagementPage from './pages/OrganizationManagementPage.jsx'
 import OrganizationPortfolioPage from './pages/OrganizationPortfolioPage.jsx'
+import OrganizationEventPage from './pages/event/OrganizationEventPage.jsx'
+import EventFormPage from './pages/event/EventFormPage.jsx'
 import VerificationShell from './layouts/VerificationShell.jsx'
 import VerifikasiAdministratorPage from './pages/verifikasi/VerifikasiAdministratorPage.jsx'
 import VerifikasiBemPageNew from './pages/verifikasi/VerifikasiBemPage.jsx'
@@ -86,6 +88,9 @@ function App() {
           <Route element={<AccessGuard roles={['akun_bem', 'akun_organisasi']} />}>
             <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
             <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
+            <Route path="kelola-event" element={<OrganizationEventPage />} />
+            <Route path="kelola-event/baru" element={<EventFormPage />} />
+            <Route path="kelola-event/:eventId/edit" element={<EventFormPage />} />
             <Route path="direktori" element={<DirectoryPage />} />
             <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
             <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
@@ -97,6 +102,9 @@ function App() {
           <Route element={<AccessGuard roles={['akun_hmj_ukm']} />}>
             <Route path="profil-organisasi" element={<OrganizationManagementPage />} />
             <Route path="portofolio-organisasi" element={<OrganizationPortfolioPage />} />
+            <Route path="kelola-event" element={<OrganizationEventPage />} />
+            <Route path="kelola-event/baru" element={<EventFormPage />} />
+            <Route path="kelola-event/:eventId/edit" element={<EventFormPage />} />
             <Route path="direktori" element={<DirectoryPage />} />
             <Route path="direktori/universitas/:universityId" element={<OrganizationListPage />} />
             <Route path="direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
