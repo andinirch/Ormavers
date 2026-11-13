@@ -15,15 +15,18 @@ class StoreEventRequest extends FormRequest
 
     public function rules(): array
     {
+
+        $minTanggalEvent = now()->addDays(8)->toDateString();
+
         return [
-            'judul'               => ['required', 'string', 'max:255'],
-            'deskripsi'           => ['required', 'string'],
-            'tanggal_event'       => ['required', 'date'],
+            'judul'               => ['sometimes', 'required', 'string', 'max:255'],
+            'deskripsi'           => ['sometimes', 'required', 'string'],
+            'tanggal_event'       => ['sometimes', 'required', 'date', 'after_or_equal:' . $minTanggalEvent],
             'id_kategori'         => ['nullable', 'required_without:tag', 'exists:kategori_event,id'],
             'tag'                 => ['nullable', 'required_without:id_kategori', 'string', 'max:255'],
             'tautan_pendaftaran'  => ['required', 'url', 'max:500'],
-            'periode_mulai'       => ['required', 'date'],
-            'periode_selesai'     => ['required', 'date', 'after:periode_mulai'],
+            'periode_mulai'       => ['sometimes', 'required', 'date'],
+            'periode_selesai'     => ['sometimes', 'required', 'date', 'before_or_equal:tanggal_event'],
             'jangkauan_publikasi' => ['required', 'in:internal,satu_universitas,multi_universitas'],
 
             // Poster: minimal 1, maksimal 3 file, JPG/JPEG, maks 2MB (2048 KB)

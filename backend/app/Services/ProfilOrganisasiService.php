@@ -76,4 +76,33 @@ class ProfilOrganisasiService
             ],
         ];
     }
+
+    public function updateLogo(\App\Models\Pengguna $pengguna, \Illuminate\Http\UploadedFile $fileLogo): array
+    {
+        $organisasi = $this->getOrganisasiAktif($pengguna);
+        if (!$organisasi) {
+            return [
+                'error' => 'Akun organisasi belum aktif atau tidak ditemukan',
+                'status' => 403,
+            ];
+        }
+
+        // Simpan file ke storage
+        $path = $fileLogo->store('logo_organisasi', 'public');
+
+        // Update ke database
+        $organisasi->update([
+            'logo' => $path,
+        ]);
+
+        $organisasi->refresh();
+
+        return [
+            'data' => [
+                'id_organisasi' => $organisasi->id_organisasi,
+                'nama_organisasi' => $organisasi->nama_organisasi,
+                'logo' => asset('storage/' . $organisasi->logo),
+            ],
+        ];
+    }
 }

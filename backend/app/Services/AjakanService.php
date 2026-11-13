@@ -57,10 +57,11 @@ class AjakanService
             ];
         }
 
-        // Query organisasi yang aktif dan bukan diri sendiri
+        // Query organisasi yang aktif dan bukan diri sendiri, dan bukan pemilik event
         $query = Organisasi::with(['universitas:id_universitas,nama_universitas', 'bidang:id_bidang,nama_bidang'])
             ->where('status_organisasi', 'aktif')
-            ->where('id_organisasi', '!=', $organisasi->id_organisasi);
+            ->where('id_organisasi', '!=', $organisasi->id_organisasi)
+            ->where('id_organisasi', '!=', $event->id_organisasi);
 
         // Filter pencarian nama / singkatan
         if (! empty($filters['q']) || ! empty($filters['search'])) {

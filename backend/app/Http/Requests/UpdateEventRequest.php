@@ -15,26 +15,26 @@ class UpdateEventRequest extends FormRequest
 
     public function rules(): array
     {
+
+        $minTanggalEvent = now()->addDays(8)->toDateString();
+
         return [
             'judul'               => ['sometimes', 'required', 'string', 'max:255'],
             'deskripsi'           => ['sometimes', 'required', 'string'],
-            'tanggal_event'       => ['sometimes', 'required', 'date'],
-            'id_kategori'         => ['nullable', 'exists:kategori_event,id'],
-            'tag'                 => ['nullable', 'string', 'max:255'],
-            'tautan_pendaftaran'  => ['sometimes', 'required', 'url', 'max:500'],
+            'tanggal_event'       => ['sometimes', 'required', 'date', 'after_or_equal:' . $minTanggalEvent],
+            'id_kategori'         => ['nullable', 'required_without:tag', 'exists:kategori_event,id'],
+            'tag'                 => ['nullable', 'required_without:id_kategori', 'string', 'max:255'],
+            'tautan_pendaftaran'  => ['required', 'url', 'max:500'],
             'periode_mulai'       => ['sometimes', 'required', 'date'],
-            'periode_selesai'     => ['sometimes', 'required', 'date'],
-            'jangkauan_publikasi' => ['sometimes', 'required', 'in:internal,satu_universitas,multi_universitas'],
+            'periode_selesai'     => ['sometimes', 'required', 'date', 'before_or_equal:tanggal_event'],
+            'jangkauan_publikasi' => ['required', 'in:internal,satu_universitas,multi_universitas'],
 
-            // Poster opsional saat update (jika ingin menambah/mengganti)
-            'poster'              => ['nullable', 'array', 'max:3'],
-            'poster.*'            => ['file', 'mimes:jpg,jpeg', 'max:2048'],
-            'hapus_poster_id'     => ['nullable', 'array'],
-            'hapus_poster_id.*'   => ['integer', 'exists:event_poster,id'],
-            'poster_utama_id'     => ['nullable', 'integer', 'exists:event_poster,id'],
+            // Poster: minimal 1, maksimal 3 file, JPG/JPEG, maks 2MB (2048 KB)
+            'poster'              => ['required', 'array', 'min:1', 'max:3'],
+            'poster.*'            => ['required', 'file', 'mimes:jpg,jpeg', 'max:2048'],
             'poster_utama_index'  => ['nullable', 'integer', 'min:0', 'max:2'],
 
-            // Tambah ajakan baru
+            // Organisasi yang dilibatkan (opsional)
             'organisasi_terlibat'                   => ['nullable', 'array'],
             'organisasi_terlibat.*.id_organisasi'   => ['required', 'integer', 'exists:organisasi,id_organisasi'],
             'organisasi_terlibat.*.jenis'           => ['required', 'in:kolaborator,undangan'],
