@@ -32,93 +32,94 @@ class AjakanService
      * lengkap dengan pencarian, filter, dan status ajakan saat ini.
      */
     public function getOrganisasiTersedia(Pengguna $pengguna, int $idEvent, string $jenis, array $filters = []): array
-    {
-        $organisasi = $this->getOrganisasiAktif($pengguna);
-        if (! $organisasi) {
+        {
+            $organisasi = $this->getOrganisasiAktif($pengguna);
+            if (! $organisasi) {
+                return [
+                    'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
+                    'status' => 403,
+                ];
+            }
+
+            $event = Event::find($idEvent);
+            if (! $event) {
+                return [
+                    'error'  => 'Event tidak ditemukan',
+                    'status' => 404,
+                ];
+            }
+
+            // Hanya pemilik event yang dapat mengakses daftar organisasi untuk event-nya (JANGAN DIHAPUS)
+            if ($event->id_organisasi !== $organisasi->id_organisasi) {
+                return [
+                    'error'  => 'Anda tidak memiliki hak akses untuk mengelola ajakan event ini',
+                    'status' => 403,
+                ];
+            }
+
+            // Query organisasi yang aktif, bukan diri sendiri (yang login), dan bukan pemilik event
+            $query = Organisasi::with(['universitas:id_universitas,nama_universitas', 'bidang:id_bidang,nama_bidang'])
+                ->where('status_organisasi', 'aktif')
+                ->where('id_organisasi', '!=', $organisasi->id_organisasi) // Bukan akun yang sedang login
+                ->where('id_organisasi', '!=', $event->id_organisasi);         // Mengecualikan pembuat event
+
+            // Filter pencarian nama / singkatan
+            if (! empty($filters['q']) || ! empty($filters['search'])) {
+                $keyword = $filters['q'] ?? $filters['search'];
+                $query->where('nama_organisasi', 'like', "%{$keyword}%");
+            }
+
+            // Filter universitas
+            if (! empty($filters['id_universitas'])) {
+                $query->where('id_universitas', (int) $filters['id_universitas']);
+            }
+
+            // Filter jenis organisasi (bem, hmj, ukm)
+            if (! empty($filters['jenis_organisasi'])) {
+                $query->where('jenis_organisasi', $filters['jenis_organisasi']);
+            }
+
+            // Filter bidang organisasi
+            if (! empty($filters['id_bidang'])) {
+                $query->where('id_bidang', (int) $filters['id_bidang']);
+            }
+
+            $organisasiList = $query->orderBy('nama_organisasi', 'asc')->get();
+
+            // Ambil status ajakan untuk event dan jenis ini
+            $ajakanMap = Ajakan::where('id_event', $event->id)
+                ->where('jenis', $jenis)
+                ->get()
+                ->keyBy('id_organisasi_tujuan');
+
+            $resultData = $organisasiList->map(function ($org) use ($ajakanMap) {
+                $ajakan = $ajakanMap->get($org->id_organisasi);
+                $statusAjakan = $ajakan ? $ajakan->status : 'belum_diajak';
+
+                return [
+                    'id_organisasi'    => $org->id_organisasi,
+                    'nama_organisasi'  => $org->nama_organisasi,
+                    'jenis_organisasi' => $org->jenis_organisasi,
+                    // Memastikan URL logo digenerate dengan benar agar tampil di Frontend
+                    'logo'             => $org->logo ? asset('storage/' . $org->logo) : null,
+                    'universitas'      => $org->universitas ? [
+                        'id'   => $org->universitas->id_universitas,
+                        'nama' => $org->universitas->nama_universitas,
+                    ] : null,
+                    'bidang'           => $org->bidang ? [
+                        'id'   => $org->bidang->id_bidang,
+                        'nama' => $org->bidang->nama_bidang,
+                    ] : null,
+                    'status_ajakan'    => $statusAjakan,
+                    'id_ajakan'        => $ajakan?->id,
+                    'dapat_diajak'     => in_array($statusAjakan, ['belum_diajak', 'ditolak', 'dibatalkan']),
+                ];
+            });
+
             return [
-                'error'  => 'Akun organisasi belum aktif atau tidak ditemukan',
-                'status' => 403,
+                'data' => $resultData,
             ];
         }
-
-        $event = Event::find($idEvent);
-        if (! $event) {
-            return [
-                'error'  => 'Event tidak ditemukan',
-                'status' => 404,
-            ];
-        }
-
-        // Hanya pemilik event yang dapat mengakses daftar organisasi untuk event-nya
-        if ($event->id_organisasi !== $organisasi->id_organisasi) {
-            return [
-                'error'  => 'Anda tidak memiliki hak akses untuk mengelola ajakan event ini',
-                'status' => 403,
-            ];
-        }
-
-        // Query organisasi yang aktif dan bukan diri sendiri, dan bukan pemilik event
-        $query = Organisasi::with(['universitas:id_universitas,nama_universitas', 'bidang:id_bidang,nama_bidang'])
-            ->where('status_organisasi', 'aktif')
-            ->where('id_organisasi', '!=', $organisasi->id_organisasi)
-            ->where('id_organisasi', '!=', $event->id_organisasi);
-
-        // Filter pencarian nama / singkatan
-        if (! empty($filters['q']) || ! empty($filters['search'])) {
-            $keyword = $filters['q'] ?? $filters['search'];
-            $query->where('nama_organisasi', 'like', "%{$keyword}%");
-        }
-
-        // Filter universitas
-        if (! empty($filters['id_universitas'])) {
-            $query->where('id_universitas', (int) $filters['id_universitas']);
-        }
-
-        // Filter jenis organisasi (bem, hmj, ukm)
-        if (! empty($filters['jenis_organisasi'])) {
-            $query->where('jenis_organisasi', $filters['jenis_organisasi']);
-        }
-
-        // Filter bidang organisasi
-        if (! empty($filters['id_bidang'])) {
-            $query->where('id_bidang', (int) $filters['id_bidang']);
-        }
-
-        $organisasiList = $query->orderBy('nama_organisasi', 'asc')->get();
-
-        // Ambil status ajakan untuk event dan jenis ini
-        $ajakanMap = Ajakan::where('id_event', $event->id)
-            ->where('jenis', $jenis)
-            ->get()
-            ->keyBy('id_organisasi_tujuan');
-
-        $resultData = $organisasiList->map(function ($org) use ($ajakanMap) {
-            $ajakan = $ajakanMap->get($org->id_organisasi);
-            $statusAjakan = $ajakan ? $ajakan->status : 'belum_diajak';
-
-            return [
-                'id_organisasi'    => $org->id_organisasi,
-                'nama_organisasi'  => $org->nama_organisasi,
-                'jenis_organisasi' => $org->jenis_organisasi,
-                'logo'             => $org->logo,
-                'universitas'      => $org->universitas ? [
-                    'id'   => $org->universitas->id_universitas,
-                    'nama' => $org->universitas->nama_universitas,
-                ] : null,
-                'bidang'           => $org->bidang ? [
-                    'id'   => $org->bidang->id_bidang,
-                    'nama' => $org->bidang->nama_bidang,
-                ] : null,
-                'status_ajakan'    => $statusAjakan,
-                'id_ajakan'        => $ajakan?->id,
-                'dapat_diajak'     => in_array($statusAjakan, ['belum_diajak', 'ditolak', 'dibatalkan']),
-            ];
-        });
-
-        return [
-            'data' => $resultData,
-        ];
-    }
 
     /**
      * ORMV-1-22 & ORMV-1-23:
