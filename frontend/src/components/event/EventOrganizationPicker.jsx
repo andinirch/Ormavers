@@ -83,9 +83,15 @@ function EventOrganizationPicker({ selected, onChange }) {
 
   const removeOrganisasi = (id) => onChange(selected.filter((item) => String(item.id_organisasi) !== String(id)))
 
-  const applyMassal = (jenis) => {
-    if (!jenis) return
-    onChange(selected.map((item) => ({ ...item, jenis })))
+  const applyMassal = (action) => {
+    if (!action) return
+    if (action === 'hapus_semua') {
+      onChange([])
+      return
+    }
+    if (action === 'undangan' || action === 'kolaborator') {
+      onChange(selected.map((item) => ({ ...item, jenis: action })))
+    }
   }
 
   return (
@@ -131,9 +137,10 @@ function EventOrganizationPicker({ selected, onChange }) {
             onChange={(event) => applyMassal(event.target.value)}
             disabled={selected.length === 0}
           >
-            <option value="" disabled>Pilih aksi</option>
-            <option value="undangan">Jadikan semua: Undangan</option>
-            <option value="kolaborator">Jadikan semua: Kolaborator</option>
+            <option value="" disabled>Pilih aksi massal ({selected.length} dipilih)</option>
+            <option value="kolaborator">Ubah semua jadi: Kolaborator</option>
+            <option value="undangan">Ubah semua jadi: Undangan</option>
+            <option value="hapus_semua">Hapus semua pilihan</option>
           </select>
         </div>
       </div>

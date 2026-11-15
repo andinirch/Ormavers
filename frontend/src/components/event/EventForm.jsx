@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import TextInput from '../form/TextInput.jsx'
-import SelectInput from '../form/SelectInput.jsx'
+import EventCategoryDropdown from './EventCategoryDropdown.jsx'
 import FormField from '../form/FormField.jsx'
 import SubmitButton from '../form/SubmitButton.jsx'
 import FormMessage from '../form/FormMessage.jsx'
@@ -54,12 +54,17 @@ function parseDateParts(value) {
   return { year, month, day }
 }
 
-// Format tanggal bahasa Indonesia, mis. "12 Des 2026" atau "1 Nov" (tanpa tahun).
-function formatDateID(value, { withYear = true } = {}) {
+// Format tanggal bahasa Indonesia, mis. "12 Des 2026" atau "12 Des 2026 08:00".
+function formatDateID(value, { withYear = true, withTime = false } = {}) {
   const parts = parseDateParts(value)
   if (!parts) return ''
   const month = BULAN_ID[parts.month - 1] ?? ''
-  return withYear ? `${parts.day} ${month} ${parts.year}` : `${parts.day} ${month}`
+  let result = withYear ? `${parts.day} ${month} ${parts.year}` : `${parts.day} ${month}`
+  if (withTime) {
+    const timePart = String(value).split(/[ T]/)[1]
+    if (timePart) result += ` ${timePart.slice(0, 5)}`
+  }
+  return result
 }
 
 function EventForm({
@@ -107,11 +112,6 @@ function EventForm({
   }, [categories])
 
   const isCustomCategory = Boolean(lainnyaId) && String(values.id_kategori) === lainnyaId
-
-  const kategoriOptions = useMemo(
-    () => (categories ?? []).map((item) => ({ value: String(item.id), label: item.nama_kategori })),
-    [categories],
-  )
 
   const keptExisting = existingPosters.filter((item) => !removedIds.includes(item.id))
   const totalPosters = keptExisting.length + newPosters.length
@@ -175,7 +175,7 @@ function EventForm({
     const formData = new FormData()
     formData.append('judul', values.judul.trim())
     formData.append('deskripsi', values.deskripsi.trim())
-    formData.append('tanggal_event', values.tanggal_event)
+    formData.append('tanggal_event', normalizeDateTime(values.tanggal_event))
     formData.append('tautan_pendaftaran', values.tautan_pendaftaran.trim())
     if (values.periode_mulai) formData.append('periode_mulai', normalizeDateTime(values.periode_mulai))
     if (values.periode_selesai) formData.append('periode_selesai', normalizeDateTime(values.periode_selesai))
@@ -212,7 +212,7 @@ function EventForm({
 
           <div className="event-form__row">
             <TextInput id="ev-judul" name="judul" label="Judul event" value={values.judul} onChange={update} placeholder="Contoh: Seminar Nasional AI 2026" required error={errors.judul} />
-            <SelectInput id="ev-kategori" name="id_kategori" label="Kategori" value={values.id_kategori} onChange={update} options={kategoriOptions} placeholder="Pilih kategori" required error={errors.id_kategori} />
+            <EventCategoryDropdown id="ev-kategori" name="id_kategori" label="Kategori" value={values.id_kategori} onChange={update} categories={categories} placeholder="Pilih kategori" required error={errors.id_kategori} />
           </div>
 
           {isCustomCategory && (
@@ -228,10 +228,10 @@ function EventForm({
             <FormField id="ev-tanggal" label="Tanggal event" required error={errors.tanggal_event}>
               <div className={`event-form__datefield${values.tanggal_event ? ' is-filled' : ''}${errors.tanggal_event ? ' has-error' : ''}`}>
                 <button type="button" id="ev-tanggal" className="event-form__datebtn" onClick={() => openPicker(tanggalRef)}>
-                  <span>{values.tanggal_event ? formatDateID(values.tanggal_event) : 'Pilih tanggal event'}</span>
+                  <span>{values.tanggal_event ? formatDateID(values.tanggal_event, { withTime: true }) : 'Pilih tanggal event'}</span>
                   <AdminIcon name="calendar" size={16} />
                 </button>
-                <input ref={tanggalRef} type="date" name="tanggal_event" value={values.tanggal_event} onChange={update} className="event-form__datenative" tabIndex={-1} aria-hidden="true" />
+                <input ref={tanggalRef} type="datetime-local" name="tanggal_event" value={values.tanggal_event} onChange={update} className="event-form__datenative" tabIndex={-1} aria-hidden="true" />
               </div>
             </FormField>
 

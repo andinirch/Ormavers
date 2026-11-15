@@ -6,6 +6,7 @@ import ImageWithFallback from '../../components/ImageWithFallback.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { assetUrl } from '../../api/api.js'
 import { getEventCategories, getExploredEvents } from '../../api/eventExploration.js'
+import { sortCategories } from '../../utils/categoryConstants.js'
 import '../../styles/event-exploration.css'
 
 const PAGE_SIZE = 6
@@ -22,9 +23,6 @@ function posterUrl(poster) {
 function formatDateInput(value) { return value ? formatDate(value) : 'Pilih tanggal' }
 function eventStatus(event) { const date = new Date(`${event.tanggal_event}T00:00:00`); if (!Number.isNaN(date.getTime()) && date < new Date(new Date().toDateString())) return ['Selesai', 'is-done']; const value = event.status_pendaftaran || 'Belum Dibuka'; return [value, value === 'Dibuka' ? 'is-open' : 'is-closed'] }
 
-function EmptyState({ filtered }) {
-  return <div className="exploration-state"><div className="exploration-state__illustration"><AdminIcon name={filtered ? 'search' : 'calendar'} size={42} /></div><h2>{filtered ? 'Event tidak ditemukan.' : 'Belum ada event.'}</h2><p>{filtered ? 'Tidak ada event yang cocok dengan kriteria pencarian atau filter yang Anda terapkan. Coba gunakan kata kunci lain.' : 'Saat ini belum ada event publik yang dipublikasikan oleh organisasi mitra. Periksa kembali nanti.'}</p></div>
-}
 function ErrorState({ retry }) { return <div className="exploration-state"><div className="exploration-state__illustration is-error"><AdminIcon name="alert-circle" size={42} /></div><h2>Gagal memuat event.</h2><p>Terjadi kesalahan saat mengambil data. Periksa koneksi Anda.</p><button className="exploration-outline-button" onClick={retry}>Coba lagi</button></div> }
 function Skeletons() { return <div className="exploration-grid">{Array.from({ length: PAGE_SIZE }, (_, index) => <div className="exploration-card exploration-card--skeleton" key={index}><div className="exploration-skeleton exploration-skeleton--poster" /><div className="exploration-skeleton exploration-skeleton--line" /><div className="exploration-skeleton exploration-skeleton--small" /><div className="exploration-skeleton exploration-skeleton--button" /></div>)}</div> }
 function PosterFallback() {
@@ -58,11 +56,128 @@ function EventCard({ event }) {
   </article>
 }
 function CategorySelect({ value, categories, onChange }) {
-  return <label className={`exploration-custom-select${value ? '' : ' is-placeholder'}`}><select value={value} onChange={onChange} aria-label="Kategori"><option value="">Semua Kategori</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.nama_kategori}</option>)}</select><AdminIcon name="chevron-down" size={16} /></label>
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+
+  const selectedCategory = categories.find((c) => String(c.id) === String(value))
+  const displayLabel = selectedCategory ? selectedCategory.nama_kategori : 'Semua Kategori'
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (id) => {
+    onChange({ target: { value: id } })
+    setIsOpen(false)
+  }
+
+  return (
+    <div className="exploration-custom-dropdown" ref={containerRef}>
+      <button
+        type="button"
+        className={`exploration-custom-dropdown__trigger${!value ? ' is-placeholder' : ''}${isOpen ? ' is-open' : ''}`}
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="exploration-custom-dropdown__label">{displayLabel}</span>
+        <AdminIcon name="chevron-down" size={16} />
+      </button>
+
+      {isOpen && (
+        <ul className="exploration-custom-dropdown__menu" role="listbox">
+          <li
+            role="option"
+            aria-selected={!value}
+            className={`exploration-custom-dropdown__item${!value ? ' is-selected' : ''}`}
+            onClick={() => handleSelect('')}
+          >
+            Semua Kategori
+          </li>
+          {categories.map((item) => {
+            const isSelected = String(item.id) === String(value)
+            return (
+              <li
+                key={item.id}
+                role="option"
+                aria-selected={isSelected}
+                className={`exploration-custom-dropdown__item${isSelected ? ' is-selected' : ''}`}
+                onClick={() => handleSelect(item.id)}
+              >
+                {item.nama_kategori}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
 }
 function DatePicker({ value, onChange }) {
   const inputRef = useRef(null)
-  return <label className={`exploration-date-picker${value ? '' : ' is-placeholder'}`}><span>{formatDateInput(value)}</span><AdminIcon name="calendar" size={16} /><input ref={inputRef} type="date" value={value} onChange={onChange} aria-label="Tanggal event" /></label>
+
+  const handleOpen = () => {
+    const el = inputRef.current
+    if (!el) return
+    if (typeof el.showPicker === 'function') {
+      try {
+        el.showPicker()
+        return
+      } catch {
+        /* fallback ke focus */
+      }
+    }
+    el.focus()
+  }
+
+  const handleClear = (e) => {
+    e.stopPropagation()
+    onChange({ target: { value: '' } })
+  }
+
+  return (
+    <div
+      className={`exploration-date-picker${value ? '' : ' is-placeholder'}`}
+      onClick={handleOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleOpen()
+        }
+      }}
+    >
+      <span>{formatDateInput(value)}</span>
+      {value ? (
+        <button
+          type="button"
+          className="exploration-date-picker__clear"
+          onClick={handleClear}
+          aria-label="Hapus filter tanggal"
+        >
+          <AdminIcon name="close" size={14} />
+        </button>
+      ) : (
+        <AdminIcon name="calendar" size={16} />
+      )}
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={onChange}
+        aria-label="Tanggal event"
+        className="exploration-date-picker__native"
+        tabIndex={-1}
+      />
+    </div>
+  )
 }
 
 export default function EventExplorationPage() {
@@ -76,11 +191,137 @@ export default function EventExplorationPage() {
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const load = async () => { setLoading(true); setError(''); try { const result = await getExploredEvents({ ...(keyword && { q: keyword }), ...(category && { id_kategori: category }), ...(date && { tanggal_mulai: date, tanggal_selesai: date }) }); setEvents(unwrap(result)); setPage(1) } catch (requestError) { setError(requestError.response?.data?.message || 'Gagal memuat event.') } finally { setLoading(false) } }
-  useEffect(() => { getEventCategories().then((result) => setCategories(unwrap(result))).catch(() => {}) }, [])
+  useEffect(() => { getEventCategories().then((result) => setCategories(sortCategories(unwrap(result)))).catch(() => {}) }, [])
   useEffect(() => { load() }, [])
   const active = Boolean(keyword || category || date)
   const pages = Math.max(1, Math.ceil(events.length / PAGE_SIZE))
   const visible = useMemo(() => events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [events, page])
-  const submit = (event) => { event.preventDefault(); setSearchParams({ ...(keyword && { q: keyword }), ...(category && { id_kategori: category }), ...(date && { tanggal_mulai: date }) }); load() }
-  return <main className="event-exploration-page"><PageHeader title="Jelajah Event" subtitle="Temukan event dari organisasi lain sesuai jangkauan publikasinya." breadcrumb={['Ormavers', 'Jelajah Event']} icon="compass" /><form className="exploration-filters" onSubmit={submit}><label className="exploration-search"><AdminIcon name="search" size={17} /><input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Cari judul atau deskripsi event..." aria-label="Cari judul atau deskripsi event" /></label><CategorySelect value={category} categories={categories} onChange={(event) => setCategory(event.target.value)} /><DatePicker value={date} onChange={(event) => setDate(event.target.value)} /><button className="exploration-primary-button" type="submit"><AdminIcon name="search" size={16} /> Cari</button></form>{loading ? <Skeletons /> : error ? <ErrorState retry={load} /> : events.length === 0 ? <EmptyState filtered={active} /> : <><div className="exploration-grid">{visible.map((event) => <EventCard event={event} key={event.id} />)}</div>{pages > 1 && <div className="exploration-pagination"><span>Halaman {page} dari {pages}</span><div><button className="exploration-pagination__button" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>Sebelumnya</button>{Array.from({ length: pages }, (_, index) => index + 1).slice(0, 5).map((number) => <button className={`exploration-pagination__button${number === page ? ' is-current' : ''}`} key={number} onClick={() => setPage(number)}>{number}</button>)}<button className="exploration-pagination__button" disabled={page === pages} onClick={() => setPage((current) => current + 1)}>Berikutnya</button></div></div>}</>}</main>
+  const submit = (event) => {
+    event.preventDefault()
+    setSearchParams({
+      ...(keyword && { q: keyword }),
+      ...(category && { id_kategori: category }),
+      ...(date && { tanggal_mulai: date }),
+    })
+    load()
+  }
+
+  const handleResetFilters = () => {
+    setKeyword('')
+    setCategory('')
+    setDate('')
+    setSearchParams({})
+    setTimeout(() => {
+      getExploredEvents({}).then((res) => {
+        setEvents(unwrap(res))
+        setPage(1)
+      }).catch(() => {})
+    }, 0)
+  }
+
+  return (
+    <main className="event-exploration-page">
+      <PageHeader
+        title="Jelajah Event"
+        subtitle="Temukan event dari organisasi lain sesuai jangkauan publikasinya."
+        breadcrumb={['Ormavers', 'Jelajah Event']}
+        icon="compass"
+      />
+      <form className="exploration-filters" onSubmit={submit}>
+        <div className="exploration-search">
+          <AdminIcon name="search" size={17} />
+          <input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Cari judul atau deskripsi event..."
+            aria-label="Cari judul atau deskripsi event"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                submit(event)
+              }
+            }}
+          />
+          {keyword && (
+            <button
+              type="button"
+              className="exploration-search__clear"
+              onClick={() => setKeyword('')}
+              aria-label="Hapus kata kunci"
+            >
+              <AdminIcon name="close" size={14} />
+            </button>
+          )}
+        </div>
+        <CategorySelect value={category} categories={categories} onChange={(event) => setCategory(event.target.value)} />
+        <DatePicker value={date} onChange={(event) => setDate(event.target.value)} />
+        <button className="exploration-primary-button" type="submit">
+          <AdminIcon name="search" size={16} /> Cari
+        </button>
+      </form>
+      {loading ? (
+        <Skeletons />
+      ) : error ? (
+        <ErrorState retry={load} />
+      ) : events.length === 0 ? (
+        <div className="exploration-state">
+          <div className="exploration-state__illustration">
+            <AdminIcon name={active ? 'search' : 'calendar'} size={42} />
+          </div>
+          <h2>{active ? 'Event tidak ditemukan.' : 'Belum ada event.'}</h2>
+          <p>
+            {active
+              ? 'Tidak ada event yang cocok dengan kriteria pencarian atau filter yang Anda terapkan. Coba gunakan kata kunci lain.'
+              : 'Saat ini belum ada event publik yang dipublikasikan oleh organisasi mitra. Periksa kembali nanti.'}
+          </p>
+          {active && (
+            <button type="button" className="exploration-outline-button" onClick={handleResetFilters}>
+              Reset Semua Filter
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="exploration-grid">
+            {visible.map((event) => (
+              <EventCard event={event} key={event.id} />
+            ))}
+          </div>
+          {pages > 1 && (
+            <div className="exploration-pagination">
+              <span>
+                Halaman {page} dari {pages}
+              </span>
+              <div>
+                <button
+                  className="exploration-pagination__button"
+                  disabled={page === 1}
+                  onClick={() => setPage((current) => current - 1)}
+                >
+                  Sebelumnya
+                </button>
+                {Array.from({ length: pages }, (_, index) => index + 1)
+                  .slice(0, 5)
+                  .map((number) => (
+                    <button
+                      className={`exploration-pagination__button${number === page ? ' is-current' : ''}`}
+                      key={number}
+                      onClick={() => setPage(number)}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                <button
+                  className="exploration-pagination__button"
+                  disabled={page === pages}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </main>
+  )
 }

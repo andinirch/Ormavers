@@ -4,17 +4,13 @@ import Swal from 'sweetalert2'
 import PageHeader from '../../components/PageHeader.jsx'
 import EventForm from '../../components/event/EventForm.jsx'
 import { createEvent, getEventCategories, getEventDetail, updateEvent } from '../../api/eventManagement.js'
+import { sortCategories } from '../../utils/categoryConstants.js'
 import '../../styles/event-management.css'
 
 function errorMessage(error, fallback) {
   const errors = error.response?.data?.errors
   const first = errors ? Object.values(errors).flat()[0] : null
   return first ?? error.response?.data?.message ?? fallback
-}
-
-function toDateInput(value) {
-  if (!value) return ''
-  return String(value).slice(0, 10)
 }
 
 function toDateTimeInput(value) {
@@ -42,7 +38,8 @@ function EventFormPage() {
       setLoadError('')
       try {
         const categoriesResult = await getEventCategories()
-        const list = Array.isArray(categoriesResult?.data) ? categoriesResult.data : []
+        const rawList = Array.isArray(categoriesResult?.data) ? categoriesResult.data : []
+        const list = sortCategories(rawList)
         if (!active) return
         setCategories(list)
 
@@ -56,7 +53,7 @@ function EventFormPage() {
           setInitialValues({
             judul: detail.judul ?? '',
             deskripsi: detail.deskripsi ?? '',
-            tanggal_event: toDateInput(detail.tanggal_event),
+            tanggal_event: toDateTimeInput(detail.tanggal_event),
             id_kategori: detail.id_kategori != null
               ? String(detail.id_kategori)
               : (detail.tag && lainnya ? String(lainnya.id) : ''),
