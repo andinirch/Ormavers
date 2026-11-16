@@ -9,10 +9,21 @@ import { getEventCategories, getExploredEvents } from '../../api/eventExploratio
 import { sortCategories } from '../../utils/categoryConstants.js'
 import '../../styles/event-exploration.css'
 
-const PAGE_SIZE = 6
+const PAGE_SIZE = 12
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
-function unwrap(result) { return Array.isArray(result?.data) ? result.data : Array.isArray(result?.data?.events) ? result.data.events : [] }
+function unwrap(result) {
+  if (Array.isArray(result?.data)) return result.data
+  if (Array.isArray(result?.data?.data)) return result.data.data
+  if (Array.isArray(result?.data?.events)) return result.data.events
+  return []
+}
+
+function unwrapMeta(result) {
+  if (result?.meta) return result.meta
+  if (result?.data?.meta) return result.data.meta
+  return null
+}
 function formatDate(value) { if (!value) return '-'; const [date] = String(value).split(/[ T]/); const [year, month, day] = date.split('-').map(Number); return year && month && day ? `${day} ${MONTHS[month - 1]} ${year}` : value }
 function posterUrl(poster) {
   const raw = poster?.url || poster?.path_file || poster?.image || poster?.thumbnail || poster?.cover_image || poster?.banner
@@ -189,13 +200,66 @@ export default function EventExplorationPage() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [page, setPage] = useState(1)
-  const load = async () => { setLoading(true); setError(''); try { const result = await getExploredEvents({ ...(keyword && { q: keyword }), ...(category && { id_kategori: category }), ...(date && { tanggal_mulai: date, tanggal_selesai: date }) }); setEvents(unwrap(result)); setPage(1) } catch (requestError) { setError(requestError.response?.data?.message || 'Gagal memuat event.') } finally { setLoading(false) } }
-  useEffect(() => { getEventCategories().then((result) => setCategories(sortCategories(unwrap(result)))).catch(() => {}) }, [])
-  useEffect(() => { load() }, [])
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get('page'), 10)
+    return Number.isFinite(p) && p > 0 ? p : 1
+  })
+  const [paginationMeta, setPaginationMeta] = useState(null)
+
+  const load = async (targetPage = page) => {
+    setLoading(true)
+    setError('')
+    try {
+      const result = await getExploredEvents({
+        page: targetPage,
+        ...(keyword && { q: keyword }),
+        ...(category && { id_kategori: category }),
+        ...(date && { tanggal_mulai: date, tanggal_selesai: date }),
+      })
+      const items = unwrap(result)
+      const meta = unwrapMeta(result)
+      setEvents(items)
+      setPaginationMeta(meta)
+      setPage(meta?.current_page ?? targetPage)
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Gagal memuat event.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getEventCategories()
+      .then((result) => setCategories(sortCategories(unwrap(result))))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get('page'), 10)
+    const initialPage = Number.isFinite(urlPage) && urlPage > 0 ? urlPage : 1
+    load(initialPage)
+  }, [])
+
   const active = Boolean(keyword || category || date)
-  const pages = Math.max(1, Math.ceil(events.length / PAGE_SIZE))
-  const visible = useMemo(() => events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [events, page])
+
+  const currentPage = paginationMeta?.current_page ?? page
+  const totalPages = paginationMeta?.last_page ?? Math.max(1, Math.ceil(events.length / PAGE_SIZE))
+
+  const handlePageChange = (newPage) => {
+    if (newPage === currentPage || newPage < 1 || newPage > totalPages) return
+    const nextParams = {
+      ...(keyword && { q: keyword }),
+      ...(category && { id_kategori: category }),
+      ...(date && { tanggal_mulai: date }),
+    }
+    if (newPage > 1) {
+      nextParams.page = newPage
+    }
+    setSearchParams(nextParams)
+    load(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const submit = (event) => {
     event.preventDefault()
     setSearchParams({
@@ -203,7 +267,7 @@ export default function EventExplorationPage() {
       ...(category && { id_kategori: category }),
       ...(date && { tanggal_mulai: date }),
     })
-    load()
+    load(1)
   }
 
   const handleResetFilters = () => {
@@ -212,12 +276,23 @@ export default function EventExplorationPage() {
     setDate('')
     setSearchParams({})
     setTimeout(() => {
-      getExploredEvents({}).then((res) => {
-        setEvents(unwrap(res))
-        setPage(1)
-      }).catch(() => {})
+      getExploredEvents({ page: 1 })
+        .then((res) => {
+          setEvents(unwrap(res))
+          setPaginationMeta(unwrapMeta(res))
+          setPage(1)
+        })
+        .catch(() => {})
     }, 0)
   }
+
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4))
+    return Array.from({ length: 5 }, (_, i) => start + i)
+  }, [totalPages, currentPage])
 
   return (
     <main className="event-exploration-page">
@@ -261,7 +336,7 @@ export default function EventExplorationPage() {
       {loading ? (
         <Skeletons />
       ) : error ? (
-        <ErrorState retry={load} />
+        <ErrorState retry={() => load(currentPage)} />
       ) : events.length === 0 ? (
         <div className="exploration-state">
           <div className="exploration-state__illustration">
@@ -282,38 +357,37 @@ export default function EventExplorationPage() {
       ) : (
         <>
           <div className="exploration-grid">
-            {visible.map((event) => (
+            {events.map((event) => (
               <EventCard event={event} key={event.id} />
             ))}
           </div>
-          {pages > 1 && (
+          {totalPages > 1 && (
             <div className="exploration-pagination">
               <span>
-                Halaman {page} dari {pages}
+                Halaman {currentPage} dari {totalPages}
+                {paginationMeta?.total != null ? ` (${paginationMeta.total} total event)` : ''}
               </span>
               <div>
                 <button
                   className="exploration-pagination__button"
-                  disabled={page === 1}
-                  onClick={() => setPage((current) => current - 1)}
+                  disabled={currentPage <= 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
                 >
                   Sebelumnya
                 </button>
-                {Array.from({ length: pages }, (_, index) => index + 1)
-                  .slice(0, 5)
-                  .map((number) => (
-                    <button
-                      className={`exploration-pagination__button${number === page ? ' is-current' : ''}`}
-                      key={number}
-                      onClick={() => setPage(number)}
-                    >
-                      {number}
-                    </button>
-                  ))}
+                {pageNumbers.map((number) => (
+                  <button
+                    key={number}
+                    className={`exploration-pagination__button${number === currentPage ? ' is-current' : ''}`}
+                    onClick={() => handlePageChange(number)}
+                  >
+                    {number}
+                  </button>
+                ))}
                 <button
                   className="exploration-pagination__button"
-                  disabled={page === pages}
-                  onClick={() => setPage((current) => current + 1)}
+                  disabled={currentPage >= totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
                 >
                   Berikutnya
                 </button>
