@@ -32,29 +32,39 @@ function posterUrl(poster) {
   return assetUrl(String(raw).startsWith('/storage/') ? String(raw) : `/storage/${String(raw).replace(/^\/+/, '')}`)
 }
 function formatDateInput(value) { return value ? formatDate(value) : 'Pilih tanggal' }
-function eventStatus(event) { const date = new Date(`${event.tanggal_event}T00:00:00`); if (!Number.isNaN(date.getTime()) && date < new Date(new Date().toDateString())) return ['Selesai', 'is-done']; const value = event.status_pendaftaran || 'Belum Dibuka'; return [value, value === 'Dibuka' ? 'is-open' : 'is-closed'] }
+function eventStatus(event) { const date = new Date(`${event.tanggal_event}T00:00:00`); if (!Number.isNaN(date.getTime()) && date < new Date(new Date().toDateString())) return ['Selesai', 'is-done']; const value = event.status_pendaftaran || 'Belum Dibuka'; return [value, value === 'Dibuka' ? 'is-open' : value === 'Belum Dibuka' ? 'is-soon' : 'is-closed'] }
 
 function ErrorState({ retry }) { return <div className="exploration-state"><div className="exploration-state__illustration is-error"><AdminIcon name="alert-circle" size={42} /></div><h2>Gagal memuat event.</h2><p>Terjadi kesalahan saat mengambil data. Periksa koneksi Anda.</p><button className="exploration-outline-button" onClick={retry}>Coba lagi</button></div> }
 function Skeletons() { return <div className="exploration-grid">{Array.from({ length: PAGE_SIZE }, (_, index) => <div className="exploration-card exploration-card--skeleton" key={index}><div className="exploration-skeleton exploration-skeleton--poster" /><div className="exploration-skeleton exploration-skeleton--line" /><div className="exploration-skeleton exploration-skeleton--small" /><div className="exploration-skeleton exploration-skeleton--button" /></div>)}</div> }
 function PosterFallback() {
   return <span className="exploration-card__fallback"><AdminIcon name="image" size={30} /></span>
 }
-const categoryStyles = {
-  seminar: { border: 'is-category-seminar', pill: 'is-category-seminar' },
-  pelatihan: { border: 'is-category-pelatihan', pill: 'is-category-pelatihan' },
-  kajian: { border: 'is-category-kajian', pill: 'is-category-kajian' },
-  lomba: { border: 'is-category-lomba', pill: 'is-category-lomba' },
-  kompetisi: { border: 'is-category-lomba', pill: 'is-category-lomba' },
-  workshop: { border: 'is-category-workshop', pill: 'is-category-workshop' },
+const categoryRules = [
+  [['kepemimpinan', 'recruitment', 'kaderisasi', 'musyawarah', 'pelantikan', 'serah terima', 'rapat', 'forum'], 'organisasi'],
+  [['seminar', 'kuliah', 'diskusi', 'bedah buku'], 'seminar'],
+  [['workshop'], 'workshop'],
+  [['pelatihan'], 'pelatihan'],
+  [['lomba', 'kompetisi'], 'lomba'],
+  [['kajian', 'islam', 'ramadan'], 'kajian'],
+  [['sosial', 'kemanusiaan', 'bencana', 'pengabdian'], 'sosial'],
+  [['seni', 'budaya'], 'seni'],
+  [['olahraga'], 'olahraga'],
+  [['wirausaha'], 'wirausaha'],
+]
+function categoryStyleFor(category) {
+  const name = String(category ?? '').trim().toLowerCase()
+  const match = categoryRules.find(([keywords]) => keywords.some((word) => name.includes(word)))
+  const key = match ? match[1] : 'default'
+  return { border: `is-category-${key}`, pill: `is-category-${key}` }
 }
 function EventCard({ event }) {
   const [status, statusClass] = eventStatus(event)
   const image = posterUrl(event.poster_utama || event.poster || event.image || event.thumbnail)
   const category = event.nama_kategori || event.kategori || event.tag || 'Lainnya'
-  const categoryStyle = categoryStyles[String(category).trim().toLowerCase()] || { border: 'is-category-default', pill: 'is-category-default' }
+  const categoryStyle = categoryStyleFor(category)
   return <article className={`exploration-card ${categoryStyle.border}`}>
     <div className="exploration-card__poster-wrap">
-      <Link className="exploration-card__poster" to={`/jelajah-event/${event.id}`}>
+      <Link className="exploration-card__poster" style={image ? { '--poster-url': `url("${image}")` } : undefined} to={`/jelajah-event/${event.id}`}>
         {image ? <ImageWithFallback src={image} alt={event.judul} fallback={<PosterFallback />} /> : <PosterFallback />}
         <span className={`exploration-card__badge exploration-card__badge--status ${statusClass}`}>{status}</span>
       </Link>
