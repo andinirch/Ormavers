@@ -43,3 +43,18 @@
 .exploration-card__poster::before{content:"";position:absolute;inset:-20px;background-image:var(--poster-url);background-size:cover;background-position:center;filter:blur(18px);opacity:.55;z-index:0}
 .exploration-card__poster img{position:relative;z-index:1}
 .exploration-card__poster .exploration-card__badge{z-index:2}
+
+/* Event selesai: diredupkan supaya event aktif lebih menonjol */
+.exploration-card--done .exploration-card__poster-wrap {
+  opacity: 0.6;
+  filter: grayscale(0.7);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+.exploration-card--done:hover .exploration-card__poster-wrap {
+  opacity: 0.9;
+  filter: grayscale(0.2);
+}
+.exploration-card--done .exploration-card__organization-pill,
+.exploration-card--done .exploration-card__date-pill {
+  opacity: 0.75;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
@@ -49,6 +49,16 @@ function OrganizationEventPage() {
   const [portfolioStatus, setPortfolioStatus] = useState({})
   const [portfolioTarget, setPortfolioTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [search, setSearch] = useState('')
+
+  const filteredEvents = useMemo(() => {
+    const keyword = search.trim().toLowerCase()
+    if (!keyword) return events
+    return events.filter((event) =>
+      [event.judul, event.namaKategori, event.tag]
+        .some((value) => String(value ?? '').toLowerCase().includes(keyword)),
+    )
+  }, [events, search])
 
   useEffect(() => {
     let active = true
@@ -120,8 +130,8 @@ function OrganizationEventPage() {
                 type="search"
                 placeholder="Cari event"
                 aria-label="Cari event"
-                disabled
-                title="Pencarian event akan tersedia pada tahap berikutnya"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </span>
             <Link to="/verifikasi/kelola-event/baru" className="event-primary-button event-primary-button--toolbar">
@@ -150,9 +160,16 @@ function OrganizationEventPage() {
             </div>
           )}
 
+          {!loading && !error && events.length > 0 && filteredEvents.length === 0 && (
+            <div className="event-state event-state--empty">
+              <strong>Event tidak ditemukan</strong>
+              <p>Tidak ada event yang cocok dengan “{search}”. Coba kata kunci lain.</p>
+            </div>
+          )}
+
           {!loading && !error && events.length > 0 && (
             <div className="event-grid">
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <EventCard
                   key={event.id}
                   event={event}

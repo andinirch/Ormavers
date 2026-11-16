@@ -20,25 +20,26 @@ const navigationByRole = {
   ],
   'Akun Organisasi BEM': [
     { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
-    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
     { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
-    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
     { to: '/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
 }

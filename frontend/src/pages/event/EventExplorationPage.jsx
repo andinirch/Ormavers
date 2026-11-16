@@ -62,7 +62,7 @@ function EventCard({ event }) {
   const image = posterUrl(event.poster_utama || event.poster || event.image || event.thumbnail)
   const category = event.nama_kategori || event.kategori || event.tag || 'Lainnya'
   const categoryStyle = categoryStyleFor(category)
-  return <article className={`exploration-card ${categoryStyle.border}`}>
+  return <article className={`exploration-card ${categoryStyle.border}${statusClass === 'is-done' ? ' exploration-card--done' : ''}`}>
     <div className="exploration-card__poster-wrap">
       <Link className="exploration-card__poster" style={image ? { '--poster-url': `url("${image}")` } : undefined} to={`/jelajah-event/${event.id}`}>
         {image ? <ImageWithFallback src={image} alt={event.judul} fallback={<PosterFallback />} /> : <PosterFallback />}
