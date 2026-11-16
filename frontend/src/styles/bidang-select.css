@@ -133,3 +133,7 @@
 .org-bidang-dropdown .org-bidang-empty:hover {
   background: transparent;
 }
+
+.org-bidang-dropdown .org-bidang-panel.no-search .org-bidang-search {
+  display: none;
+}

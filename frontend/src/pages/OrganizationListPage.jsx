@@ -169,24 +169,27 @@ function OrganizationListPage() {
           </div>
         </label>
 
-        <label className="org-filter-group">
+        <div className="org-filter-group">
           <span className="org-filter-label">
             <AdminIcon name="sliders" size={14} />
             <span>Jenis Organisasi</span>
           </span>
           <div className="org-filter-input-wrapper">
-            <select
-              className="org-filter-select"
+            <BidangSelect
               value={type}
-              onChange={(event) => setType(event.target.value)}
-            >
-              <option value="">Semua jenis</option>
-              <option value="BEM">BEM</option>
-              <option value="HMJ">HMJ</option>
-              <option value="UKM">UKM</option>
-            </select>
+              options={[
+                { value: 'BEM', label: 'BEM' },
+                { value: 'HMJ', label: 'HMJ' },
+                { value: 'UKM', label: 'UKM' },
+              ]}
+              valueKey="value"
+              labelKey="label"
+              onChange={(value) => setType(value)}
+              placeholder="Semua jenis"
+              searchable={false}
+            />
           </div>
-        </label>
+        </div>
 
         <div className="org-filter-group">
           <span className="org-filter-label">

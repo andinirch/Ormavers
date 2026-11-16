@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import AdminIcon from './admin/AdminIcon.jsx'
 import '../styles/bidang-select.css'
 
-function BidangSelect({ value, options, onChange, placeholder = 'Semua bidang', disabled = false }) {
+function BidangSelect({ value, options, onChange, placeholder = 'Semua bidang', disabled = false, valueKey = 'id_bidang', labelKey = 'nama_bidang', searchable = true }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const containerRef = useRef(null)
 
-  const selectedOption = options.find((o) => String(o.id_bidang) === String(value))
-  const displayLabel = selectedOption ? selectedOption.nama_bidang : placeholder
+  const selectedOption = options.find((o) => String(o[valueKey]) === String(value))
+  const displayLabel = selectedOption ? selectedOption[labelKey] : placeholder
 
   const filtered = options.filter((o) =>
-    String(o.nama_bidang ?? '').toLowerCase().includes(search.toLowerCase())
+    String(o[labelKey] ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   useEffect(() => {
@@ -57,7 +57,7 @@ function BidangSelect({ value, options, onChange, placeholder = 'Semua bidang', 
       </button>
 
       {isOpen && (
-        <div className="org-bidang-panel">
+        <div className={`org-bidang-panel${searchable ? '' : ' no-search'}`}>
           <div className="org-bidang-search">
             <AdminIcon name="search" size={14} />
             <input
@@ -78,16 +78,16 @@ function BidangSelect({ value, options, onChange, placeholder = 'Semua bidang', 
               {placeholder}
             </li>
             {filtered.map((opt) => {
-              const isSelected = String(opt.id_bidang) === String(value)
+              const isSelected = String(opt[valueKey]) === String(value)
               return (
                 <li
-                  key={opt.id_bidang}
+                  key={opt[valueKey]}
                   role="option"
                   aria-selected={isSelected}
                   className={`org-bidang-item${isSelected ? ' is-selected' : ''}`}
-                  onClick={() => handleSelect(opt.id_bidang)}
+                  onClick={() => handleSelect(opt[valueKey])}
                 >
-                  {opt.nama_bidang}
+                  {opt[labelKey]}
                 </li>
               )
             })}
