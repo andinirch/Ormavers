@@ -701,9 +701,10 @@ class EventService
             $query->where('tanggal_event', '<=', $filters['tanggal_selesai']);
         }
 
-        $events = $query->orderBy('tanggal_event', 'desc')->get();
+        $events = $query->latest()->paginate(12);
 
-        $accessibleEvents = $events->filter(function ($ev) use ($pengguna) {
+        // Ambil item koleksi dari paginasi untuk difilter
+        $accessibleEvents = collect($events->items())->filter(function ($ev) use ($pengguna) {
             /** @var Event $ev */
             return $this->cekAksesPengguna($pengguna, $ev);
         })->values();
@@ -736,7 +737,7 @@ class EventService
                 'id'                  => (int) $ev->id,
                 'judul'               => $ev->judul,
                 'deskripsi'           => $ev->deskripsi,
-                'tanggal_event'       => $ev->tanggal_event?->format('Y-m-d') ?? (string) $ev->tanggal_event,
+                'tanggal_event'       => $ev->tanggal_event ? Carbon::parse($ev->tanggal_event)->format('Y-m-d') : null,
                 'id_kategori'         => $ev->id_kategori,
                 'kategori'            => $ev->kategori?->nama_kategori,
                 'nama_kategori'       => $ev->kategori?->nama_kategori,
@@ -764,6 +765,12 @@ class EventService
         return [
             'message' => 'Daftar event berhasil diambil',
             'data'    => $data,
+            'meta'    => [
+                'current_page' => $events->currentPage(),
+                'last_page'    => $events->lastPage(),
+                'per_page'     => $events->perPage(),
+                'total'        => $events->total(),
+            ],
         ];
     }
 
