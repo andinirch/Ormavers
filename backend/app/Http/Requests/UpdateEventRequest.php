@@ -30,7 +30,7 @@ class UpdateEventRequest extends FormRequest
             'jangkauan_publikasi' => ['required', 'in:internal,satu_universitas,multi_universitas'],
 
             // Poster: minimal 1, maksimal 3 file, JPG/JPEG, maks 2MB (2048 KB)
-            'poster'              => ['required', 'array', 'min:1', 'max:3'],
+            'poster'              => ['sometimes', 'array', 'max:3'],
             'poster.*'            => ['required', 'file', 'mimes:jpg,jpeg', 'max:2048'],
             'poster_utama_index'  => ['nullable', 'integer', 'min:0', 'max:2'],
 
@@ -57,7 +57,7 @@ class UpdateEventRequest extends FormRequest
             'jangkauan_publikasi.in'       => 'Jangkauan publikasi harus internal, satu_universitas, atau multi_universitas',
 
             'poster.array'                 => 'Poster harus berupa berkas',
-            'poster.max'                   => 'Maksimal unggah 3 poster',
+            'poster.max'                   => 'Maksimal total poster adalah 3',
             'poster.*.file'                => 'Poster harus berupa file',
             'poster.*.mimes'               => 'Poster harus berformat JPG atau JPEG',
             'poster.*.max'                 => 'Ukuran poster maksimal 2 MB per file',
