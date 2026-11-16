@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import BidangSelect from '../components/BidangSelect.jsx'
 import { getBidangOrganisasi } from '../api/organizationManagement.js'
 import { getDirectoryOrganizations, searchOrganizations } from '../services/orgApi.js'
 import '../styles/organization-directory.css'
@@ -187,26 +188,20 @@ function OrganizationListPage() {
           </div>
         </label>
 
-        <label className="org-filter-group">
+        <div className="org-filter-group">
           <span className="org-filter-label">
             <AdminIcon name="grid" size={14} />
             <span>Bidang</span>
           </span>
           <div className="org-filter-input-wrapper">
-            <select
-              className="org-filter-select"
+            <BidangSelect
               value={field}
-              onChange={(event) => setField(event.target.value)}
-            >
-              <option value="">Semua bidang</option>
-              {fields.map((item) => (
-                <option key={item.id_bidang} value={item.id_bidang}>
-                  {item.nama_bidang}
-                </option>
-              ))}
-            </select>
+              options={fields}
+              onChange={(value) => setField(value)}
+              placeholder="Semua bidang"
+            />
           </div>
-        </label>
+        </div>
       </section>
 
       {loading && <div className="organization-directory-state">Memuat organisasi...</div>}

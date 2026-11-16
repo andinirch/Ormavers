@@ -1,3 +1,4 @@
+import BidangSelect from '../components/BidangSelect.jsx'
 import { useEffect, useState } from 'react'
 import Swal from 'sweetalert2'
 import { assetUrl } from '../api/api.js'
@@ -402,16 +403,19 @@ function OrganizationManagementPage() {
             </span>
           </header>
           <div className="organization-identity-form">
-            <label className="organization-identity-field">
+            <div className="organization-identity-field">
               <span>Bidang organisasi</span>
               <div className="organization-identity-input-wrap">
-<select value={identityDraft?.id_bidang ?? ''} onChange={(event) => setIdentityDraft((current) => ({ ...current, id_bidang: event.target.value, nama_bidang_kustom: event.target.value === CUSTOM_BIDANG ? current?.nama_bidang_kustom : '' }))} disabled={!editingIdentity || saving}>
-                   <option value="">Pilih bidang organisasi</option>
-                   {bidangOptions
-                     .filter((item) => String(item.nama_bidang ?? '').trim().toLowerCase() !== 'lainnya')
-                     .map((item) => <option key={item.id_bidang} value={item.id_bidang}>{item.nama_bidang}</option>)}
-                   <option value={CUSTOM_BIDANG}>Lainnya</option>
-                 </select>
+<BidangSelect
+                  value={identityDraft?.id_bidang ?? ''}
+                  options={[
+                    ...bidangOptions.filter((item) => String(item.nama_bidang ?? '').trim().toLowerCase() !== 'lainnya'),
+                    { id_bidang: CUSTOM_BIDANG, nama_bidang: 'Lainnya' },
+                  ]}
+                  onChange={(value) => setIdentityDraft((current) => ({ ...current, id_bidang: String(value), nama_bidang_kustom: String(value) === CUSTOM_BIDANG ? current?.nama_bidang_kustom : '' }))}
+                  placeholder="Pilih bidang organisasi"
+                  disabled={!editingIdentity || saving}
+                />
                </div>
                {isCustomBidang(identityDraft) && (
                  <div className="organization-identity-input-wrap" style={{ marginTop: '8px' }}>
@@ -419,7 +423,7 @@ function OrganizationManagementPage() {
                  </div>
                )}
                {bidangError && <small className="organization-identity-error">{bidangError}</small>}
-              </label>
+              </div>
 
               <label className="organization-identity-field">
               <span>Alamat organisasi</span>
