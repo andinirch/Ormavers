@@ -72,7 +72,7 @@ function EventCard({ event }) {
     <div className="exploration-card__body">
       <h2>{event.judul}</h2>
       <div className="exploration-card__meta-line"><span className="exploration-card__organization-pill">{event.organisasi?.nama_organisasi || 'Organisasi penyelenggara'}</span><span className={`exploration-card__category-pill ${categoryStyle.pill}`}>{category}</span><span className="exploration-card__date-pill"><AdminIcon name="calendar" size={12} /> {formatDate(event.tanggal_event)}</span></div>
-      <Link className="exploration-primary-button exploration-primary-button--full" to={`/jelajah-event/${event.id}`}>Lihat detail <span aria-hidden="true">→</span></Link>
+      <Link className="exploration-primary-button exploration-primary-button--full" to={`/jelajah-event/${event.id}`}>Lihat detail</Link>
     </div>
   </article>
 }
