@@ -1018,7 +1018,7 @@ class EventService
             ];
         }
 
-        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gte(today())) {
+        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gt(now())) {
             return [
                 'error'  => 'Event belum selesai',
                 'status' => 422,
@@ -1070,7 +1070,7 @@ class EventService
             ];
         }
 
-        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gte(today())) {
+        if (! $event->is_selesai && Carbon::parse($event->tanggal_event)->gt(now())) {
             return [
                 'error'  => 'Event belum selesai',
                 'status' => 422,
