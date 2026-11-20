@@ -53,7 +53,7 @@ function EventFormPage() {
           setInitialValues({
             judul: detail.judul ?? '',
             deskripsi: detail.deskripsi ?? '',
-            tanggal_event: toDateTimeInput(detail.tanggal_event),
+            tanggal_event: toDateTimeInput(detail.waktu_event || detail.tanggal_event),
             id_kategori: detail.id_kategori != null
               ? String(detail.id_kategori)
               : (detail.tag && lainnya ? String(lainnya.id) : ''),

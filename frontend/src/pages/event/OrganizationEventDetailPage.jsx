@@ -30,6 +30,15 @@ function formatDate(value) {
   return year && month && day ? `${day} ${MONTHS[month - 1]} ${year}` : value
 }
 
+function formatDateTime(value) {
+  const base = formatDate(value)
+  if (!value || base === '-') return base
+  const time = String(value).split(/[ T]/)[1]
+  if (!time) return base
+  const hhmm = time.slice(0, 5)
+  return hhmm === '00:00' ? base : `${base}, ${hhmm}`
+}
+
 function posterUrl(poster) {
   const raw = poster?.url || poster?.path_file
   if (!raw) return ''
@@ -283,7 +292,7 @@ function OrganizationEventDetailPage() {
             <p>
               <AdminIcon name="calendar" size={16} />
               <span>
-                <strong>Tanggal:</strong> {formatDate(event.tanggal_event)}
+                <strong>Tanggal:</strong> {formatDateTime(event.waktu_event || event.tanggal_event)}
               </span>
             </p>
             <p>
