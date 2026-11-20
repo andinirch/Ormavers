@@ -41,7 +41,7 @@ class Event extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_event'   => 'date',
+            'tanggal_event'   => 'datetime',
             'periode_mulai'   => 'datetime',
             'periode_selesai' => 'datetime',
         ];

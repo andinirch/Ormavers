@@ -540,7 +540,11 @@ class EventService
             }
         }
 
+        $rawTanggal = $event->getRawOriginal('tanggal_event');
+
         $data = $event->toArray();
+        $data['tanggal_event'] = $rawTanggal ? Carbon::parse($rawTanggal)->format('Y-m-d') : null;
+        $data['waktu_event']   = $rawTanggal ? Carbon::parse($rawTanggal)->format('Y-m-d H:i:s') : null;
         $data['peran_organisasi'] = $peran;
 
         return [
@@ -694,11 +698,12 @@ class EventService
             });
         }
 
-        if (! empty($filters['tanggal_mulai'])) {
-            $query->where('tanggal_event', '>=', $filters['tanggal_mulai']);
+        if (!empty($filters['tanggal_mulai'])) {
+            $query->whereDate('tanggal_event', '>=', $filters['tanggal_mulai']);
         }
-        if (! empty($filters['tanggal_selesai'])) {
-            $query->where('tanggal_event', '<=', $filters['tanggal_selesai']);
+
+        if (!empty($filters['tanggal_selesai'])) {
+            $query->whereDate('tanggal_event', '<=', $filters['tanggal_selesai']);
         }
 
         $events = $query->latest()->paginate(12);
