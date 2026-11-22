@@ -16,10 +16,10 @@ import useNotifications from '../components/notifications/useNotifications.js'
 const navigationByRole = {
   Administrator: [
     { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
   ],
   'Akun Organisasi BEM': [
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
     { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
     { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
@@ -29,7 +29,7 @@ const navigationByRole = {
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   'Akun Organisasi HMJ/UKM': [
-    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
     { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
     { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
@@ -38,7 +38,7 @@ const navigationByRole = {
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
   Anggota: [
-    { to: '/direktori', label: 'Direktori Organisasi', icon: 'compass', permission: 'view profile' },
+    { to: '/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
     { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
     { to: '/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
   ],
@@ -128,18 +128,32 @@ function VerificationShell() {
       ? `/verifikasi/bem?bagian=${bemDefaultPart}`
       : `/verifikasi/${defaultPath}`
 
+  const currentDateFormatted = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
   if (pathname === '/verifikasi' || pathname === '/verifikasi/') {
     return <Navigate to={defaultPath} replace />
   }
 
   return <div className="verification-shell">
-    <header className="verification-header">
+    <header className="verification-header app-topbar">
       <button className="verification-menu-button" type="button" aria-label="Buka menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><AdminIcon name="menu" /></button>
-       <OrmaLogo to={defaultLink} variant="verification" className="verification-brand" />
-      <div className="verification-account">
+      <OrmaLogo to={defaultLink} variant="verification" className="verification-brand" />
+      <div className="topbar-date-pill app-topbar__date-pill">
+        <AdminIcon name="calendar" size={14} />
+        <span>{currentDateFormatted}</span>
+      </div>
+      <div className="verification-account topbar-actions app-topbar__actions">
         <button ref={bellRef} type="button" className="verification-bell notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" size={20} />{notifications.unread > 0 && <i />}</button>
-        <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
-        <span><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
+        <span className="topbar-divider" aria-hidden="true" />
+        <div className="topbar-profile-capsule">
+          <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>
+          <span className="topbar-profile-info"><strong>{profileName}</strong><small>{profileSubtitle}</small></span>
+        </div>
       </div>
     </header>
     <Sidebar groups={groups} open={menuOpen} onClose={() => setMenuOpen(false)} logoTo={defaultLink} ariaLabel="Navigasi verifikasi" showBrand variant="verification" />

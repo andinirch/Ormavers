@@ -9,9 +9,8 @@ function Sidebar({ groups, open = false, onClose, logoTo = '/', ariaLabel = 'Nav
       <aside className={`app-sidebar sidebar admin-sidebar${variant ? ` app-sidebar--${variant}` : ''}${open ? ' is-open' : ''}`}>
         {showBrand && <OrmaLogo to={logoTo} onClick={onClose} variant="sidebar" className="app-sidebar__brand" />}
         <nav className="app-sidebar__nav sidebar__nav" aria-label={ariaLabel}>
-          {groups.map((group) => (
-            <div className="app-sidebar__group sidebar__group" key={group.label}>
-              <p>{group.label}</p>
+          {groups.map((group, groupIndex) => (
+            <div className="app-sidebar__group sidebar__group" key={group.label || groupIndex}>
               {group.items.map((item) => (
                 <NavLink
                   key={item.to}

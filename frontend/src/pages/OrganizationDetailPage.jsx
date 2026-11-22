@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import AdminIcon from '../components/admin/AdminIcon.jsx'
 import ImageWithFallback from '../components/ImageWithFallback.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { getOrganizationDetail } from '../services/orgApi.js'
 import '../styles/organization-directory.css'
 
@@ -19,10 +20,6 @@ function getInitials(name = '') {
   const words = name.split(/\s+/).filter(Boolean)
   const meaningful = words.length > 1 && ORGANIZATION_PREFIXES.includes(words[0].toUpperCase()) ? words.slice(1) : words
   return meaningful.slice(0, 2).map((word) => word[0].toUpperCase()).join('')
-}
-
-function BackIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
 }
 
 function normalizeContactUrl(url) {
@@ -105,32 +102,50 @@ function OrganizationDetailPage() {
     return () => { active = false }
   }, [organizationId, universityId])
 
+  const initials = getInitials(organization?.name) || 'OR'
+
+  const logoNode = (
+    <div className="organization-detail-logo-box">
+      {organization?.logo ? (
+        <ImageWithFallback
+          src={organization.logo}
+          alt={organization?.name ?? 'Logo'}
+          fallback={<span className="organization-detail-logo-initials">{initials}</span>}
+        />
+      ) : (
+        <span className="organization-detail-logo-initials">{initials}</span>
+      )}
+    </div>
+  )
+
+  const subtitleNode = (
+    <div className="organization-detail-pills">
+      <span className="organization-detail-pill organization-detail-pill--univ">
+        <AdminIcon name="building" size={13} />
+        {university?.label ?? 'Kampus belum tersedia'}
+      </span>
+      {organization?.type && (
+        <span className="organization-detail-pill organization-detail-pill--type">
+          {organization.type}
+        </span>
+      )}
+    </div>
+  )
+
   return (
     <main className="organization-detail-main">
-      <nav className="organization-directory-breadcrumb" aria-label="Breadcrumb">
-        <Link to={directoryRoot}>Direktori Organisasi</Link>
-        <span aria-hidden="true">/</span>
-        <Link to={directoryPath}>{university?.label ?? 'Kampus'}</Link>
-        <span aria-hidden="true">/</span>
-        <span className="is-current" aria-current="page">{organization?.name ?? 'Organisasi'}</span>
-      </nav>
-      <div className="organization-detail-heading">
-        <a className="organization-directory-back" href={directoryPath} aria-label="Kembali ke daftar organisasi"><BackIcon /></a>
-        <div className="organization-detail-profile">
-          <span className="organization-detail-avatar" aria-hidden="true">
-            {organization?.logo
-              ? <img src={organization.logo} alt="" />
-              : (getInitials(organization?.name) || 'OR')}
-          </span>
-          <div className="organization-detail-heading__copy">
-            <h1>{organization?.name ?? 'Profil Organisasi'}</h1>
-            <div className="organization-detail-tags">
-              <span className="organization-detail-tag"><AdminIcon name="building" size={14} />{university?.label ?? 'Kampus belum tersedia'}</span>
-              <span className="organization-detail-tag">{organization?.type ?? 'Jenis belum tersedia'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={organization?.name ?? (loading ? 'Memuat...' : 'Profil Organisasi')}
+        subtitle={subtitleNode}
+        breadcrumb={[
+          { label: 'Direktori Organisasi', to: directoryRoot },
+          { label: university?.label ?? 'Kampus', to: directoryPath },
+          organization?.name ?? 'Organisasi'
+        ]}
+        icon={logoNode}
+        backTo={directoryPath}
+        badge="Organisasi Terverifikasi"
+      />
 
       {loading && <div className="organization-directory-state">Memuat profil organisasi...</div>}
       {!loading && error && <div className="organization-directory-state organization-directory-state--error" role="alert">{error}</div>}

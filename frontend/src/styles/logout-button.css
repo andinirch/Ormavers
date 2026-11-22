@@ -16,7 +16,9 @@
   text-align: left;
   box-sizing: border-box;
   border-radius: 10px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .platform-logout:disabled,
@@ -34,7 +36,7 @@
 
 .platform-logout:hover:not(:disabled),
 .sidebar__logout:hover:not(:disabled) {
-  background-color: #fef2f2 !important;
+  background: #fef2f2 !important;
   color: #dc2626 !important;
   border-radius: 10px !important;
   transform: none !important;

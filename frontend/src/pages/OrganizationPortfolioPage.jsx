@@ -241,9 +241,26 @@ function OrganizationPortfolioPage() {
           </select>
         </div>
 
-        {loading && <div className="organization-portfolio-state">Memuat portofolio...</div>}
-        {!loading && error && <div className="organization-portfolio-state organization-portfolio-state--error" role="alert">{error}</div>}
-        {!loading && !error && !groups.length && <div className="organization-portfolio-state">Belum ada portofolio yang tersedia.</div>}
+        {loading && (
+          <div className="organization-portfolio-state" role="status" aria-live="polite">
+            <span className="organization-portfolio-state__icon"><AdminIcon name="folder-special" size={26} /></span>
+            <strong>Memuat portofolio…</strong>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="organization-portfolio-state organization-portfolio-state--error" role="alert">
+            <span className="organization-portfolio-state__icon"><AdminIcon name="info" size={26} /></span>
+            <strong>Terjadi Kesalahan</strong>
+            <p>{error}</p>
+          </div>
+        )}
+        {!loading && !error && !groups.length && (
+          <div className="organization-portfolio-state">
+            <span className="organization-portfolio-state__icon"><AdminIcon name="folder-special" size={26} /></span>
+            <strong>Belum ada portofolio</strong>
+            <p>Tambahkan portofolio atau riwayat kegiatan organisasi melalui formulir di samping.</p>
+          </div>
+        )}
 
         {!loading && !error && groups.map((group) => <div className="organization-portfolio-year" key={group.year}>
           <div className="organization-portfolio-year__head">

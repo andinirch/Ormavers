@@ -1,7 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import AdminIcon from '../admin/AdminIcon.jsx'
 import { assetUrl } from '../../api/api.js'
 import { getUniversitas, searchOrganizations } from '../../services/orgApi.js'
+
+function OrgLogo({ src, name }) {
+  const [failed, setFailed] = useState(false)
+  const initials = (name ?? '?').charAt(0).toUpperCase()
+  const handleError = useCallback(() => setFailed(true), [])
+
+  if (src && !failed) {
+    return (
+      <span className="libatkan-result__logo">
+        <img src={assetUrl(src)} alt="" onError={handleError} />
+      </span>
+    )
+  }
+
+  return (
+    <span className="libatkan-result__logo">
+      <span className="libatkan-result__initials">{initials}</span>
+    </span>
+  )
+}
 
 const JENIS_FILTER_OPTIONS = [
   { value: '', label: 'Semua Jenis' },
@@ -95,9 +115,9 @@ function EventOrganizationPicker({ selected, onChange }) {
   }
 
   return (
-    <div className="libatkan-card">
-      <header className="libatkan-card__head">
-        <div className="libatkan-card__title">
+    <div className="libatkan-section">
+      <header className="libatkan-section__head">
+        <div className="libatkan-section__title">
           <h2>Libatkan Organisasi <span className="event-form__optional">(opsional)</span></h2>
           <p>Kirim undangan kolaborasi atau partisipasi resmi ke ormawa mitra.</p>
         </div>
@@ -152,10 +172,8 @@ function EventOrganizationPicker({ selected, onChange }) {
         {!loading && !error && results.map((org) => {
           const chosen = selectedById.get(String(org.id))
           return (
-            <div className="libatkan-result" key={org.id}>
-              <span className="libatkan-result__logo">
-                {org.logo ? <img src={assetUrl(org.logo)} alt="" /> : <AdminIcon name="building" size={16} />}
-              </span>
+            <div className={`libatkan-result${chosen ? ' is-selected' : ''}`} key={org.id}>
+              <OrgLogo src={org.logo} name={org.name} />
               <span className="libatkan-result__body">
                 <strong>{org.name}</strong>
                 <small>{[org.organization_type, org.nama_universitas].filter(Boolean).join(' · ')}</small>

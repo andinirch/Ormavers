@@ -14,7 +14,7 @@ const MAX_POSTER_BYTES = 2 * 1024 * 1024
 const MAX_DESKRIPSI = 2000
 
 const JANGKAUAN_OPTIONS = [
-  { value: 'internal', label: 'Internal Kampus' },
+  { value: 'internal', label: 'Internal Organisasi' },
   { value: 'satu_universitas', label: 'Satu universitas' },
   { value: 'multi_universitas', label: 'Multi-universitas' },
 ]

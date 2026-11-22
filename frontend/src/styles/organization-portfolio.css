@@ -3,12 +3,15 @@
 .organization-portfolio-back{display:flex;align-items:center;margin-top:8px;color:#0f172a;text-decoration:none}
 .organization-portfolio-heading h1{margin:8px 0 5px;font-family:var(--font-ui);font-size:28px;font-weight:750;line-height:1.15;letter-spacing:-1.3px;color:#0f172a}
 .organization-portfolio-heading p{margin:0;color:#273047;font-size:15px}
-.organization-portfolio-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,34vw,460px);gap:24px;align-items:start}
-.organization-portfolio-main{display:grid;gap:18px;align-content:start;min-width:0}
-.organization-portfolio-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#fff;border:1px solid #e5e7f4;border-radius:14px;box-shadow:0 8px 24px rgba(31,35,75,.04);font-size:.82rem}
+.organization-portfolio-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,34vw,460px);gap:24px;align-items:stretch;width:100%}
+.organization-portfolio-main{display:flex;flex-direction:column;gap:18px;min-width:0;width:100%}
+.organization-portfolio-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 18px;height:44px;box-sizing:border-box;width:100%;background:#fff;border:1px solid #e5e7f4;border-radius:14px;box-shadow:0 8px 24px rgba(31,35,75,.04);font-size:.82rem}
 .organization-portfolio-filter>span{display:inline-flex;align-items:center;gap:8px;color:#334155}
-.organization-portfolio-filter select{min-width:160px;height:38px;padding:0 12px;color:#0f172a;background:#fff;border:1px solid #e5e7f4;border-radius:9px;font:inherit}
-.organization-portfolio-state{padding:28px;color:#64748b;background:#fff;border:1px solid #e5e7f4;border-radius:14px}
+.organization-portfolio-filter select{min-width:160px;height:34px;padding:0 12px;color:#0f172a;background:#fff;border:1px solid #e5e7f4;border-radius:9px;font:inherit}
+.organization-portfolio-state{width:100%;flex:1;min-height:calc(100vh - 290px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:40px 24px;color:#64748b;background:#fff;border:1px solid #e5e7f4;border-radius:16px;box-shadow:0 8px 24px rgba(31,35,75,.04);gap:10px}
+.organization-portfolio-state strong{color:#0f172a;font-size:16px;font-weight:700}
+.organization-portfolio-state p{margin:0;max-width:320px;color:#64748b;font-size:13.5px;line-height:1.5}
+.organization-portfolio-state__icon{display:grid;place-items:center;width:52px;height:52px;color:#2563eb;background:#eef0ff;border-radius:14px;margin-bottom:4px}
 .organization-portfolio-state--error{color:#b91c1c;background:#fff1f2;border-color:#fecdd3}
 .organization-portfolio-year{display:grid;gap:12px}
 .organization-portfolio-year__head{display:flex;align-items:center;gap:10px}
@@ -41,10 +44,10 @@
 .organization-portfolio-card__actions{margin-top:6px;padding-top:10px;border-top:1px solid #eef0ff}
 .organization-portfolio-year__head .admin-icon{box-sizing:content-box;padding:6px;background:#eef0ff;border-radius:8px}
 .organization-portfolio-year__head::after{content:none}
-.organization-portfolio-side{min-width:0}
+.organization-portfolio-side{min-width:0;display:flex;flex-direction:column}
 @media(min-width:901px){.organization-portfolio-side{position:sticky;top:calc(var(--verification-header-height,72px) + 24px)}}
 @media(min-width:901px) and (max-width:1100px){.organization-portfolio-layout{grid-template-columns:minmax(0,1fr) 320px}}
-.portfolio-form{position:relative;display:grid;gap:16px;padding:28px 24px 24px;overflow:hidden;background:#fff;border:1px solid #e5e7f4;border-radius:16px;box-shadow:0 8px 24px rgba(31,35,75,.04)}
+.portfolio-form{position:relative;display:flex;flex-direction:column;gap:16px;flex:1;padding:28px 24px 24px;overflow:hidden;background:#fff;border:1px solid #e5e7f4;border-radius:16px;box-shadow:0 8px 24px rgba(31,35,75,.04)}
 .portfolio-form::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,#2563eb,#3b82f6)}
 .portfolio-form-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:4px}
 .portfolio-form-header__icon{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;color:#2563eb;background:#eef0ff;border-radius:50%}

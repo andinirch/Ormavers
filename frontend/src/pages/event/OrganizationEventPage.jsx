@@ -122,23 +122,21 @@ function OrganizationEventPage() {
       />
 
       <div className="event-management-layout">
-        <section className="event-management-main" aria-label="Daftar event organisasi">
-          <div className="event-management-toolbar">
-            <span className="event-search">
-              <AdminIcon name="search" size={16} />
-              <input
-                type="search"
-                placeholder="Cari event"
-                aria-label="Cari event"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </span>
-            <Link to="/verifikasi/kelola-event/baru" className="event-primary-button event-primary-button--toolbar">
-              <AdminIcon name="plus" size={16} /> Buat Event
-            </Link>
-          </div>
+        <span className="event-search">
+          <AdminIcon name="search" size={16} />
+          <input
+            type="search"
+            placeholder="Cari event..."
+            aria-label="Cari event"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </span>
+        <Link to="/verifikasi/kelola-event/baru" className="event-primary-button event-primary-button--toolbar">
+          <AdminIcon name="plus" size={16} /> Buat Event
+        </Link>
 
+        <section className="event-management-main" aria-label="Daftar event organisasi">
           {loading && (
             <div className="event-state event-state--loading" role="status" aria-live="polite">
               Memuat event…

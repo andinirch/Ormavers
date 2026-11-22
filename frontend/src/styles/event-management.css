@@ -62,30 +62,32 @@
 }
 .event-management-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px 20px;
+  align-items: stretch;
 }
 
 .event-management-main {
   min-width: 0;
+  min-height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ---------- Toolbar ---------- */
-.event-management-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+.event-management-layout > .event-search {
+  width: 100%;
 }
 
 .event-primary-button--toolbar {
-  flex: 0 0 auto;
-  height: 42px;
-  min-height: 42px;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
   padding: 0 16px;
   font-size: 14px;
   border-radius: 10px;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .event-search {
@@ -94,12 +96,14 @@
   gap: 8px;
   flex: 1 1 auto;
   max-width: none;
-  height: 42px;
+  width: 100%;
+  height: 44px;
   padding: 0 14px;
   color: #64748b;
   background: #fff;
   border: 1px solid #e5e7f4;
   border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .event-search input {
@@ -392,8 +396,16 @@
 
 /* ---------- State ---------- */
 .event-state {
-  padding: 40px 24px;
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 290px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  box-sizing: border-box;
+  padding: 40px 24px;
   background: #fff;
   border: 1px solid #e5e7f4;
   border-radius: 16px;
@@ -407,18 +419,11 @@
 }
 
 .event-state--loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 160px;
   color: #64748b;
   font-size: 14px;
 }
 
 .event-state--empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 10px;
 }
 
@@ -450,6 +455,9 @@
 /* ---------- Panel Ajakan & Undangan ---------- */
 .event-management-side {
   padding: 18px;
+  min-height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
 }
 
 .event-side-heading h2 {
@@ -466,9 +474,13 @@
 }
 
 /* ---------- Responsif ---------- */
-@media (max-width: 1024px) {
+@media (max-width: 992px) {
   .event-management-layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-primary-button--toolbar {
+    width: auto;
   }
 }
 
@@ -522,7 +534,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  max-width: 900px;
+  width: 100%;
 }
 
 .event-form__card {
@@ -552,7 +564,7 @@
 
 .event-form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 16px;
 }
 
@@ -743,15 +755,21 @@
   justify-content: center;
   gap: 8px;
   min-height: 46px;
-  padding: 0 22px;
+  padding: 10px 28px;
   color: #fff;
-  background: var(--accent);
+  background: #2563eb;
   border: 0;
   border-radius: 10px;
   font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+  transition: background 0.15s ease;
+}
+
+.event-form .form-submit:hover:not(:disabled) {
+  background: #1d4ed8;
 }
 
 .event-form .form-submit:disabled {
@@ -899,7 +917,11 @@
 .event-form__actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+  margin-top: 28px;
 }
 
 .event-secondary-button {
@@ -907,15 +929,20 @@
   align-items: center;
   justify-content: center;
   min-height: 46px;
-  padding: 0 22px;
-  color: #0f172a;
+  padding: 10px 22px;
+  color: #475569;
   background: #fff;
-  border: 1px solid #dbe4f0;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
   font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.event-secondary-button:hover:not(:disabled) {
+  background: #f8fafc;
 }
 
 .event-secondary-button:disabled {
@@ -1990,10 +2017,47 @@
 /* ---------- Card Libatkan Organisasi ---------- */
 .event-form__cancel {
   min-height: 40px;
-  padding: 0 16px;
+  padding: 10px 22px;
   font-size: 14px;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
+/* Section variant: flat separator instead of nested card */
+.libatkan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 24px;
+  margin-top: 24px;
+}
+
+.libatkan-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.libatkan-section__title h2 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.libatkan-section__title p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+}
+
+/* Legacy card styling kept for other uses */
 .libatkan-card {
   display: flex;
   flex-direction: column;
@@ -2040,7 +2104,7 @@
 
 .libatkan-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: center;
 }
@@ -2164,10 +2228,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  background: #fff;
-  border: 1px solid #e5e7f4;
-  border-radius: 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.libatkan-result:hover,
+.libatkan-result.is-selected {
+  background: #eff6ff;
+  border-color: #93c5fd;
 }
 
 .libatkan-result__logo,
@@ -2176,18 +2247,33 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   overflow: hidden;
-  color: #9ca3af;
+  border-radius: 50%;
   background: #eef1f8;
-  border-radius: 8px;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .libatkan-result__logo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.libatkan-result__initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #e0e7ff;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 50%;
 }
 
 .libatkan-result__body,
@@ -2521,12 +2607,17 @@
 
 /* Empty state */
 .ajakan-empty {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 360px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 26px 16px;
   text-align: center;
+  box-sizing: border-box;
   background: #eef2ff;
   border: 1px dashed #dbe4ff;
   border-radius: 12px;
@@ -2589,17 +2680,18 @@
 .libatkan-result__jenis {
   min-width: 124px;
   height: 34px;
-  padding: 0 26px 0 10px;
+  padding: 6px 12px;
   color: #0f172a;
-  background-color: #eef2ff;
+  background-color: #ffffff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 12px;
-  border: 1px solid #dbe4ff;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
+  font-weight: 500;
   text-align: left;
   appearance: none;
   -webkit-appearance: none;

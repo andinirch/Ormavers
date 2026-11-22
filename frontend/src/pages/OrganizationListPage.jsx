@@ -122,11 +122,7 @@ function OrganizationListPage() {
           university?.label ?? (loading ? 'Memuat...' : 'Kampus')
         ]}
         icon="building"
-        action={
-          <Link to={directoryPath} className="page-header-back-btn">
-            &larr; Kembali
-          </Link>
-        }
+        backTo={directoryPath}
       />
 
       <section className="organization-directory-filters" aria-label="Filter organisasi">
