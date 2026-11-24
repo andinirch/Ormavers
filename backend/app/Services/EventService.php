@@ -170,6 +170,12 @@ class EventService
 
         return DB::transaction(function () use ($organisasi, $event, $data, $posters) {
             // Update data event dasar
+            if (! empty($data['tag'] ?? null)) {
+                $data['id_kategori'] = null;
+            } elseif (! empty($data['id_kategori'] ?? null)) {
+                $data['tag'] = null;
+            }
+
             $updateFields = [];
             foreach ([
                 'judul', 'deskripsi', 'tanggal_event', 'id_kategori',
@@ -682,22 +688,51 @@ class EventService
                     ->orWhere('tag', 'like', "%{$keyword}%");
             });
         }
-
-        if (! empty($filters['id_kategori'])) {
-            $query->where('id_kategori', $filters['id_kategori']);
-        } elseif (! empty($filters['kategori'])) {
-            $kat = $filters['kategori'];
-            $query->where(function ($q) use ($kat) {
-                if (is_numeric($kat)) {
-                    $q->where('id_kategori', (int) $kat);
+$kategoriLainnyaId = DB::table('kategori_event')
+    ->whereRaw('LOWER(nama_kategori) = ?', ['lainnya'])
+    ->value('id');
+$applyKategoriLainnya = function ($q) use ($kategoriLainnyaId) {
+            $q->where(function ($sub) use ($kategoriLainnyaId) {
+                if ($kategoriLainnyaId !== null) {
+                    $sub->where('id_kategori', $kategoriLainnyaId)
+                        ->orWhere(function ($custom) {
+                            $custom->whereNull('id_kategori')
+                                ->whereNotNull('tag')
+                                ->where('tag', '!=', '');
+                        });
                 } else {
-                    $q->whereHas('kategori', function ($kq) use ($kat) {
-                        $kq->where('nama_kategori', 'like', "%{$kat}%");
-                    });
+                    $sub->whereNull('id_kategori')
+                        ->whereNotNull('tag')
+                        ->where('tag', '!=', '');
                 }
             });
-        }
+        };
 
+        if (! empty($filters['id_kategori'])) {
+            $idKategori = (int) $filters['id_kategori'];
+            if ($kategoriLainnyaId !== null && $idKategori === $kategoriLainnyaId) {
+                $applyKategoriLainnya($query);
+            } else {
+                $query->where('id_kategori', $idKategori);
+            }
+        } elseif (! empty($filters['kategori'])) {
+            $kat = $filters['kategori'];
+            if (is_string($kat) && strtolower(trim($kat)) === 'lainnya') {
+                $applyKategoriLainnya($query);
+            } elseif (is_numeric($kat) && $kategoriLainnyaId !== null && (int) $kat === $kategoriLainnyaId) {
+                $applyKategoriLainnya($query);
+            } else {
+                $query->where(function ($q) use ($kat) {
+                    if (is_numeric($kat)) {
+                        $q->where('id_kategori', (int) $kat);
+                    } else {
+                        $q->whereHas('kategori', function ($kq) use ($kat) {
+                            $kq->where('nama_kategori', 'like', "%{$kat}%");
+                        });
+                    }
+                });
+            }
+        }
         if (!empty($filters['tanggal_mulai'])) {
             $query->whereDate('tanggal_event', '>=', $filters['tanggal_mulai']);
         }
