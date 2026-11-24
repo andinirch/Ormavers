@@ -144,7 +144,7 @@
   align-items: stretch;
   gap: 20px;
   padding: 20px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .event-card.card {
@@ -318,17 +318,23 @@
 
 .event-card__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
   padding-top: 8px;
+  padding-bottom: 4px;
+  padding-inline: 2px;
+  width: 100%;
+  min-width: 0;
 }
 
 .event-card__actions-left {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .event-card__actions-right {
@@ -339,9 +345,13 @@
 .event-card__btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 12px;
+  height: 40px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  flex: 0 0 auto;
   border: 0;
   border-radius: 8px;
   font-family: var(--font-ui);
@@ -352,6 +362,7 @@
 }
 
 .event-card__btn.is-neutral {
+  width: 84px;
   color: #1e293b;
   background: #fff;
   border: 1px solid #cbd5e1;
@@ -364,7 +375,8 @@
 }
 
 .event-card__btn.is-portfolio:hover:not(:disabled) {
-  background: #eff6ff;
+  background: #f8fbff;
+  border-color: #3b82f6;
 }
 
 .event-card__btn.is-portfolio-done {
@@ -3400,3 +3412,13 @@
 .event-card__pill.is-status.is-done { color: #166534; background: #dcfce7; }
 .event-card__pill.is-status.is-live { color: #92400e; background: #fef3c7; }
 .event-card__pill.is-status.is-soon { color: #92400e; background: #fef3c7; }
+
+/* Revisi final: tombol aksi kartu event satu baris, rata kiri, ukuran seragam */
+
+/* Ikon tombol kartu event: ukuran seragam */
+.event-card__btn svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke-width: 2;
+}

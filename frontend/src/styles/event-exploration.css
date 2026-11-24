@@ -58,3 +58,343 @@
 .exploration-card--done .exploration-card__date-pill {
   opacity: 0.75;
 }
+
+/* Revisi: kartu lebih kecil, tetap 3 per baris di layar lebar */
+.exploration-grid {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:20px;
+  max-width:1100px;
+  margin:0 auto;
+}
+.exploration-grid > * {
+  max-width:100%;
+}
+.exploration-card__poster-wrap {
+  padding:10px;
+}
+.exploration-card__poster {
+  aspect-ratio:3/4;
+  max-height:300px;
+}
+.exploration-card__body h2 {
+  font-size:15px;
+}
+@media (max-width:1024px){
+  .exploration-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+}
+@media (max-width:640px){
+  .exploration-grid{grid-template-columns:1fr;}
+}
+
+/* Skeleton: ukuran mengikuti kartu asli */
+.exploration-card--skeleton .exploration-card__poster-wrap{padding:12px}
+.exploration-card--skeleton .exploration-skeleton--poster{aspect-ratio:3/4;width:100%;margin:0}
+.exploration-card--skeleton .exploration-card__body{padding:12px 6px 0;gap:10px}
+.exploration-skeleton--pill{width:72px;height:24px;border-radius:999px}
+.exploration-card--skeleton .exploration-skeleton--line{width:90%;height:18px;margin-top:4px}
+.exploration-card--skeleton .exploration-skeleton--button{margin-top:10px;margin-bottom:12px}
+
+/* Paksa skeleton sama persis dengan kartu asli */
+.exploration-grid .exploration-card--skeleton{
+  height:auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__body{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--button{
+  margin-top:auto;
+}
+
+/* Skeleton: tinggi dan lebar sama dengan kartu event asli */
+.exploration-grid .exploration-card--skeleton {
+  height: 440px;
+  max-height: 440px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__poster-wrap {
+  padding: 12px;
+  flex-shrink: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--poster {
+  width: 100%;
+  aspect-ratio: 4/3;
+  height: auto;
+  margin: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__body {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 18px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--line {
+  width: 85%;
+  height: 18px;
+  margin: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--small {
+  width: 50%;
+  height: 12px;
+  margin: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--button {
+  margin-top: auto;
+  height: 40px;
+}
+
+/* Skeleton shimmer: kilau bergerak di atas blok abu-abu */
+.exploration-grid .exploration-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e8edf7;
+  animation: none;
+}
+.exploration-grid .exploration-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent);
+  animation: exploration-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes exploration-shimmer {
+  100% { transform: translateX(100%); }
+}
+.exploration-grid .exploration-card--skeleton {
+  background: #fff;
+  gap: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__poster-wrap {
+  padding: 12px 12px 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__body {
+  gap: 12px;
+}
+
+/* Skeleton utuh: satu kotak, blok di dalamnya rapi */
+.exploration-grid .exploration-card--skeleton {
+  border-top: 4px solid #3b82f6;
+  background: #fff;
+  height: 440px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__poster-wrap {
+  padding: 12px 12px 0;
+  flex-shrink: 0;
+  margin: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--poster {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4/3;
+  margin: 0;
+  border-radius: 10px;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  margin: 0;
+  box-sizing: border-box;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--button {
+  margin-top: auto;
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* Skeleton final: satu kotak penuh, shimmer halus, tanpa pulse lama */
+.exploration-grid .exploration-card--skeleton {
+  height: 440px;
+  padding: 0;
+  background: #fff;
+  border-top: 4px solid #3b82f6;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(15,23,42,.10);
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__poster-wrap {
+  padding: 12px 12px 0;
+  margin: 0;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--poster {
+  width: 100%;
+  height: 0;
+  padding-bottom: 75%;
+  margin: 0;
+  border-radius: 10px;
+  animation: none;
+}
+.exploration-grid .exploration-card--skeleton .exploration-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  margin: 0;
+  box-sizing: border-box;
+}
+.exploration-grid .exploration-card--skeleton .exploration-skeleton--button {
+  margin-top: auto;
+  width: 100%;
+  height: 40px;
+  animation: none;
+}
+
+/* Halaman Jelajah Event saat dibuka dari layout admin: beri jarak seperti layout verifikasi */
+.admin-content .event-exploration-page,
+.admin-content .exploration-back {
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+.admin-content .exploration-back {
+  display: inline-block;
+  margin-top: 12px;
+}
+.admin-content .exploration-detail-layout {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Tombol kembali: outline rapi */
+.exploration-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 18px;
+  padding: 8px 14px;
+  color: #2563eb;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+.exploration-back:hover {
+  background: #eff6ff;
+  border-color: #60a5fa;
+}
+
+/* Detail event: presisi kiri-kanan, info lebih besar, tombol sejajar bawah poster */
+.exploration-detail-layout {
+  align-items: stretch;
+}
+.exploration-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.exploration-detail-sidebar .exploration-info-box {
+  padding: 22px 24px;
+  gap: 16px;
+  margin-bottom: 0;
+}
+.exploration-detail-sidebar .exploration-info-box p {
+  font-size: 15px;
+  line-height: 1.6;
+  gap: 14px;
+  align-items: center;
+}
+.exploration-detail-sidebar .exploration-info-box a {
+  max-width: 320px;
+  font-size: 15px;
+}
+.exploration-detail-sidebar .exploration-detail-actions {
+  margin-top: auto;
+  margin-bottom: 0;
+  padding-top: 0;
+  align-items: stretch;
+}
+.exploration-detail-sidebar .exploration-detail-actions button {
+  flex: 1;
+  min-height: 46px;
+  font-size: 15px;
+}
+.exploration-detail-sidebar .exploration-detail-actions {
+  margin-top: 20px;
+}
+
+/* Presisi bawah: tombol aksi sejajar dengan baris kontrol galeri */
+.exploration-detail-layout {
+  align-items: stretch;
+}
+.exploration-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.exploration-detail-sidebar .exploration-detail-actions {
+  margin-top: auto;
+  margin-bottom: 40px;
+  display: flex;
+  gap: 16px;
+}
+.exploration-detail-sidebar .exploration-detail-actions button {
+  flex: 1;
+  min-height: 48px;
+  margin: 0;
+}
+.exploration-detail-left {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Lightbox poster */
+.exploration-gallery__zoom { display:block; width:100%; height:100%; }
+.poster-lightbox { position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(15,23,42,.85); cursor:zoom-out; }
+.poster-lightbox img { max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.4); }
+
+/* Kontrol galeri tidak tertutup poster / deskripsi */
+.exploration-gallery {
+  position: relative;
+  padding-bottom: 8px;
+}
+.exploration-gallery__main {
+  height: auto;
+  max-height: none;
+}
+.exploration-gallery__controls {
+  position: relative;
+  z-index: 2;
+  margin-top: 16px;
+  padding-bottom: 4px;
+  background: transparent;
+}
+.exploration-detail-left {
+  padding-bottom: 8px;
+}
+.exploration-description {
+  margin-top: 24px;
+}
+
+/* Jarak minimum antara kolaborator dan tombol aksi */
+.exploration-detail-sidebar .detail-collaborators {
+  margin-bottom: 24px;
+}

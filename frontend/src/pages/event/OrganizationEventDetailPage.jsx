@@ -35,8 +35,7 @@ function formatDateTime(value) {
   if (!value || base === '-') return base
   const time = String(value).split(/[ T]/)[1]
   if (!time) return base
-  const hhmm = time.slice(0, 5)
-  return hhmm === '00:00' ? base : `${base}, ${hhmm}`
+  return `${base}, ${time.slice(0, 5).replace(':', '.')} WIB`
 }
 
 function posterUrl(poster) {
@@ -298,8 +297,8 @@ function OrganizationEventDetailPage() {
             <p>
               <AdminIcon name="clock" size={16} />
               <span>
-                <strong>Periode pendaftaran:</strong> {formatDate(event.periode_mulai)} –{' '}
-                {formatDate(event.periode_selesai)}
+                <strong>Periode pendaftaran:</strong> {formatDateTime(event.periode_mulai)} –{' '}
+                {formatDateTime(event.periode_selesai)}
               </span>
             </p>
             {event.tautan_pendaftaran && (

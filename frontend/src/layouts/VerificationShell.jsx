@@ -15,15 +15,15 @@ import useNotifications from '../components/notifications/useNotifications.js'
 
 const navigationByRole = {
   Administrator: [
-    { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'bem' },
+    { to: '/verifikasi/administrator', label: 'Daftar Registrasi BEM', icon: 'shield' },
     { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
   ],
   'Akun Organisasi BEM': [
     { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
     { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
-    { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'hmj', permission: 'verify hmj/ukm' },
-    { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
-    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
+    { to: '/verifikasi/bem?bagian=hmj', label: 'Daftar Registrasi HMJ/UKM', icon: 'shield', permission: 'verify hmj/ukm' },
+    { to: '/verifikasi/bem?bagian=anggota', label: 'Daftar Permintaan Anggota', icon: 'users', permission: 'verify members' },
+    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'building', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
     { to: '/verifikasi/profil', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
@@ -31,8 +31,8 @@ const navigationByRole = {
   'Akun Organisasi HMJ/UKM': [
     { to: '/verifikasi/direktori', label: 'Direktori Organisasi', icon: 'university', permission: 'view profile' },
     { to: '/jelajah-event', label: 'Jelajah Event', icon: 'compass', permission: 'view profile' },
-    { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'member', permission: 'verify members' },
-    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'contact-page', permission: 'view profile' },
+    { to: '/verifikasi/hmj', label: 'Daftar Permintaan Anggota', icon: 'users', permission: 'verify members' },
+    { to: '/verifikasi/profil-organisasi', label: 'Profil Organisasi', icon: 'building', permission: 'view profile' },
     { to: '/verifikasi/portofolio-organisasi', label: 'Portofolio Organisasi', icon: 'folder-special', permission: 'view profile' },
     { to: '/verifikasi/kelola-event', label: 'Kelola Event', icon: 'calendar', permission: 'view profile' },
     { to: '/verifikasi/profil-hmj', label: 'Profil Saya', icon: 'profile', permission: 'view profile' },
@@ -148,7 +148,7 @@ function VerificationShell() {
         <span>{currentDateFormatted}</span>
       </div>
       <div className="verification-account topbar-actions app-topbar__actions">
-        <button ref={bellRef} type="button" className="verification-bell notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" size={20} />{notifications.unread > 0 && <i />}</button>
+        <button ref={bellRef} type="button" className="verification-bell notification-bell" aria-label="Buka notifikasi" aria-haspopup="dialog" onClick={() => setNotifOpen(true)}><AdminIcon name="bell" size={20} />{notifications.unread > 0 && <i className="notification-count">{notifications.unread > 99 ? '99+' : notifications.unread}</i>}</button>
         <span className="topbar-divider" aria-hidden="true" />
         <div className="topbar-profile-capsule">
           <span className="verification-account__avatar"><Icon name="profile" size={20} /></span>

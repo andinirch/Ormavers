@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../api/notifications.js'
+import { getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead } from '../../api/notifications.js'
 
 const titles = { ajakan: 'Ajakan kolaborasi baru', undangan: 'Undangan event', jawaban: 'Undangan diterima', perubahan_event: 'Event diperbarui', penghapusan_event: 'Event dihapus', pengingat_event: 'Pengingat event H-7' }
 const icons = { ajakan: 'users', undangan: 'mail', jawaban: 'check-circle', perubahan_event: 'calendar', penghapusan_event: 'trash', pengingat_event: 'clock' }
@@ -71,7 +71,7 @@ export default function useNotifications() {
       const payload = result?.data || result?.notifikasi || {}
       const list = Array.isArray(payload) ? payload : payload.notifikasi || []
       setItems(list.map(normalize))
-      setUnreadFromApi(Number.isFinite(payload.unread_count) ? payload.unread_count : list.filter((item) => !item.sudah_baca).length)
+      try { const c = await getUnreadNotificationCount(); setUnreadFromApi(Number(c?.unread_count ?? c?.data?.unread_count ?? 0) || 0) } catch { setUnreadFromApi(list.filter((item) => !item.sudah_baca).length) }
     } catch (requestError) {
       setItems([])
       setUnreadFromApi(0)
@@ -81,7 +81,20 @@ export default function useNotifications() {
     }
   }, [supported])
 
-  useEffect(() => { load() }, [load])
+ // Muat ulang saat route berubah, supaya notifikasi baru terlihat setelah pindah halaman
+useEffect(() => { load() }, [load, pathname])
+
+// Muat ulang saat tab kembali aktif dan secara berkala
+useEffect(() => {
+  if (!supported) return undefined
+  const onFocus = () => load()
+  const timer = setInterval(load, 30000)
+  window.addEventListener('focus', onFocus)
+  return () => {
+    clearInterval(timer)
+    window.removeEventListener('focus', onFocus)
+  }
+}, [supported, load])
 
   const markRead = async (item) => {
     if (!item.read) {

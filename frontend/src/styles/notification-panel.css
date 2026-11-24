@@ -30,3 +30,62 @@
 .notification-item__dot{position:absolute;top:12px;right:12px;width:8px;height:8px;background:#2563eb;border-radius:50%}
 @media(max-width:480px){.notification-panel{width:100vw}.notification-panel-header,.notification-panel-filter,.notification-panel-list{padding-left:16px;padding-right:16px}}
 .verification-bell{position:relative;margin-right:14px;color:#334155}.verification-bell i{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#dc2626;border:2px solid #fff;border-radius:50%}@media(max-width:1024px){.notification-panel{max-width:90vw}.notification-panel-header{padding:12px 14px}.notification-panel-list{max-height:60vh}}@media(max-width:768px){.notification-panel{width:100vw;max-width:100vw;max-height:70vh}.notification-panel-header,.notification-panel-filter,.notification-panel-list{padding:12px}.notification-item{padding:10px}}@media(max-width:375px){.notification-panel{max-height:80vh}.notification-item{padding:8px;border-radius:6px}.notification-item__title{font-size:0.75rem}.notification-item__time{font-size:0.65rem}}@media(max-width:320px){.notification-panel{width:100vw;max-height:100vh}.notification-panel-header{padding:10px}.notification-item__dot{top:10px;right:10px}}
+
+/* Badge jumlah notifikasi belum dibaca */
+.notification-bell { position: relative; }
+.notification-bell .notification-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 18px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Override: badge angka notifikasi lebih jelas */
+.notification-bell i.notification-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: auto;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Revisi: badge notifikasi lebih kecil, ikon lonceng tetap terlihat */
+.notification-bell i.notification-count {
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  width: auto;
+  height: 16px;
+  padding: 0 4px;
+  border: 1.5px solid #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+}

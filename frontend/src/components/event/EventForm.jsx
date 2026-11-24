@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import TextInput from '../form/TextInput.jsx'
 import EventCategoryDropdown from './EventCategoryDropdown.jsx'
 import FormField from '../form/FormField.jsx'
@@ -6,6 +6,7 @@ import SubmitButton from '../form/SubmitButton.jsx'
 import FormMessage from '../form/FormMessage.jsx'
 import AdminIcon from '../admin/AdminIcon.jsx'
 import EventOrganizationPicker from './EventOrganizationPicker.jsx'
+import DateTimeField from './DateTimeField.jsx'
 import EventSentInvitations from './EventSentInvitations.jsx'
 import { assetUrl } from '../../api/api.js'
 
@@ -44,28 +45,8 @@ function posterSrc(poster) {
   return assetUrl(`/storage/${String(raw).replace(/^\/+/, '')}`)
 }
 
-const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
-function parseDateParts(value) {
-  if (!value) return null
-  const [datePart] = String(value).split(/[ T]/)
-  const [year, month, day] = datePart.split('-').map(Number)
-  if (!year || !month || !day) return null
-  return { year, month, day }
-}
 
-// Format tanggal bahasa Indonesia, mis. "12 Des 2026" atau "12 Des 2026 08:00".
-function formatDateID(value, { withYear = true, withTime = false } = {}) {
-  const parts = parseDateParts(value)
-  if (!parts) return ''
-  const month = BULAN_ID[parts.month - 1] ?? ''
-  let result = withYear ? `${parts.day} ${month} ${parts.year}` : `${parts.day} ${month}`
-  if (withTime) {
-    const timePart = String(value).split(/[ T]/)[1]
-    if (timePart) result += ` ${timePart.slice(0, 5)}`
-  }
-  return result
-}
 
 function EventForm({
   mode = 'create',
@@ -90,21 +71,8 @@ function EventForm({
   const [errors, setErrors] = useState({})
   const [participants, setParticipants] = useState([])
 
-  const tanggalRef = useRef(null)
-  const mulaiRef = useRef(null)
-  const selesaiRef = useRef(null)
 
-  const openPicker = (ref) => {
-    const el = ref.current
-    if (!el) return
-    if (typeof el.showPicker === 'function') {
-      try { el.showPicker(); return } catch { /* lanjut ke fallback */ }
-    }
-    el.focus()
-  }
 
-  const sameYear = Boolean(values.periode_mulai && values.periode_selesai)
-    && String(values.periode_mulai).slice(0, 4) === String(values.periode_selesai).slice(0, 4)
 
   const lainnyaId = useMemo(() => {
     const other = (categories ?? []).find((item) => String(item.nama_kategori).toLowerCase() === 'lainnya')
@@ -155,12 +123,16 @@ function EventForm({
     if (!values.judul.trim()) next.judul = 'Judul event wajib diisi.'
     if (!values.deskripsi.trim()) next.deskripsi = 'Deskripsi event wajib diisi.'
     if (!values.tanggal_event) next.tanggal_event = 'Tanggal event wajib diisi.'
+    else if (values.tanggal_event.replace('T', ' ').length === 16 && new Date(values.tanggal_event.replace(' ', 'T')) < new Date()) next.tanggal_event = 'Tanggal dan jam event tidak boleh sebelum waktu sekarang.'
     if (!values.id_kategori) next.id_kategori = 'Kategori event wajib dipilih.'
     else if (isCustomCategory && !values.tag.trim()) next.tag = 'Tag wajib diisi untuk kategori Lainnya.'
     if (!values.tautan_pendaftaran.trim()) next.tautan_pendaftaran = 'Tautan pendaftaran wajib diisi.'
     else if (!/^https?:\/\/.+/i.test(values.tautan_pendaftaran.trim())) next.tautan_pendaftaran = 'Tautan pendaftaran harus berupa URL yang valid.'
     if (values.periode_mulai && values.periode_selesai && values.periode_selesai <= values.periode_mulai) {
       next.periode_selesai = 'Periode selesai harus setelah periode mulai.'
+    }
+    if (values.periode_selesai && values.tanggal_event && values.periode_selesai > values.tanggal_event) {
+      next.periode_selesai = 'Periode selesai harus sebelum atau sama dengan tanggal event.'
     }
     if (totalPosters === 0) next.poster = 'Minimal unggah 1 poster.'
     return next
@@ -226,27 +198,13 @@ function EventForm({
 
           <div className="event-form__row3">
             <FormField id="ev-tanggal" label="Tanggal event" required error={errors.tanggal_event}>
-              <div className={`event-form__datefield${values.tanggal_event ? ' is-filled' : ''}${errors.tanggal_event ? ' has-error' : ''}`}>
-                <button type="button" id="ev-tanggal" className="event-form__datebtn" onClick={() => openPicker(tanggalRef)}>
-                  <span>{values.tanggal_event ? formatDateID(values.tanggal_event, { withTime: true }) : 'Pilih tanggal event'}</span>
-                  <AdminIcon name="calendar" size={16} />
-                </button>
-                <input ref={tanggalRef} type="datetime-local" name="tanggal_event" value={values.tanggal_event} onChange={update} className="event-form__datenative" tabIndex={-1} aria-hidden="true" />
-              </div>
+              <DateTimeField id="ev-tanggal" name="tanggal_event" value={values.tanggal_event} onChange={update} hasError={Boolean(errors.tanggal_event)} disallowPast placeholder="Pilih tanggal & jam" />
             </FormField>
 
             <FormField id="ev-periode" label="Periode pendaftaran" error={errors.periode_mulai || errors.periode_selesai}>
-              <div className={`event-form__range${(values.periode_mulai || values.periode_selesai) ? ' is-filled' : ''}`}>
-                <button type="button" id="ev-periode" className="event-form__rangeseg" onClick={() => openPicker(mulaiRef)}>
-                  {values.periode_mulai ? formatDateID(values.periode_mulai, { withYear: !sameYear }) : 'Mulai'}
-                </button>
-                <span className="event-form__rangesep" aria-hidden="true">–</span>
-                <button type="button" className="event-form__rangeseg" onClick={() => openPicker(selesaiRef)}>
-                  {values.periode_selesai ? formatDateID(values.periode_selesai) : 'Selesai'}
-                </button>
-                <AdminIcon name="calendar" size={16} />
-                <input ref={mulaiRef} type="datetime-local" name="periode_mulai" value={values.periode_mulai} onChange={update} className="event-form__datenative" tabIndex={-1} aria-hidden="true" />
-                <input ref={selesaiRef} type="datetime-local" name="periode_selesai" value={values.periode_selesai} onChange={update} className="event-form__datenative" tabIndex={-1} aria-hidden="true" />
+              <div className="dtf__range">
+                <DateTimeField id="ev-periode" name="periode_mulai" value={values.periode_mulai} onChange={update} placeholder="Mulai" />
+                <DateTimeField id="ev-periode-selesai" name="periode_selesai" value={values.periode_selesai} onChange={update} placeholder="Selesai" />
               </div>
             </FormField>
 

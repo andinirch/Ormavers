@@ -18,13 +18,15 @@ function resolvePoster(poster) {
   return assetUrl(`/storage/${String(raw).replace(/^\/+/, '')}`)
 }
 
-function formatShort(value, withYear = true) {
+function formatShort(value, withYear = true, withTime = false) {
   if (!value) return ''
-  const [datePart] = String(value).split(/[ T]/)
+  const [datePart, timePart] = String(value).split(/[ T]/)
   const [year, month, day] = datePart.split('-').map(Number)
   if (!year || !month || !day) return ''
   const mon = BULAN_ID[month - 1] ?? ''
-  return withYear ? `${day} ${mon} ${year}` : `${day} ${mon}`
+  const base = withYear ? `${day} ${mon} ${year}` : `${day} ${mon}`
+  if (withTime && timePart) return `${base}, ${timePart.slice(0, 5).replace(':', '.')} WIB`
+  return base
 }
 
 function parseDateOnly(value) {
@@ -61,7 +63,7 @@ function EventCard({
   const poster = resolvePoster(event.poster)
   const kategori = event.namaKategori || event.tag || 'Tanpa kategori'
   const isPembuat = event.peran === 'pembuat'
-  const tanggal = formatShort(event.tanggalEvent, true) || 'Tanggal tidak tersedia'
+  const tanggal = formatShort(event.tanggalEvent, true, true) || 'Tanggal tidak tersedia'
   const status = resolveEventStatus(event)
   const isSelesai = status.key === 'selesai'
   // Pembuat selalu boleh (event selesai); kolaborator hanya jika sudah diterima
@@ -112,9 +114,9 @@ function EventCard({
                   className="event-card__btn is-portfolio"
                   onClick={() => onAddToPortfolio?.(event)}
                   disabled={!portfolioEligible}
-                  title={portfolioEligible ? 'Tambah ke Portofolio' : 'Data portofolio belum siap'}
+                  title={portfolioEligible ? undefined : 'Data portofolio belum siap'}
                 >
-                  <AdminIcon name="folder-special" size={16} /> Tambah ke Portofolio
+                  <AdminIcon name="folder-special" size={16} /> Portofolio
                 </button>
               )
             )}

@@ -1,3 +1,4 @@
+// Daftar resmi kategori event (sama dengan KategoriEventSeeder backend)
 export const KATEGORI_ORDER = [
   'Open Recruitment',
   'Kaderisasi',
@@ -25,37 +26,15 @@ export const KATEGORI_ORDER = [
   'Lainnya',
 ]
 
+// Hanya kategori resmi yang ditampilkan, diurutkan A-Z, "Lainnya" selalu di akhir
 export function sortCategories(list) {
   if (!Array.isArray(list)) return []
-  const map = new Map(list.map((item) => [String(item.nama_kategori).trim(), item]))
-  const sorted = []
-  let lainnya = null
-
-  KATEGORI_ORDER.forEach((name) => {
-    if (map.has(name)) {
-      const item = map.get(name)
-      map.delete(name)
-      if (name.toLowerCase() === 'lainnya') {
-        lainnya = item
-      } else {
-        sorted.push(item)
-      }
-    }
-  })
-
-  // Sisa kategori lain jika ada
-  for (const remaining of map.values()) {
-    if (String(remaining.nama_kategori).toLowerCase() === 'lainnya') {
-      lainnya = remaining
-    } else {
-      sorted.push(remaining)
-    }
-  }
-
-  // Pastikan "Lainnya" selalu di posisi paling akhir
-  if (lainnya) {
-    sorted.push(lainnya)
-  }
-
-  return sorted
+  const resmi = new Set(KATEGORI_ORDER)
+  const nama = (item) => String(item.nama_kategori ?? '').trim()
+  const items = list.filter((item) => resmi.has(nama(item)))
+  const lainnya = items.filter((item) => nama(item).toLowerCase() === 'lainnya')
+  const lainnyaLain = items
+    .filter((item) => nama(item).toLowerCase() !== 'lainnya')
+    .sort((a, b) => nama(a).localeCompare(nama(b), 'id', { sensitivity: 'base' }))
+  return [...lainnyaLain, ...lainnya]
 }

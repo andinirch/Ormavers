@@ -55,6 +55,8 @@ function App() {
             <Route path="/admin/direktori" element={<DirectoryPage />} />
             <Route path="/admin/direktori/universitas/:universityId" element={<OrganizationListPage />} />
             <Route path="/admin/direktori/universitas/:universityId/organisasi/:organizationId" element={<OrganizationDetailPage />} />
+            <Route path="/admin/jelajah-event" element={<EventExplorationPage />} />
+            <Route path="/admin/jelajah-event/:id" element={<EventDetailPage />} />
             <Route path="/admin/profil" element={<ProfilePage />} />
           </Route>
           <Route element={<AccessGuard roles={['super_admin']} />}>

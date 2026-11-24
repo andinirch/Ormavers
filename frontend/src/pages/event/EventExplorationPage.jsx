@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import AdminIcon from '../../components/admin/AdminIcon.jsx'
 import ImageWithFallback from '../../components/ImageWithFallback.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
@@ -57,14 +57,14 @@ function categoryStyleFor(category) {
   const key = match ? match[1] : 'default'
   return { border: `is-category-${key}`, pill: `is-category-${key}` }
 }
-function EventCard({ event }) {
+function EventCard({ event, detailBase }) {
   const [status, statusClass] = eventStatus(event)
   const image = posterUrl(event.poster_utama || event.poster || event.image || event.thumbnail)
   const category = event.nama_kategori || event.kategori || event.tag || 'Lainnya'
   const categoryStyle = categoryStyleFor(category)
   return <article className={`exploration-card ${categoryStyle.border}${statusClass === 'is-done' ? ' exploration-card--done' : ''}`}>
     <div className="exploration-card__poster-wrap">
-      <Link className="exploration-card__poster" style={image ? { '--poster-url': `url("${image}")` } : undefined} to={`/jelajah-event/${event.id}`}>
+      <Link className="exploration-card__poster" style={image ? { '--poster-url': `url("${image}")` } : undefined} to={`${detailBase}/${event.id}`}>
         {image ? <ImageWithFallback src={image} alt={event.judul} fallback={<PosterFallback />} /> : <PosterFallback />}
         <span className={`exploration-card__badge exploration-card__badge--status ${statusClass}`}>{status}</span>
       </Link>
@@ -72,7 +72,7 @@ function EventCard({ event }) {
     <div className="exploration-card__body">
       <h2>{event.judul}</h2>
       <div className="exploration-card__meta-line"><span className="exploration-card__organization-pill">{event.organisasi?.nama_organisasi || 'Organisasi penyelenggara'}</span><span className={`exploration-card__category-pill ${categoryStyle.pill}`}>{category}</span><span className="exploration-card__date-pill"><AdminIcon name="calendar" size={12} /> {formatDate(event.tanggal_event)}</span></div>
-      <Link className="exploration-primary-button exploration-primary-button--full" to={`/jelajah-event/${event.id}`}>Lihat detail</Link>
+      <Link className="exploration-primary-button exploration-primary-button--full" to={`${detailBase}/${event.id}`}>Lihat detail</Link>
     </div>
   </article>
 }
@@ -202,6 +202,8 @@ function DatePicker({ value, onChange }) {
 }
 
 export default function EventExplorationPage() {
+  const location = useLocation()
+  const detailBase = location.pathname.startsWith('/admin') ? '/admin/jelajah-event' : '/jelajah-event'
   const [searchParams, setSearchParams] = useSearchParams()
   const [keyword, setKeyword] = useState(searchParams.get('q') || '')
   const [category, setCategory] = useState(searchParams.get('id_kategori') || '')
@@ -368,7 +370,7 @@ export default function EventExplorationPage() {
         <>
           <div className="exploration-grid">
             {events.map((event) => (
-              <EventCard event={event} key={event.id} />
+              <EventCard event={event} detailBase={detailBase} key={event.id} />
             ))}
           </div>
           {totalPages > 1 && (
