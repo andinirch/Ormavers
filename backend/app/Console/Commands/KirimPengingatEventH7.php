@@ -35,7 +35,7 @@ class KirimPengingatEventH7 extends Command
         $this->info("Memeriksa event dengan tanggal pelaksanaan: {$targetDate} (H-7)...");
 
         // Ambil event yang memiliki tanggal pelaksanaan tepat H-7
-        $events = Event::with(['kolaborator'])
+        $events = Event::with(['kolaborator', 'undangan'])
             ->whereDate('tanggal_event', $targetDate)
             ->get();
 
@@ -59,6 +59,13 @@ class KirimPengingatEventH7 extends Command
             foreach ($event->kolaborator as $kolaborator) {
                 if ($kolaborator->id_organisasi_tujuan) {
                     $penerimaOrgIds[] = (int) $kolaborator->id_organisasi_tujuan;
+                }
+            }
+
+            // 3. Organisasi yang telah menerima undangan ('undangan' dengan status 'diterima')
+            foreach ($event->undangan as $undangan) {
+                if ($undangan->id_organisasi_tujuan) {
+                    $penerimaOrgIds[] = (int) $undangan->id_organisasi_tujuan;
                 }
             }
 

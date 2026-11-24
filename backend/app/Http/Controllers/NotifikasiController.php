@@ -47,9 +47,12 @@ class NotifikasiController extends Controller
             ], $result['status']);
         }
 
+        $unreadCount = $result['data']['unread_count'] ?? 0;
+
         return response()->json([
-            'success' => true,
-            'data'    => $result['data'],
+            'success'      => true,
+            'unread_count' => $unreadCount,
+            'data'         => $result['data'],
         ]);
     }
 

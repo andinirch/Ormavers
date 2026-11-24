@@ -597,4 +597,29 @@ class JelajahEventTest extends TestCase
         $this->assertArrayHasKey('poster_utama', $item);
         $this->assertArrayHasKey('kategori', $item);
     }
+
+    public function test_administrator_bisa_mengakses_rute_moderasi_admin_events_dan_detail(): void
+    {
+        [$adminUser, $tokenAdmin] = $this->buatAdministrator();
+        [$userBem, $orgBem, $tokenBem] = $this->buatAkunOrganisasi('bem', $this->univ1);
+
+        $eventInternal = $this->buatEvent($orgBem, 'internal');
+
+        // Administrator dapat mengakses /api/admin/events
+        $responseList = $this->withHeader('Authorization', 'Bearer ' . $tokenAdmin)
+            ->getJson('/api/admin/events');
+
+        $responseList->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertGreaterThanOrEqual(1, count($responseList->json('data')));
+
+        // Administrator dapat mengakses detail event internal via /api/admin/events/{id}
+        $responseDetail = $this->withHeader('Authorization', 'Bearer ' . $tokenAdmin)
+            ->getJson('/api/admin/events/' . $eventInternal->id);
+
+        $responseDetail->assertStatus(200)
+            ->assertJson(['success' => true])
+            ->assertJsonPath('data.id', $eventInternal->id);
+    }
 }

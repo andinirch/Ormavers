@@ -326,7 +326,7 @@ class NotifikasiDanPengingatH7Test extends TestCase
             'status'                 => 'menunggu',
         ]);
 
-        // Undangan: status 'diterima' (TIDAK BOLEH dapat notifikasi pengingat H-7 kolaborator)
+        // Undangan: status 'diterima' (HARUS dapat notifikasi pengingat H-7)
         [$undanganUser, $undanganOrg] = $this->buatAkunOrganisasi('ukm');
         Ajakan::create([
             'id_event'               => $eventH7->id,
@@ -338,7 +338,7 @@ class NotifikasiDanPengingatH7Test extends TestCase
 
         // Jalankan Artisan Command
         $this->artisan('event:kirim-pengingat-h7')
-            ->expectsOutputToContain('Selesai memproses 1 event. Sebanyak 3 notifikasi pengingat berhasil dikirim.')
+            ->expectsOutputToContain('Selesai memproses 1 event. Sebanyak 4 notifikasi pengingat berhasil dikirim.')
             ->assertExitCode(0);
 
         // 1. Pembuat event menerima notifikasi
@@ -372,11 +372,12 @@ class NotifikasiDanPengingatH7Test extends TestCase
             'jenis'         => 'pengingat_event',
         ]);
 
-        // 5. Undangan TIDAK menerima notifikasi
-        $this->assertDatabaseMissing('notifikasi', [
+        // 5. Undangan status 'diterima' MENERIMA notifikasi pengingat H-7
+        $this->assertDatabaseHas('notifikasi', [
             'id_organisasi' => $undanganOrg->id_organisasi,
             'id_event'      => $eventH7->id,
             'jenis'         => 'pengingat_event',
+            'sudah_baca'    => 0,
         ]);
 
         // Uji Idempotency: Jalankan command untuk kedua kalinya di hari yang sama
@@ -384,8 +385,8 @@ class NotifikasiDanPengingatH7Test extends TestCase
             ->expectsOutputToContain('Selesai memproses 1 event. Sebanyak 0 notifikasi pengingat berhasil dikirim.')
             ->assertExitCode(0);
 
-        // Jumlah total notifikasi pengingat di database tetap 3 (tidak bertambah jadi 6)
-        $this->assertEquals(3, Notifikasi::where('id_event', $eventH7->id)->where('jenis', 'pengingat_event')->count());
+        // Jumlah total notifikasi pengingat di database tetap 4 (tidak bertambah jadi 8)
+        $this->assertEquals(4, Notifikasi::where('id_event', $eventH7->id)->where('jenis', 'pengingat_event')->count());
     }
 
     public function test_artisan_command_tidak_mengirim_jika_bukan_h7(): void

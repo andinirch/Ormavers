@@ -42,7 +42,15 @@ class NotifikasiService
 
         // Filter berdasarkan status baca jika diberikan ('1' / '0')
         if (isset($filters['sudah_baca']) && $filters['sudah_baca'] !== '') {
-            $query->where('sudah_baca', filter_var($filters['sudah_baca'], FILTER_VALIDATE_BOOLEAN));
+            $isRead = filter_var($filters['sudah_baca'], FILTER_VALIDATE_BOOLEAN);
+            if ($isRead) {
+                $query->where('sudah_baca', true);
+            } else {
+                $query->where(function ($q) {
+                    $q->where('sudah_baca', false)
+                        ->orWhereNull('sudah_baca');
+                });
+            }
         }
 
         // Filter berdasarkan jenis jika diberikan
@@ -54,9 +62,7 @@ class NotifikasiService
             ->orderBy('id', 'desc')
             ->get();
 
-        $unreadCount = Notifikasi::where('id_organisasi', $organisasi->id_organisasi)
-            ->where('sudah_baca', false)
-            ->count();
+        $unreadCount = $this->hitungUnread($organisasi->id_organisasi);
 
         if ($notifikasiList->isEmpty()) {
             return [
@@ -90,9 +96,7 @@ class NotifikasiService
             ];
         }
 
-        $unreadCount = Notifikasi::where('id_organisasi', $organisasi->id_organisasi)
-            ->where('sudah_baca', false)
-            ->count();
+        $unreadCount = $this->hitungUnread($organisasi->id_organisasi);
 
         return [
             'data' => [
@@ -137,9 +141,7 @@ class NotifikasiService
             ]);
         }
 
-        $unreadCount = Notifikasi::where('id_organisasi', $organisasi->id_organisasi)
-            ->where('sudah_baca', false)
-            ->count();
+        $unreadCount = $this->hitungUnread($organisasi->id_organisasi);
 
         return [
             'data' => [
@@ -164,7 +166,10 @@ class NotifikasiService
         }
 
         Notifikasi::where('id_organisasi', $organisasi->id_organisasi)
-            ->where('sudah_baca', false)
+            ->where(function ($q) {
+                $q->where('sudah_baca', false)
+                    ->orWhereNull('sudah_baca');
+            })
             ->update([
                 'sudah_baca'  => true,
                 'dibaca_pada' => now(),
@@ -176,5 +181,18 @@ class NotifikasiService
                 'unread_count' => 0,
             ],
         ];
+    }
+
+    /**
+     * Hitung total notifikasi belum dibaca untuk organisasi.
+     */
+    public function hitungUnread(int $idOrganisasi): int
+    {
+        return Notifikasi::where('id_organisasi', $idOrganisasi)
+            ->where(function ($q) {
+                $q->where('sudah_baca', false)
+                    ->orWhereNull('sudah_baca');
+            })
+            ->count();
     }
 }

@@ -256,12 +256,23 @@ class EventCoreTest extends TestCase
             'jangkauan_publikasi' => 'internal',
         ]);
 
+        [$userUndangan, $orgUndangan, $tokenUndangan] = $this->buatAkunOrganisasi('ukm');
+
         // Kolaborator yang sudah menerima
         Ajakan::create([
             'id_event'               => $event->id,
             'id_organisasi_pengirim' => $org->id_organisasi,
             'id_organisasi_tujuan'   => $orgKolab->id_organisasi,
             'jenis'                  => 'kolaborator',
+            'status'                 => 'diterima',
+        ]);
+
+        // Undangan yang sudah menerima
+        Ajakan::create([
+            'id_event'               => $event->id,
+            'id_organisasi_pengirim' => $org->id_organisasi,
+            'id_organisasi_tujuan'   => $orgUndangan->id_organisasi,
+            'jenis'                  => 'undangan',
             'status'                 => 'diterima',
         ]);
 
@@ -280,6 +291,13 @@ class EventCoreTest extends TestCase
         // Notifikasi penghapusan terkirim ke kolaborator
         $this->assertDatabaseHas('notifikasi', [
             'id_organisasi' => $orgKolab->id_organisasi,
+            'jenis'         => 'penghapusan_event',
+        ]);
+
+        // Notifikasi penghapusan terkirim ke organisasi penerima undangan
+        $this->assertDatabaseHas('notifikasi', [
+            'id_organisasi' => $orgUndangan->id_organisasi,
+            'jenis'         => 'penghapusan_event',
         ]);
     }
 

@@ -121,7 +121,7 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'role:super_admin'])
     ->whereNumber('id');
     });
 
-// Administrator — Verifikasi BEM
+// Administrator — Verifikasi BEM & Moderasi Event
 Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:administrator'])
     ->prefix('admin')
     ->group(function () {
@@ -133,6 +133,11 @@ Route::middleware(['auth:sanctum', 'akun.aktif', 'peran:administrator'])
         Route::post('/registrations/bem/{id}/approve', [VerifikasiBemController::class, 'approve'])
             ->whereNumber('id');
         Route::post('/registrations/bem/{id}/reject', [VerifikasiBemController::class, 'reject'])
+            ->whereNumber('id');
+
+        // Moderasi Jelajah Event & Detail Event untuk Administrator (ORMV-1-30 & ORMV-1-32)
+        Route::get('/events', [JelajahEventController::class, 'index']);
+        Route::get('/events/{id}', [JelajahEventController::class, 'show'])
             ->whereNumber('id');
     });
 

@@ -342,9 +342,14 @@ class EventService
                 ->where('status', 'diterima')
                 ->get();
 
-            foreach ($ajakanDiterima as $ajakan) {
+            $penerimaOrgIds = $ajakanDiterima->pluck('id_organisasi_tujuan')
+                ->filter()
+                ->unique()
+                ->values();
+
+            foreach ($penerimaOrgIds as $idOrgTujuan) {
                 Notifikasi::create([
-                    'id_organisasi' => $ajakan->id_organisasi_tujuan,
+                    'id_organisasi' => $idOrgTujuan,
                     'jenis'         => 'penghapusan_event',
                     'id_event'      => null, // event akan terhapus
                     'id_ajakan'     => null,
