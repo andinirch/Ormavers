@@ -77,3 +77,25 @@
   max-width: none;
   width: 100%;
 }
+
+/* Lightbox poster: overlay penuh layar, gambar di tengah */
+.poster-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.8);
+  cursor: zoom-out;
+}
+.poster-lightbox img {
+  max-width: min(90vw, 720px);
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
