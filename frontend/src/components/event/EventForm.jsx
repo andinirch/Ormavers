@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import TextInput from '../form/TextInput.jsx'
 import EventCategoryDropdown from './EventCategoryDropdown.jsx'
 import FormField from '../form/FormField.jsx'
@@ -69,6 +69,9 @@ function EventForm({
     return utama?.id ?? existingPosters[0]?.id ?? null
   })
   const [errors, setErrors] = useState({})
+  const initialTanggal = useRef(values.tanggal_event)
+  const initialPeriodeMulai = useRef(values.periode_mulai)
+  const initialPeriodeSelesai = useRef(values.periode_selesai)
   const [participants, setParticipants] = useState([])
 
 
@@ -123,7 +126,7 @@ function EventForm({
     if (!values.judul.trim()) next.judul = 'Judul event wajib diisi.'
     if (!values.deskripsi.trim()) next.deskripsi = 'Deskripsi event wajib diisi.'
     if (!values.tanggal_event) next.tanggal_event = 'Tanggal event wajib diisi.'
-    else if (values.tanggal_event.replace('T', ' ').length === 16 && new Date(values.tanggal_event.replace(' ', 'T')) < new Date()) next.tanggal_event = 'Tanggal dan jam event tidak boleh sebelum waktu sekarang.'
+    else if (values.tanggal_event !== initialTanggal.current && values.tanggal_event.replace('T', ' ').length === 16 && new Date(values.tanggal_event.replace(' ', 'T')) < new Date()) next.tanggal_event = 'Tanggal dan jam event tidak boleh sebelum waktu sekarang.'
     if (!values.id_kategori) next.id_kategori = 'Kategori event wajib dipilih.'
     else if (isCustomCategory && !values.tag.trim()) next.tag = 'Tag wajib diisi untuk kategori Lainnya.'
     if (!values.tautan_pendaftaran.trim()) next.tautan_pendaftaran = 'Tautan pendaftaran wajib diisi.'
@@ -147,10 +150,10 @@ function EventForm({
     const formData = new FormData()
     formData.append('judul', values.judul.trim())
     formData.append('deskripsi', values.deskripsi.trim())
-    formData.append('tanggal_event', normalizeDateTime(values.tanggal_event))
+    if (values.tanggal_event !== initialTanggal.current) formData.append('tanggal_event', normalizeDateTime(values.tanggal_event))
     formData.append('tautan_pendaftaran', values.tautan_pendaftaran.trim())
-    if (values.periode_mulai) formData.append('periode_mulai', normalizeDateTime(values.periode_mulai))
-    if (values.periode_selesai) formData.append('periode_selesai', normalizeDateTime(values.periode_selesai))
+    if (values.periode_mulai && values.periode_mulai !== initialPeriodeMulai.current) formData.append('periode_mulai', normalizeDateTime(values.periode_mulai))
+    if (values.periode_selesai && values.periode_selesai !== initialPeriodeSelesai.current) formData.append('periode_selesai', normalizeDateTime(values.periode_selesai))
     formData.append('jangkauan_publikasi', values.jangkauan_publikasi)
     if (isCustomCategory) {
       formData.append('tag', values.tag.trim())
@@ -201,7 +204,7 @@ function EventForm({
               <DateTimeField id="ev-tanggal" name="tanggal_event" value={values.tanggal_event} onChange={update} hasError={Boolean(errors.tanggal_event)} disallowPast placeholder="Pilih tanggal & jam" />
             </FormField>
 
-            <FormField id="ev-periode" label="Periode pendaftaran" error={errors.periode_mulai || errors.periode_selesai}>
+            <FormField id="ev-periode" label="Periode pendaftaran" required error={errors.periode_mulai || errors.periode_selesai}>
               <div className="dtf__range">
                 <DateTimeField id="ev-periode" name="periode_mulai" value={values.periode_mulai} onChange={update} placeholder="Mulai" />
                 <DateTimeField id="ev-periode-selesai" name="periode_selesai" value={values.periode_selesai} onChange={update} placeholder="Selesai" />

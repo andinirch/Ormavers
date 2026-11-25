@@ -3422,3 +3422,12 @@
   flex: 0 0 16px;
   stroke-width: 2;
 }
+
+
+/* Garis biru kiri kartu event ikut melengkung mengikuti radius kartu */
+.event-card {
+  overflow: hidden;
+}
+.event-card::before {
+  border-radius: 16px 0 0 16px;
+}
