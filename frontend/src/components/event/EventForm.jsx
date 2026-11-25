@@ -242,7 +242,7 @@ function EventForm({
 
             {newPosters.map((file, index) => (
               <div className="event-form__poster-slot is-filled" key={`new-${file.name}-${index}`}>
-                <span className="event-form__poster-file"><AdminIcon name="image" size={22} />{file.name}</span>
+                <img src={URL.createObjectURL(file)} alt={file.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 <label className="event-form__poster-utama">
                   <input type="radio" name="poster_utama" checked={primaryNewIndex === index} onChange={() => setPrimaryNewIndex(index)} />
                   <span>Utama</span>
@@ -254,7 +254,17 @@ function EventForm({
             ))}
 
             {Array.from({ length: emptySlots }).map((_, index) => (
-              <label className="event-form__poster-slot" key={`empty-${index}`}>
+              <label
+                className="event-form__poster-slot"
+                key={`empty-${index}`}
+                onDragOver={(event) => { event.preventDefault(); event.currentTarget.classList.add('is-dragover') }}
+                onDragLeave={(event) => event.currentTarget.classList.remove('is-dragover')}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  event.currentTarget.classList.remove('is-dragover')
+                  addPosterFile(event.dataTransfer.files?.[0])
+                }}
+              >
                 <input
                   type="file"
                   accept=".jpg,.jpeg,image/jpeg"
