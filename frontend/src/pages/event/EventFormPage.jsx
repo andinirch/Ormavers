@@ -1,3 +1,4 @@
+import { getMyRegistrationStatus } from '../../services/registrationStatusApi.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -19,6 +20,13 @@ function toDateTimeInput(value) {
 }
 
 function EventFormPage() {
+  const [universitasPembuat, setUniversitasPembuat] = useState(null)
+  useEffect(() => {
+    getMyRegistrationStatus()
+      .then((r) => setUniversitasPembuat(r?.organisasiDetail?.id_universitas ?? null))
+      .catch(() => setUniversitasPembuat(null))
+  }, [])
+
   const navigate = useNavigate()
   const { eventId } = useParams()
   const isEdit = Boolean(eventId)
@@ -114,6 +122,7 @@ function EventFormPage() {
 
       {(!isEdit || (!loading && !loadError && canEdit)) && (
         <EventForm
+          universitasPembuat={universitasPembuat}
           mode={isEdit ? 'edit' : 'create'}
           eventId={eventId}
           categories={categories}

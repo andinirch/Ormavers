@@ -3431,3 +3431,10 @@
 .event-card::before {
   border-radius: 16px 0 0 16px;
 }
+
+/* Highlight saat file poster diseret di atas kotak upload */
+.event-form__poster-slot.is-dragover {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}

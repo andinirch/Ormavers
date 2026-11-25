@@ -39,6 +39,7 @@ function AjakanDetailModal({ idAjakan, onClose, onDone }) {
   const [view, setView] = useState('detail')
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const onCloseRef = useRef(onClose)
   const submittingRef = useRef(submitting)
@@ -160,7 +161,7 @@ function AjakanDetailModal({ idAjakan, onClose, onDone }) {
             <h2 className="event-invitation-modal__title">{detail.event?.judul ?? '—'}</h2>
 
             <div className="event-invitation-modal__content">
-              <div className="event-invitation-modal__poster">
+              <button type="button" className="event-invitation-modal__poster" aria-label="Perbesar poster" onClick={() => posterUrl && setPreviewOpen(true)} style={{ cursor: posterUrl ? "zoom-in" : "default", border: 0, padding: 0, background: "none" }}>
                 {posterUrl
                   ? <img src={posterUrl} alt={detail.event?.judul ?? 'Poster Event'} />
                   : (
@@ -170,7 +171,14 @@ function AjakanDetailModal({ idAjakan, onClose, onDone }) {
                       <span className="event-invitation-modal__poster-date">{formatLongDate(detail.event?.tanggal_event)}</span>
                     </div>
                   )}
-              </div>
+              </button>
+
+              {previewOpen && posterUrl && createPortal(
+                <div onClick={() => setPreviewOpen(false)} role="dialog" aria-modal="true" style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15, 23, 42, 0.8)", padding: 24, cursor: "zoom-out" }}>
+                  <img src={posterUrl} alt={detail.event?.judul ?? 'Poster Event'} style={{ maxWidth: "min(90vw, 720px)", maxHeight: "90vh", width: "auto", height: "auto", objectFit: "contain", borderRadius: 12, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }} />
+                </div>,
+                document.body
+              )}
 
               <div className="event-invitation-modal__info">
                 <div className="event-invitation-modal__info-row">

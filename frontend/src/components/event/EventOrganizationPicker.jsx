@@ -41,7 +41,7 @@ function toParticipant(org, jenis = 'undangan') {
   }
 }
 
-function EventOrganizationPicker({ selected, onChange }) {
+function EventOrganizationPicker({ selected, onChange, jangkauan = '', universitasPembuat = null }) {
   const [universities, setUniversities] = useState([])
   const [keyword, setKeyword] = useState('')
   const [universitasId, setUniversitasId] = useState('')
@@ -73,7 +73,11 @@ function EventOrganizationPicker({ selected, onChange }) {
         id_universitas: universitasId || undefined,
         jenis_organisasi: jenisFilter || undefined,
       })
-      setResults(Array.isArray(list) ? list : [])
+      const semua = Array.isArray(list) ? list : []
+      const dibatasi = jangkauan === 'satu_universitas' && universitasPembuat
+        ? semua.filter((org) => String(org.id_universitas ?? org.university_id ?? '') === String(universitasPembuat))
+        : semua
+      setResults(dibatasi)
     } catch {
       setError('Daftar organisasi gagal dimuat.')
     } finally {
@@ -84,7 +88,7 @@ function EventOrganizationPicker({ selected, onChange }) {
   useEffect(() => {
     queueMicrotask(() => { runSearch('') })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [universitasId, jenisFilter])
+  }, [universitasId, jenisFilter, jangkauan, universitasPembuat])
 
   const selectedById = new Map(selected.map((item) => [String(item.id_organisasi), item]))
   const undanganCount = selected.filter((item) => item.jenis === 'undangan').length

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import TextInput from '../form/TextInput.jsx'
 import EventCategoryDropdown from './EventCategoryDropdown.jsx'
 import FormField from '../form/FormField.jsx'
@@ -48,7 +48,7 @@ function posterSrc(poster) {
 
 
 
-function EventForm({
+function EventForm({ universitasPembuat = null,
   mode = 'create',
   eventId,
   categories,
@@ -60,7 +60,17 @@ function EventForm({
   onCancel,
 }) {
   const isEdit = mode === 'edit'
-  const [values, setValues] = useState(() => ({ ...EMPTY_VALUES, ...(initialValues ?? {}) }))
+  const [values, setValues] = useState(() => {
+    if (isEdit) return { ...EMPTY_VALUES, ...(initialValues ?? {}) }
+    try {
+      const saved = sessionStorage.getItem("ormavers:draft-event-baru")
+      return { ...EMPTY_VALUES, ...(saved ? JSON.parse(saved) : {}) }
+    } catch { return { ...EMPTY_VALUES } }
+  })
+  useEffect(() => {
+    if (isEdit) return
+    try { sessionStorage.setItem("ormavers:draft-event-baru", JSON.stringify(values)) } catch { void 0 }
+  }, [values, isEdit])
   const [newPosters, setNewPosters] = useState([])
   const [removedIds, setRemovedIds] = useState([])
   const [primaryNewIndex, setPrimaryNewIndex] = useState(0)
@@ -176,6 +186,7 @@ function EventForm({
       formData.append(`organisasi_terlibat[${index}][jenis]`, item.jenis)
     })
 
+    if (!isEdit) { try { sessionStorage.removeItem("ormavers:draft-event-baru") } catch { void 0 } }
     onSubmit(formData)
   }
 
@@ -306,7 +317,7 @@ function EventForm({
           </div>
         </div>
 
-        <EventOrganizationPicker selected={participants} onChange={setParticipants} />
+        <EventOrganizationPicker selected={participants} onChange={setParticipants} jangkauan={values.jangkauan_publikasi} universitasPembuat={universitasPembuat} />
 
         {eventId && <EventSentInvitations eventId={eventId} />}
 
