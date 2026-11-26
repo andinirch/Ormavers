@@ -3457,3 +3457,31 @@ select[aria-label="Filter jenis"] {
   background-color: #fff;
   box-sizing: border-box;
 }
+
+/* Dropdown jenis per organisasi: tidak terpotong, menu tampil di atas kartu */
+.libatkan-result__actions { position: relative; flex-shrink: 0; }
+.libatkan-result__actions .event-category-dropdown { width: 170px; }
+.libatkan-result__actions .event-category-dropdown__trigger {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+.libatkan-result__actions .event-category-dropdown__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.libatkan-result__actions .event-category-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: auto;
+  width: 170px;
+  z-index: 50;
+}

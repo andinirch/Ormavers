@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AdminIcon from '../admin/AdminIcon.jsx'
 import { assetUrl } from '../../api/api.js'
 import { getUniversitas, searchOrganizations } from '../../services/orgApi.js'
@@ -39,6 +39,159 @@ function toParticipant(org, jenis = 'undangan') {
     logo: org.logo ?? '',
     jenis,
   }
+}
+
+
+function UniversitasDropdown({ items, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+  const selected = (items || []).find((u) => String(u.value) === String(value))
+  const displayLabel = selected ? selected.label : 'Semua Universitas'
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="event-category-dropdown" ref={containerRef}>
+      <button
+        type="button"
+        className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
+        onClick={() => setIsOpen((o) => !o)}
+        aria-label="Filter universitas"
+      >
+        <span className="event-category-dropdown__label">{displayLabel}</span>
+        <span className={`event-category-dropdown__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">▾</span>
+      </button>
+      {isOpen && (
+        <ul className="event-category-dropdown__menu" role="listbox">
+          <li role="option" aria-selected={!value}
+            className={`event-category-dropdown__item${!value ? ' is-selected' : ''}`}
+            onClick={() => { onChange(''); setIsOpen(false) }}>Semua Universitas</li>
+          {(items || []).map((u) => (
+            <li key={u.value} role="option" aria-selected={String(u.value) === String(value)}
+              className={`event-category-dropdown__item${String(u.value) === String(value) ? ' is-selected' : ''}`}
+              onClick={() => { onChange(String(u.value)); setIsOpen(false) }}>{u.label}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+
+function JenisDropdown({ options, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+  const selected = options.find((o) => String(o.value) === String(value))
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="event-category-dropdown" ref={containerRef}>
+      <button type="button" className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
+        onClick={() => setIsOpen((o) => !o)} aria-label="Filter jenis">
+        <span className="event-category-dropdown__label">{selected ? selected.label : options[0].label}</span>
+        <span className={`event-category-dropdown__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">▾</span>
+      </button>
+      {isOpen && (
+        <ul className="event-category-dropdown__menu" role="listbox">
+          {options.map((o) => (
+            <li key={o.value} role="option" aria-selected={String(o.value) === String(value)}
+              className={`event-category-dropdown__item${String(o.value) === String(value) ? ' is-selected' : ''}`}
+              onClick={() => { onChange(String(o.value)); setIsOpen(false) }}>{o.label}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+
+const JENIS_ORG_OPTIONS = [
+  { value: 'kolaborator', label: 'Kolaborator' },
+  { value: 'undangan', label: 'Undangan' },
+]
+
+function JenisOrgDropdown({ value, onChange, label }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+  const selected = JENIS_ORG_OPTIONS.find((o) => o.value === value)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="event-category-dropdown" ref={containerRef}>
+      <button type="button" className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
+        onClick={() => setIsOpen((o) => !o)} aria-label={label}>
+        <span className={`event-category-dropdown__label${selected ? '' : ' is-placeholder'}`}>{selected ? selected.label : 'Pilih jenis'}</span>
+        <span className={`event-category-dropdown__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">▾</span>
+      </button>
+      {isOpen && (
+        <ul className="event-category-dropdown__menu" role="listbox">
+          {JENIS_ORG_OPTIONS.map((o) => (
+            <li key={o.value} role="option" aria-selected={o.value === value}
+              className={`event-category-dropdown__item${o.value === value ? ' is-selected' : ''}`}
+              onClick={() => { onChange(o.value); setIsOpen(false) }}>{o.label}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+
+const MASSAL_OPTIONS = [
+  { value: 'kolaborator', label: 'Ubah semua jadi: Kolaborator' },
+  { value: 'undangan', label: 'Ubah semua jadi: Undangan' },
+  { value: 'hapus_semua', label: 'Hapus semua pilihan' },
+]
+
+function MassalDropdown({ onPick, disabled, count }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="event-category-dropdown" ref={containerRef}>
+      <button type="button" className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
+        onClick={() => !disabled && setIsOpen((o) => !o)} disabled={disabled} aria-label="Aksi massal">
+        <span className="event-category-dropdown__label is-placeholder">Pilih aksi massal ({count} dipilih)</span>
+        <span className={`event-category-dropdown__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">▾</span>
+      </button>
+      {isOpen && (
+        <ul className="event-category-dropdown__menu" role="listbox">
+          {MASSAL_OPTIONS.map((o) => (
+            <li key={o.value} role="option" className="event-category-dropdown__item"
+              onClick={() => { onPick(o.value); setIsOpen(false) }}>{o.label}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 function EventOrganizationPicker({ selected, onChange, jangkauan = '', universitasPembuat = null }) {
@@ -139,13 +292,8 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
             onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); runSearch(keyword) } }}
           />
         </span>
-        <select value={universitasId} onChange={(event) => setUniversitasId(event.target.value)} aria-label="Filter universitas">
-          <option value="">Semua Universitas</option>
-          {universities.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-        </select>
-        <select value={jenisFilter} onChange={(event) => setJenisFilter(event.target.value)} aria-label="Filter jenis">
-          {JENIS_FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        <UniversitasDropdown items={universities} value={universitasId} onChange={setUniversitasId} />
+        <JenisDropdown options={JENIS_FILTER_OPTIONS} value={jenisFilter} onChange={setJenisFilter} />
       </div>
 
       <div className="libatkan-summary">
@@ -154,18 +302,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
         <span className="libatkan-chip is-kolaborator">{kolaboratorCount} Kolaborator</span>
         <div className="libatkan-massal">
           <label htmlFor="libatkan-massal" className="libatkan-massal__label">Aksi massal:</label>
-          <select
-            id="libatkan-massal"
-            className="libatkan-summary__massal"
-            value=""
-            onChange={(event) => applyMassal(event.target.value)}
-            disabled={selected.length === 0}
-          >
-            <option value="" disabled>Pilih aksi massal ({selected.length} dipilih)</option>
-            <option value="kolaborator">Ubah semua jadi: Kolaborator</option>
-            <option value="undangan">Ubah semua jadi: Undangan</option>
-            <option value="hapus_semua">Hapus semua pilihan</option>
-          </select>
+          <MassalDropdown onPick={applyMassal} disabled={selected.length === 0} count={selected.length} />
         </div>
       </div>
 
@@ -183,16 +320,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
                 <small>{[org.organization_type, org.nama_universitas].filter(Boolean).join(' · ')}</small>
               </span>
               <span className="libatkan-result__actions">
-                <select
-                  className="libatkan-result__jenis"
-                  value={chosen?.jenis ?? ''}
-                  onChange={(event) => chooseJenis(org, event.target.value)}
-                  aria-label={`Jenis keterlibatan ${org.name}`}
-                >
-                  <option value="" disabled>Pilih jenis</option>
-                  <option value="kolaborator">Kolaborator</option>
-                  <option value="undangan">Undangan</option>
-                </select>
+                <JenisOrgDropdown value={chosen?.jenis ?? ''} onChange={(v) => chooseJenis(org, v)} label={`Jenis keterlibatan ${org.name}`} />
                 {chosen && (
                   <button
                     type="button"
