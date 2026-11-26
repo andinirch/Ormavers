@@ -165,6 +165,7 @@ function EventForm({ universitasPembuat = null,
     if (values.periode_mulai && values.periode_mulai !== initialPeriodeMulai.current) formData.append('periode_mulai', normalizeDateTime(values.periode_mulai))
     if (values.periode_selesai && values.periode_selesai !== initialPeriodeSelesai.current) formData.append('periode_selesai', normalizeDateTime(values.periode_selesai))
     formData.append('jangkauan_publikasi', values.jangkauan_publikasi)
+    if (values.jangkauan_publikasi === 'internal') setParticipants([])
     if (isCustomCategory) {
       formData.append('tag', values.tag.trim())
     } else {
@@ -317,7 +318,7 @@ function EventForm({ universitasPembuat = null,
           </div>
         </div>
 
-        <EventOrganizationPicker selected={participants} onChange={setParticipants} jangkauan={values.jangkauan_publikasi} universitasPembuat={universitasPembuat} />
+        {values.jangkauan_publikasi !== 'internal' && <EventOrganizationPicker selected={participants} onChange={setParticipants} jangkauan={values.jangkauan_publikasi} universitasPembuat={universitasPembuat} />}
 
         {eventId && <EventSentInvitations eventId={eventId} />}
 
