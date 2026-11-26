@@ -21,9 +21,10 @@ function toDateTimeInput(value) {
 
 function EventFormPage() {
   const [universitasPembuat, setUniversitasPembuat] = useState(null)
+  const [organisasiPembuat, setOrganisasiPembuat] = useState(null)
   useEffect(() => {
     getMyRegistrationStatus()
-      .then((r) => setUniversitasPembuat(r?.organisasiDetail?.id_universitas ?? null))
+      .then((r) => { setUniversitasPembuat(r?.data?.organisasiDetail?.id_universitas ?? null); setOrganisasiPembuat(r?.data?.organisasiDetail?.id ?? r?.data?.organisasiDetail?.id_organisasi ?? null) })
       .catch(() => setUniversitasPembuat(null))
   }, [])
 
@@ -123,6 +124,7 @@ function EventFormPage() {
       {(!isEdit || (!loading && !loadError && canEdit)) && (
         <EventForm
           universitasPembuat={universitasPembuat}
+          organisasiPembuat={organisasiPembuat}
           mode={isEdit ? 'edit' : 'create'}
           eventId={eventId}
           categories={categories}

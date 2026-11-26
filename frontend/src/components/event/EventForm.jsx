@@ -48,7 +48,7 @@ function posterSrc(poster) {
 
 
 
-function EventForm({ universitasPembuat = null,
+function EventForm({ universitasPembuat = null, organisasiPembuat = null,
   mode = 'create',
   eventId,
   categories,
@@ -83,6 +83,26 @@ function EventForm({ universitasPembuat = null,
   const initialPeriodeMulai = useRef(values.periode_mulai)
   const initialPeriodeSelesai = useRef(values.periode_selesai)
   const [participants, setParticipants] = useState([])
+  const [terundang, setTerundang] = useState([])
+  const [terundangNama, setTerundangNama] = useState([])
+  useEffect(() => {
+    if (!eventId) return
+    import('../../api/eventInvitation.js').then(({ getEventInvitations }) =>
+      getEventInvitations(eventId).then((res) => {
+        const list = Array.isArray(res?.data) ? res.data : []
+        console.log('AJAKAN_RAW', JSON.stringify(list).slice(0, 1500))
+        const ids = []
+        const namas = []
+        list.forEach((it) => {
+          const t = it.tujuan || it.organisasi_tujuan || {}
+          ;[t.id, t.id_organisasi].forEach((v) => { if (v != null) ids.push(String(v)) })
+          if (t.nama_organisasi) namas.push(String(t.nama_organisasi).trim().toLowerCase())
+        })
+        setTerundang(ids)
+        setTerundangNama(namas)
+      }).catch(() => setTerundang([]))
+    )
+  }, [eventId])
 
 
 
@@ -318,7 +338,7 @@ function EventForm({ universitasPembuat = null,
           </div>
         </div>
 
-        {values.jangkauan_publikasi !== 'internal' && <EventOrganizationPicker selected={participants} onChange={setParticipants} jangkauan={values.jangkauan_publikasi} universitasPembuat={universitasPembuat} />}
+        {values.jangkauan_publikasi !== 'internal' && <EventOrganizationPicker selected={participants} onChange={setParticipants} jangkauan={values.jangkauan_publikasi} universitasPembuat={universitasPembuat} organisasiPembuat={organisasiPembuat} terundang={terundang} terundangNama={terundangNama} />}
 
         {eventId && <EventSentInvitations eventId={eventId} />}
 

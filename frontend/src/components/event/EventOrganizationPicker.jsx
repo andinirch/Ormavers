@@ -42,7 +42,7 @@ function toParticipant(org, jenis = 'undangan') {
 }
 
 
-function UniversitasDropdown({ items, value, onChange }) {
+function UniversitasDropdown({ items, value, onChange, terkunci = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef(null)
   const selected = (items || []).find((u) => String(u.value) === String(value))
@@ -61,7 +61,8 @@ function UniversitasDropdown({ items, value, onChange }) {
       <button
         type="button"
         className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
-        onClick={() => setIsOpen((o) => !o)}
+        onClick={() => !terkunci && setIsOpen((o) => !o)}
+        disabled={terkunci}
         aria-label="Filter universitas"
       >
         <span className="event-category-dropdown__label">{displayLabel}</span>
@@ -123,7 +124,7 @@ const JENIS_ORG_OPTIONS = [
   { value: 'undangan', label: 'Undangan' },
 ]
 
-function JenisOrgDropdown({ value, onChange, label }) {
+function JenisOrgDropdown({ terkunci = false, value, onChange, label }) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef(null)
   const selected = JENIS_ORG_OPTIONS.find((o) => o.value === value)
@@ -139,8 +140,8 @@ function JenisOrgDropdown({ value, onChange, label }) {
   return (
     <div className="event-category-dropdown" ref={containerRef}>
       <button type="button" className={`event-category-dropdown__trigger form-input${isOpen ? ' is-open' : ''}`}
-        onClick={() => setIsOpen((o) => !o)} aria-label={label}>
-        <span className={`event-category-dropdown__label${selected ? '' : ' is-placeholder'}`}>{selected ? selected.label : 'Pilih jenis'}</span>
+        onClick={() => !terkunci && setIsOpen((o) => !o)} disabled={terkunci} aria-label={label}>
+        <span className={`event-category-dropdown__label${selected ? '' : ' is-placeholder'}`}>{terkunci ? 'Sudah diundang' : (selected ? selected.label : 'Pilih jenis')}</span>
         <span className={`event-category-dropdown__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">▾</span>
       </button>
       {isOpen && (
@@ -194,12 +195,13 @@ function MassalDropdown({ onPick, disabled, count }) {
   )
 }
 
-function EventOrganizationPicker({ selected, onChange, jangkauan = '', universitasPembuat = null }) {
+function EventOrganizationPicker({ selected, onChange, jangkauan = '', universitasPembuat = null, organisasiPembuat = null, terundang = [], terundangNama = [] }) {
   const [universities, setUniversities] = useState([])
   const [keyword, setKeyword] = useState('')
   const [universitasId, setUniversitasId] = useState('')
   const [jenisFilter, setJenisFilter] = useState('')
   const [results, setResults] = useState([])
+  const sudahTerundang = (id) => terundang.includes(String(id))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -228,8 +230,11 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
       })
       const semua = Array.isArray(list) ? list : []
       const dibatasi = jangkauan === 'satu_universitas' && universitasPembuat
-        ? semua.filter((org) => String(org.id_universitas ?? org.university_id ?? '') === String(universitasPembuat))
+        ? semua.filter((org) => String(org.id_universitas ?? org.university_id ?? '') === String(universitasPembuat) && String(org.id_organisasi ?? org.id ?? '') !== String(organisasiPembuat ?? ''))
         : semua
+      const tanpaTerundang = dibatasi.filter((org) => !sudahTerundang(org.id_organisasi ?? org.id) && !terundangNama.includes(String(org.name ?? org.nama_organisasi ?? '').trim().toLowerCase()))
+      setResults(tanpaTerundang)
+      return
       setResults(dibatasi)
     } catch {
       setError('Daftar organisasi gagal dimuat.')
@@ -292,7 +297,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
             onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); runSearch(keyword) } }}
           />
         </span>
-        <UniversitasDropdown items={universities} value={universitasId} onChange={setUniversitasId} />
+        <UniversitasDropdown items={universities} value={universitasId} onChange={setUniversitasId} terkunci={jangkauan === 'satu_universitas' && Boolean(universitasPembuat)} />
         <JenisDropdown options={JENIS_FILTER_OPTIONS} value={jenisFilter} onChange={setJenisFilter} />
       </div>
 
@@ -320,7 +325,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
                 <small>{[org.organization_type, org.nama_universitas].filter(Boolean).join(' · ')}</small>
               </span>
               <span className="libatkan-result__actions">
-                <JenisOrgDropdown value={chosen?.jenis ?? ''} onChange={(v) => chooseJenis(org, v)} label={`Jenis keterlibatan ${org.name}`} />
+                <JenisOrgDropdown terkunci={sudahTerundang(org.id_organisasi ?? org.id)} value={chosen?.jenis ?? ''} onChange={(v) => chooseJenis(org, v)} label={`Jenis keterlibatan ${org.name}`} />
                 {chosen && (
                   <button
                     type="button"
