@@ -228,10 +228,19 @@ class EventCoreTest extends TestCase
             'judul' => 'Workshop Desain Grafis 2026 - Diperbarui',
         ]);
 
+        // Notifikasi perubahan terkirim ke organisasi pembuat event
+        $this->assertDatabaseHas('notifikasi', [
+            'id_organisasi' => $org->id_organisasi,
+            'id_event'      => $event->id,
+            'jenis'         => 'perubahan_event',
+            'pesan'         => "Anda telah memperbarui event \"{$payload['judul']}\".",
+        ]);
+
         // Notifikasi perubahan terkirim ke kolaborator yang diterima
         $this->assertDatabaseHas('notifikasi', [
             'id_organisasi' => $orgKolab->id_organisasi,
             'id_event'      => $event->id,
+            'jenis'         => 'perubahan_event',
         ]);
     }
 

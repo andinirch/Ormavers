@@ -281,9 +281,20 @@ class EventService
                 }
             }
 
-            // Kirim notifikasi perubahan ke seluruh kolaborator dan undangan yang telah menerima
+            // Kirim notifikasi perubahan ke organisasi pembuat event
+            Notifikasi::create([
+                'id_organisasi' => $organisasi->id_organisasi,
+                'jenis'         => 'perubahan_event',
+                'id_event'      => $event->id,
+                'id_ajakan'     => null,
+                'pesan'         => "Anda telah memperbarui event \"{$event->judul}\".",
+                'sudah_baca'    => false,
+            ]);
+
+            // Kirim notifikasi perubahan ke seluruh kolaborator dan undangan yang telah menerima (selain pembuat)
             $ajakanDiterima = Ajakan::where('id_event', $event->id)
                 ->where('status', 'diterima')
+                ->where('id_organisasi_tujuan', '!=', $organisasi->id_organisasi)
                 ->get();
 
             foreach ($ajakanDiterima as $ajakan) {
