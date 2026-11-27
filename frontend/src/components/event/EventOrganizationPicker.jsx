@@ -234,8 +234,6 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
         : semua
       const tanpaTerundang = dibatasi.filter((org) => !sudahTerundang(org.id_organisasi ?? org.id) && !terundangNama.includes(String(org.name ?? org.nama_organisasi ?? '').trim().toLowerCase()))
       setResults(tanpaTerundang)
-      return
-      setResults(dibatasi)
     } catch {
       setError('Daftar organisasi gagal dimuat.')
     } finally {
