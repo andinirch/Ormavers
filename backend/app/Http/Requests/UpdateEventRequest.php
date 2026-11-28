@@ -32,6 +32,13 @@ class UpdateEventRequest extends FormRequest
             'poster.*'            => ['required', 'file', 'mimes:jpg,jpeg', 'max:2048'],
             'poster_utama_index'  => ['nullable', 'integer', 'min:0', 'max:2'],
 
+            // Poster lama yang akan dihapus (array of IDs)
+            'hapus_poster_id'     => ['sometimes', 'array'],
+            'hapus_poster_id.*'   => ['required', 'integer', 'exists:event_poster,id'],
+
+            // ID poster lama yang dijadikan poster utama
+            'poster_utama_id'     => ['sometimes', 'nullable', 'integer', 'exists:event_poster,id'],
+
             // Organisasi yang dilibatkan (opsional)
             'organisasi_terlibat'                   => ['nullable', 'array'],
             'organisasi_terlibat.*.id_organisasi'   => ['required', 'integer', 'exists:organisasi,id_organisasi'],
@@ -62,6 +69,14 @@ class UpdateEventRequest extends FormRequest
             'poster.*.file'                => 'Poster harus berupa file',
             'poster.*.mimes'               => 'Poster harus berformat JPG atau JPEG',
             'poster.*.max'                 => 'Ukuran poster maksimal 2 MB per file',
+
+            'hapus_poster_id.array'        => 'Data poster yang dihapus harus berupa array',
+            'hapus_poster_id.*.required'   => 'ID poster yang dihapus wajib diisi',
+            'hapus_poster_id.*.integer'    => 'ID poster yang dihapus harus berupa angka',
+            'hapus_poster_id.*.exists'     => 'Poster yang akan dihapus tidak ditemukan',
+
+            'poster_utama_id.integer'      => 'ID poster utama harus berupa angka',
+            'poster_utama_id.exists'       => 'Poster utama yang dipilih tidak ditemukan',
 
             'organisasi_terlibat.*.id_organisasi.required' => 'Organisasi yang dilibatkan wajib dipilih',
             'organisasi_terlibat.*.id_organisasi.exists'   => 'Organisasi yang dilibatkan tidak ditemukan',

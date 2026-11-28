@@ -395,6 +395,177 @@ class EventCoreTest extends TestCase
     }
 
     /**
+     * Helper: Buat event lengkap dengan poster via Service layer
+     */
+    private function buatEventDenganPoster(string $token, array $overrides = [], int $jumlahPoster = 2): array
+    {
+        $kategori = KategoriEvent::first();
+
+        $posters = [];
+        for ($i = 1; $i <= $jumlahPoster; $i++) {
+            $posters[] = UploadedFile::fake()->image("poster{$i}.jpg", 600, 800)->size(500);
+        }
+
+        $payload = array_merge([
+            'judul'               => 'Event Poster Test ' . uniqid(),
+            'deskripsi'           => 'Deskripsi event untuk test poster.',
+            'tanggal_event'       => now()->addDays(10)->format('Y-m-d'),
+            'id_kategori'         => $kategori->id,
+            'tautan_pendaftaran'  => 'https://example.com/daftar',
+            'periode_mulai'       => now()->subDay()->format('Y-m-d H:i:s'),
+            'periode_selesai'     => now()->addDays(5)->format('Y-m-d H:i:s'),
+            'jangkauan_publikasi' => 'internal',
+            'poster_utama_index'  => 0,
+            'poster'              => $posters,
+        ], $overrides);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->post('/api/organisasi/event', $payload);
+
+        $response->assertStatus(201);
+
+        $event = Event::where('judul', $payload['judul'])->first();
+
+        return [$event, $event->posters()->get()];
+    }
+
+    /**
+     * Test Edit Event: Hapus 1 dari 2 poster (penghapusan sebagian)
+     */
+    public function test_edit_event_hapus_sebagian_poster(): void
+    {
+        Storage::fake('public');
+
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem');
+        [$event, $posters] = $this->buatEventDenganPoster($token);
+
+        $this->assertCount(2, $posters);
+
+        $posterDihapus     = $posters[0];
+        $posterDipertahankan = $posters[1];
+
+        // Pastikan file fisik poster tersimpan di storage
+        $pathDihapus = preg_replace('#^.*/storage/#', '', $posterDihapus->path_file);
+        $pathDisimpan = preg_replace('#^.*/storage/#', '', $posterDipertahankan->path_file);
+        Storage::disk('public')->assertExists($pathDihapus);
+        Storage::disk('public')->assertExists($pathDisimpan);
+
+        // Edit event: hapus 1 poster
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->post("/api/organisasi/event/{$event->id}", [
+                'hapus_poster_id' => [$posterDihapus->id],
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        // Poster yang dihapus hilang dari DB
+        $this->assertDatabaseMissing('event_poster', ['id' => $posterDihapus->id]);
+
+        // Poster yang dipertahankan masih di DB
+        $this->assertDatabaseHas('event_poster', ['id' => $posterDipertahankan->id]);
+
+        // File fisik poster yang dihapus sudah tidak ada
+        Storage::disk('public')->assertMissing($pathDihapus);
+
+        // File fisik poster yang dipertahankan masih ada
+        Storage::disk('public')->assertExists($pathDisimpan);
+
+        // GET detail event: hanya 1 poster tersisa
+        $detail = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson("/api/organisasi/event/{$event->id}");
+
+        $detail->assertStatus(200);
+        $this->assertCount(1, $detail->json('data.posters'));
+        $this->assertEquals($posterDipertahankan->id, $detail->json('data.posters.0.id'));
+    }
+
+    /**
+     * Test Edit Event: Hapus poster lama + upload poster baru sekaligus
+     */
+    public function test_edit_event_hapus_poster_lama_dan_upload_baru(): void
+    {
+        Storage::fake('public');
+
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem');
+        [$event, $posters] = $this->buatEventDenganPoster($token);
+
+        $this->assertCount(2, $posters);
+
+        $posterDihapus     = $posters[0];
+        $posterDisimpan    = $posters[1];
+        $pathDihapus = preg_replace('#^.*/storage/#', '', $posterDihapus->path_file);
+
+        // Upload poster baru sekaligus hapus poster lama
+        $posterBaru = UploadedFile::fake()->image('poster_baru.jpg', 600, 800)->size(400);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->post("/api/organisasi/event/{$event->id}", [
+                'hapus_poster_id' => [$posterDihapus->id],
+                'poster'          => [$posterBaru],
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        // Poster lama yang dihapus hilang dari DB
+        $this->assertDatabaseMissing('event_poster', ['id' => $posterDihapus->id]);
+
+        // File fisik poster lama yang dihapus sudah tidak ada
+        Storage::disk('public')->assertMissing($pathDihapus);
+
+        // Poster yang dipertahankan masih ada
+        $this->assertDatabaseHas('event_poster', ['id' => $posterDisimpan->id]);
+
+        // Total poster sekarang: 1 lama dipertahankan + 1 baru = 2
+        $event->refresh();
+        $this->assertEquals(2, $event->posters()->count());
+
+        // Poster baru tersimpan di DB
+        $posterBaruRecord = $event->posters()->where('id', '!=', $posterDisimpan->id)->first();
+        $this->assertNotNull($posterBaruRecord);
+        $this->assertEquals('poster_baru.jpg', $posterBaruRecord->nama_file_asli);
+    }
+
+    /**
+     * Test Edit Event: Edit data non-poster (judul) tanpa mengirim field poster → poster lama tetap utuh
+     */
+    public function test_edit_event_tanpa_mengubah_poster(): void
+    {
+        Storage::fake('public');
+
+        [$user, $org, $token] = $this->buatAkunOrganisasi('bem');
+        [$event, $posters] = $this->buatEventDenganPoster($token);
+
+        $this->assertCount(2, $posters);
+        $judulBaru = 'Judul Diperbarui Tanpa Ubah Poster';
+
+        // Edit hanya judul, tanpa kirim field poster/hapus_poster_id
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->putJson("/api/organisasi/event/{$event->id}", [
+                'judul' => $judulBaru,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        // Judul sudah berubah
+        $this->assertDatabaseHas('event', [
+            'id'    => $event->id,
+            'judul' => $judulBaru,
+        ]);
+
+        // Kedua poster masih utuh di DB
+        $event->refresh();
+        $this->assertEquals(2, $event->posters()->count());
+        foreach ($posters as $poster) {
+            $this->assertDatabaseHas('event_poster', ['id' => $poster->id]);
+            $path = preg_replace('#^.*/storage/#', '', $poster->path_file);
+            Storage::disk('public')->assertExists($path);
+        }
+    }
+
+    /**
      * Test Lihat Event Saya Ketika Kosong
      */
     public function test_lihat_event_saya_kosong(): void
