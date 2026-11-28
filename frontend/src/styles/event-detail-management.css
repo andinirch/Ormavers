@@ -313,3 +313,327 @@
 }
 
 /* Tombol aksi kartu event: satu baris, ukuran seragam */
+
+/* Warna tombol aksi pada halaman detail event */
+.event-detail-management-actions .event-card__btn {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Ubah: tetap netral */
+.event-detail-management-actions .event-card__btn.is-neutral {
+  color: #1e293b;
+  background: #fff;
+  border-color: #cbd5e1;
+}
+
+.event-detail-management-actions .event-card__btn.is-neutral:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* Hapus: merah, termasuk saat hover */
+.event-detail-management-actions .event-card__btn.is-danger {
+  color: #b91c1c;
+  background: #fff;
+  border-color: #fecaca;
+}
+
+.event-detail-management-actions .event-card__btn.is-danger:hover:not(:disabled) {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Bagikan: biru, termasuk saat hover */
+.event-detail-management-actions .event-card__btn.is-primary {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.event-detail-management-actions .event-card__btn.is-primary:hover:not(:disabled) {
+  color: #fff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Tombol aksi detail event: warna solid dan konsisten */
+.event-detail-management-actions .event-card__btn {
+  height: 40px;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Ubah - abu-abu */
+.event-detail-management-actions .event-card__btn.is-neutral {
+  color: #fff;
+  background: #475569;
+  border-color: #475569;
+}
+
+.event-detail-management-actions .event-card__btn.is-neutral:hover {
+  color: #fff;
+  background: #334155;
+  border-color: #334155;
+}
+
+/* Hapus - merah */
+.event-detail-management-actions .event-card__btn.is-danger {
+  color: #fff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.event-detail-management-actions .event-card__btn.is-danger:hover:not(:disabled) {
+  color: #fff;
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Bagikan - biru Ormavers */
+.event-detail-management-actions .event-card__btn.is-primary {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.event-detail-management-actions .event-card__btn.is-primary:hover:not(:disabled) {
+  color: #fff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Poster dapat diklik untuk membuka preview */
+.event-detail-management-poster-trigger {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.event-detail-management-poster-trigger img {
+  transition: transform 0.2s ease;
+}
+
+.event-detail-management-poster-trigger:hover img {
+  transform: scale(1.025);
+}
+
+/* Preview poster ukuran besar */
+.event-poster-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(4px);
+}
+
+.event-poster-preview-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: min(90vw, 760px);
+  max-height: 90vh;
+}
+
+.event-poster-preview-content img {
+  display: block;
+  max-width: 100%;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.event-poster-preview-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: #dc2626;
+  cursor: pointer;
+}
+
+.event-poster-preview-close:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 600px) {
+  .event-poster-preview-overlay {
+    padding: 20px;
+  }
+
+  .event-poster-preview-content {
+    max-width: 100%;
+  }
+
+  .event-poster-preview-close {
+    top: -14px;
+    right: -10px;
+  }
+}
+
+
+/* Carousel poster pada Detail Event Kelola */
+.event-detail-management-gallery {
+  width: 240px;
+  min-width: 0;
+}
+
+.event-detail-management-gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.event-detail-management-gallery-controls > button {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.event-detail-management-gallery-controls > button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.event-detail-management-gallery-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.event-detail-management-gallery-dots button {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #cbd5e1;
+  cursor: pointer;
+}
+
+.event-detail-management-gallery-dots button.is-current {
+  background: #2563eb;
+}
+
+
+/* Animasi geser poster pada Detail Event Kelola */
+@keyframes eventPosterSlideFromRight {
+  from {
+    opacity: 0.65;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes eventPosterSlideFromLeft {
+  from {
+    opacity: 0.65;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.event-detail-management-poster-trigger.is-slide-next {
+  animation: eventPosterSlideFromRight 350ms ease-out both;
+}
+
+.event-detail-management-poster-trigger.is-slide-prev {
+  animation: eventPosterSlideFromLeft 350ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-detail-management-poster-trigger.is-slide-next,
+  .event-detail-management-poster-trigger.is-slide-prev {
+    animation: none;
+  }
+}
+
+/* Presisikan posisi tombol aksi dengan batas bawah poster */
+.event-detail-management-actions {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+
+/* Jarak tombol aksi tetap lega dan sejajar dengan kontrol poster */
+.event-detail-management-actions {
+  margin-top: 0;
+  padding-top: 20px;
+}
+
+
+/* Sejajarkan navigasi poster dengan tombol aksi */
+.event-detail-management-gallery-controls {
+  margin-top: 31px;
+}
+
+
+/* Sedikit menambah tinggi bingkai poster agar sejajar dengan informasi */
+.event-detail-management-poster {
+  min-height: 368px;
+}
+
+
+/* Koreksi tinggi bingkai poster */
+.event-detail-management-poster {
+  min-height: 360px;
+}
+
+
+/* Penyesuaian akhir tinggi poster */
+.event-detail-management-poster {
+  min-height: 361px;
+}
+
+
+.event-detail-management-poster {
+  min-height: 362px;
+}
+
+
+.event-detail-management-poster {
+  min-height: 363px;
+}
+
+
+.event-detail-management-poster {
+  min-height: 364px;
+}

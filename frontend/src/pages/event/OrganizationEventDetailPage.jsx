@@ -11,6 +11,7 @@ import { assetUrl } from '../../api/api.js'
 import { deleteEvent, getEventDetail } from '../../api/eventManagement.js'
 import { cancelCollaboration, cancelInvitation, getEventInvitations } from '../../api/eventInvitation.js'
 import { createEventSharelink } from '../../api/eventExploration.js'
+import { getMyRegistrationStatus } from '../../services/registrationStatusApi.js'
 import '../../styles/event-management.css'
 import '../../styles/event-detail-management.css'
 
@@ -76,13 +77,29 @@ function OrganizationEventDetailPage() {
   const { eventId } = useParams()
   const navigate = useNavigate()
   const [event, setEvent] = useState(null)
+  const [universitasPembuat, setUniversitasPembuat] = useState(null)
+  const [organisasiPembuat, setOrganisasiPembuat] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [modalJenis, setModalJenis] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showPosterPreview, setShowPosterPreview] = useState(false)
+  const [activePosterIndex, setActivePosterIndex] = useState(0)
+  const [posterDirection, setPosterDirection] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    getMyRegistrationStatus().then((result) => {
+      if (!active) return
+      const organisasi = result?.data?.organisasiDetail
+      setUniversitasPembuat(organisasi?.id_universitas ?? null)
+      setOrganisasiPembuat(organisasi?.id ?? organisasi?.id_organisasi ?? null)
+    })
+    return () => { active = false }
+  }, [])
 
   const load = async () => {
     setLoading(true)
@@ -97,6 +114,7 @@ function OrganizationEventDetailPage() {
         throw Object.assign(new Error('Akses ditolak'), { response: { status: 403 } })
       }
       setEvent(detail)
+      setActivePosterIndex(0)
       setItems(Array.isArray(invitationsResult?.data) ? invitationsResult.data : [])
     } catch (requestError) {
       setError(
@@ -236,34 +254,88 @@ function OrganizationEventDetailPage() {
     )
   }
 
-  const poster = event.poster_utama || event.posters?.find((item) => item.is_utama) || event.posters?.[0]
+  const posters = Array.isArray(event.posters) ? event.posters : []
+  const poster = event.poster_utama || posters.find((item) => item.is_utama) || posters[0]
+  const allPosters = poster
+    ? [poster, ...posters.filter((item) => item !== poster && (poster.id == null || item.id !== poster.id))]
+    : []
+  const currentPoster = allPosters[activePosterIndex] || poster
   const kategori = event.nama_kategori || event.kategori?.nama_kategori || event.tag || 'Lainnya'
 
   return (
-    <main className="event-management-page event-detail-management-page">
-      <Link className="event-back-link" to="/verifikasi/kelola-event">
-        ← Kembali ke Kelola Event
-      </Link>
-      <PageHeader
-        title="Detail Event"
-        subtitle="Kelola informasi event serta organisasi yang terlibat."
-        breadcrumb={['Ormavers', 'Kelola Event', 'Detail Event']}
-        icon="calendar"
-      />
+  <main className="event-management-page event-detail-management-page">
+    <PageHeader
+      title="Detail Event"
+      subtitle="Kelola informasi event serta organisasi yang terlibat."
+      breadcrumb={['Ormavers', 'Kelola Event', 'Detail Event']}
+      icon="calendar"
+      backTo="/verifikasi/kelola-event"
+    />
 
       {/* Card Informasi Event */}
       <section className="event-detail-management-card card">
-        <div className="event-detail-management-poster">
-          {posterUrl(poster) ? (
-            <ImageWithFallback
-              src={posterUrl(poster)}
-              alt={event.judul}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          ) : (
-            <span style={{ color: '#94a3b8' }}>
-              <AdminIcon name="image" size={38} />
-            </span>
+        <div className="event-detail-management-gallery">
+          <div className="event-detail-management-poster">
+            {posterUrl(currentPoster) ? (
+              <button
+                key={activePosterIndex}
+                type="button"
+                className={`event-detail-management-poster-trigger${posterDirection ? ` is-slide-${posterDirection}` : ''}`}
+                onClick={() => setShowPosterPreview(true)}
+                aria-label="Lihat poster event dalam ukuran besar"
+              >
+                <ImageWithFallback
+                  src={posterUrl(currentPoster)}
+                  alt={`${event.judul} - Poster ${activePosterIndex + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </button>
+            ) : (
+              <span style={{ color: '#94a3b8' }}>
+                <AdminIcon name="image" size={38} />
+              </span>
+            )}
+          </div>
+
+          {allPosters.length > 1 && (
+            <div className="event-detail-management-gallery-controls">
+              <button
+                type="button"
+                disabled={activePosterIndex === 0}
+                onClick={() => {
+                  setPosterDirection('prev')
+                  setActivePosterIndex((index) => index - 1)
+                }}
+              >
+                ‹ Sebelumnya
+              </button>
+
+              <div className="event-detail-management-gallery-dots">
+                {allPosters.map((item, index) => (
+                  <button
+                    key={item.id || index}
+                    type="button"
+                    className={index === activePosterIndex ? 'is-current' : ''}
+                    onClick={() => {
+                      setPosterDirection(null)
+                      setActivePosterIndex(index)
+                    }}
+                    aria-label={`Poster ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={activePosterIndex === allPosters.length - 1}
+                onClick={() => {
+                  setPosterDirection('next')
+                  setActivePosterIndex((index) => index + 1)
+                }}
+              >
+                Berikutnya ›
+              </button>
+            </div>
           )}
         </div>
 
@@ -320,14 +392,14 @@ function OrganizationEventDetailPage() {
             </Link>
             <button
               type="button"
-              className="event-card__btn is-danger"
+              className="event-card__btn is-danger event-detail-action--delete"
               onClick={() => setShowDeleteModal(true)}
             >
               <AdminIcon name="trash" size={16} /> Hapus
             </button>
             <button
               type="button"
-              className="event-card__btn is-neutral"
+              className="event-card__btn is-primary"
               onClick={handleShare}
             >
               <AdminIcon name="share" size={16} /> Bagikan
@@ -352,8 +424,12 @@ function OrganizationEventDetailPage() {
             type="button"
             className="event-primary-button"
             onClick={() => setModalJenis('kolaborator')}
+            disabled={event?.jangkauan_publikasi === 'internal'}
+            title={event?.jangkauan_publikasi === 'internal'
+              ? 'Event internal tidak dapat melibatkan organisasi lain.'
+              : undefined}
           >
-            <AdminIcon name="user-plus" size={16} /> + Libatkan organisasi lain
+            <AdminIcon name="user-plus" size={16} /> Libatkan organisasi lain
           </button>
         </header>
 
@@ -446,11 +522,40 @@ function OrganizationEventDetailPage() {
         </div>
       </section>
 
+      {/* Preview Poster Event */}
+      {showPosterPreview && posterUrl(currentPoster) && (
+        <div
+          className="event-poster-preview-overlay"
+          onClick={() => setShowPosterPreview(false)}
+        >
+          <div
+            className="event-poster-preview-content"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Preview poster event"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="event-poster-preview-close"
+              onClick={() => setShowPosterPreview(false)}
+              aria-label="Tutup preview poster"
+            >
+              <AdminIcon name="close" size={22} />
+            </button>
+            <img src={posterUrl(currentPoster)} alt={event.judul} />
+          </div>
+        </div>
+      )}
+
       {/* Modal Libatkan Organisasi */}
       <InviteOrganizationsModal
         open={modalJenis !== null}
         jenis={modalJenis || 'kolaborator'}
         eventId={eventId}
+        jangkauan={event?.jangkauan_publikasi}
+        universitasPembuat={universitasPembuat}
+        organisasiPembuat={organisasiPembuat}
         onClose={() => setModalJenis(null)}
         onDone={async (msg) => {
           setModalJenis(null)

@@ -6,7 +6,7 @@ import '../../styles/notification-panel.css'
 const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 function NotificationItem({ icon, title, text, time, read, onClick }) {
-  return <button type="button" className={`notification-item${read ? '' : ' is-unread'}`} onClick={onClick}>
+  return <button type="button" className={`notification-item${read ? '' : ' is-unread'}`} onClick={onClick} title={`${title}\n${text}`}>
     <span className="notification-item__icon"><AdminIcon name={icon} size={18} /></span>
     <div className="notification-item__body">
       <h3>{title}</h3>

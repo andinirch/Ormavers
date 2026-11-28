@@ -21,13 +21,21 @@ function errorMessage(error, fallback) {
   return first ?? error.response?.data?.message ?? fallback
 }
 
-function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
+function InviteOrganizationsModal({
+  open, eventId, jenis, jangkauan, universitasPembuat,
+  organisasiPembuat, onClose, onDone,
+}) {
+  const [jenisAktif, setJenisAktif] = useState(jenis || 'kolaborator')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState([])
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (open) setJenisAktif(jenis || 'kolaborator')
+  }, [open, jenis])
 
   useEffect(() => {
     if (!open) return undefined
@@ -38,17 +46,26 @@ function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
       setSelected([])
       setSearch('')
       try {
-        const result = await getAvailableOrganizations(eventId, jenis)
-        if (active) setItems(Array.isArray(result?.data) ? result.data : [])
+        const params = jangkauan === 'satu_universitas' && universitasPembuat
+          ? { id_universitas: universitasPembuat }
+          : {}
+        const result = await getAvailableOrganizations(eventId, jenisAktif, params)
+        const daftar = Array.isArray(result?.data) ? result.data : []
+        const tanpaPembuat = daftar.filter((org) => {
+          if (organisasiPembuat == null) return true
+          const idOrg = org.id_organisasi ?? org.id
+          return String(idOrg) !== String(organisasiPembuat)
+        })
+        if (active) setItems(tanpaPembuat)
       } catch (requestError) {
         if (active) setError(errorMessage(requestError, 'Daftar organisasi gagal dimuat.'))
       } finally {
         if (active) setLoading(false)
       }
     }
-    queueMicrotask(run)
+    run()
     return () => { active = false }
-  }, [open, eventId, jenis])
+  }, [open, eventId, jenisAktif, jangkauan, universitasPembuat, organisasiPembuat])
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -58,7 +75,7 @@ function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
 
   if (!open) return null
 
-  const meta = JENIS_META[jenis] ?? JENIS_META.kolaborator
+  const meta = JENIS_META[jenisAktif] ?? JENIS_META.kolaborator
 
   const toggle = (id) => setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]))
 
@@ -67,7 +84,7 @@ function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
     setSubmitting(true)
     setError('')
     try {
-      const fn = jenis === 'undangan' ? inviteGuests : inviteCollaborators
+      const fn = jenisAktif === 'undangan' ? inviteGuests : inviteCollaborators
       const result = await fn(eventId, selected)
       onDone?.(result?.message ?? 'Berhasil dikirim.')
     } catch (requestError) {
@@ -91,21 +108,45 @@ function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
           </button>
         </header>
 
+        <div className={`event-invite-tabs${jenisAktif === 'undangan' ? ' is-undangan' : ''}`}>
+          <span className="event-invite-tabs__blob" aria-hidden="true" />
+          <button
+            type="button"
+            className={`event-invite-tabs__button${jenisAktif === 'kolaborator' ? ' is-active' : ''}`}
+            onClick={() => { setJenisAktif('kolaborator'); setSelected([]); setError('') }}
+            disabled={submitting || jenisAktif === 'kolaborator'}
+            aria-pressed={jenisAktif === 'kolaborator'}
+          >
+            Ajak Kolaborasi
+          </button>
+          <button
+            type="button"
+            className={`event-invite-tabs__button${jenisAktif === 'undangan' ? ' is-active' : ''}`}
+            onClick={() => { setJenisAktif('undangan'); setSelected([]); setError('') }}
+            disabled={submitting || jenisAktif === 'undangan'}
+            aria-pressed={jenisAktif === 'undangan'}
+          >
+            Kirim Undangan
+          </button>
+        </div>
+
         <div className="event-modal__search">
           <AdminIcon name="search" size={16} />
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari organisasi" />
         </div>
 
         <div className="event-modal__body">
-          {loading && <p className="event-modal__state">Memuat…</p>}
+          <div className="event-modal__loading-slot" aria-live="polite">
+            {loading && <p className="event-modal__state">Memperbarui daftar organisasi…</p>}
+          </div>
           {!loading && error && <p className="event-modal__state is-error">{error}</p>}
           {!loading && !error && filtered.length === 0 && <p className="event-modal__state">Tidak ada organisasi yang dapat dipilih.</p>}
-          {!loading && !error && filtered.map((org) => {
+          {!error && filtered.map((org) => {
             const disabled = !org.dapat_diajak
             const checked = selected.includes(org.id_organisasi)
             return (
               <label key={org.id_organisasi} className={`event-org-option${disabled ? ' is-disabled' : ''}`}>
-                <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggle(org.id_organisasi)} />
+                <input type="checkbox" checked={checked} disabled={loading || disabled} onChange={() => toggle(org.id_organisasi)} />
                 <span className="event-org-option__logo">
                   {org.logo
                     ? <img src={assetUrl(org.logo)} alt="" />
@@ -130,7 +171,7 @@ function InviteOrganizationsModal({ open, eventId, jenis, onClose, onDone }) {
         <footer className="event-modal__foot">
           {error && !loading && <span className="event-modal__error">{error}</span>}
           <button type="button" className="event-secondary-button" onClick={onClose} disabled={submitting}>Batal</button>
-          <button type="button" className="event-primary-button" onClick={submit} disabled={submitting}>
+          <button type="button" className="event-primary-button event-modal__submit-button" onClick={submit} disabled={submitting}>
             {submitting ? 'Mengirim…' : meta.submit}
           </button>
         </footer>
