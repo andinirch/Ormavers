@@ -98,7 +98,7 @@ function EventCard({
         <div className="event-card__actions">
           <div className="event-card__actions-left">
             {detailTo ? <Link to={detailTo} className="event-card__btn is-neutral"><AdminIcon name="eye" size={16} /> Detail</Link> : <button type="button" className="event-card__btn is-neutral" disabled title="Detail event akan tersedia pada tahap berikutnya"><AdminIcon name="eye" size={16} /> Detail</button>}
-            {isPembuat && !isSelesai && (
+            {isPembuat && (
               <Link to={`/verifikasi/kelola-event/${event.id}/edit`} className="event-card__btn is-neutral">
                 <AdminIcon name="edit" size={16} /> Ubah
               </Link>

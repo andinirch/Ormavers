@@ -195,7 +195,7 @@ function MassalDropdown({ onPick, disabled, count }) {
   )
 }
 
-function EventOrganizationPicker({ selected, onChange, jangkauan = '', universitasPembuat = null, organisasiPembuat = null, terundang = [], terundangNama = [] }) {
+function EventOrganizationPicker({ selected, onChange, organisasiPembuat = null, terundang = [], terundangNama = [] }) {
   const [universities, setUniversities] = useState([])
   const [keyword, setKeyword] = useState('')
   const [universitasId, setUniversitasId] = useState('')
@@ -229,10 +229,10 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
         jenis_organisasi: jenisFilter || undefined,
       })
       const semua = Array.isArray(list) ? list : []
-      const dibatasi = jangkauan === 'satu_universitas' && universitasPembuat
-        ? semua.filter((org) => String(org.id_universitas ?? org.university_id ?? '') === String(universitasPembuat) && String(org.id_organisasi ?? org.id ?? '') !== String(organisasiPembuat ?? ''))
-        : semua
-      const tanpaTerundang = dibatasi.filter((org) => !sudahTerundang(org.id_organisasi ?? org.id) && !terundangNama.includes(String(org.name ?? org.nama_organisasi ?? '').trim().toLowerCase()))
+      const tanpaPembuat = semua.filter(
+        (org) => String(org.id_organisasi ?? org.id ?? '') !== String(organisasiPembuat ?? '')
+      )
+      const tanpaTerundang = tanpaPembuat.filter((org) => !sudahTerundang(org.id_organisasi ?? org.id) && !terundangNama.includes(String(org.name ?? org.nama_organisasi ?? '').trim().toLowerCase()))
       setResults(tanpaTerundang)
     } catch {
       setError('Daftar organisasi gagal dimuat.')
@@ -244,7 +244,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
   useEffect(() => {
     queueMicrotask(() => { runSearch('') })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [universitasId, jenisFilter, jangkauan, universitasPembuat])
+  }, [universitasId, jenisFilter])
 
   const selectedById = new Map(selected.map((item) => [String(item.id_organisasi), item]))
   const undanganCount = selected.filter((item) => item.jenis === 'undangan').length
@@ -295,7 +295,7 @@ function EventOrganizationPicker({ selected, onChange, jangkauan = '', universit
             onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); runSearch(keyword) } }}
           />
         </span>
-        <UniversitasDropdown items={universities} value={universitasId} onChange={setUniversitasId} terkunci={jangkauan === 'satu_universitas' && Boolean(universitasPembuat)} />
+        <UniversitasDropdown items={universities} value={universitasId} onChange={setUniversitasId} />
         <JenisDropdown options={JENIS_FILTER_OPTIONS} value={jenisFilter} onChange={setJenisFilter} />
       </div>
 

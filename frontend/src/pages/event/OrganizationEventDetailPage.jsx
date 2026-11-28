@@ -424,10 +424,6 @@ function OrganizationEventDetailPage() {
             type="button"
             className="event-primary-button"
             onClick={() => setModalJenis('kolaborator')}
-            disabled={event?.jangkauan_publikasi === 'internal'}
-            title={event?.jangkauan_publikasi === 'internal'
-              ? 'Event internal tidak dapat melibatkan organisasi lain.'
-              : undefined}
           >
             <AdminIcon name="user-plus" size={16} /> Libatkan organisasi lain
           </button>

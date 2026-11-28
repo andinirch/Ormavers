@@ -46,16 +46,15 @@ function InviteOrganizationsModal({
       setSelected([])
       setSearch('')
       try {
-        const params = jangkauan === 'satu_universitas' && universitasPembuat
-          ? { id_universitas: universitasPembuat }
-          : {}
-        const result = await getAvailableOrganizations(eventId, jenisAktif, params)
+        // Jangkauan publikasi tidak membatasi organisasi yang dapat diajak.
+        const result = await getAvailableOrganizations(eventId, jenisAktif)
         const daftar = Array.isArray(result?.data) ? result.data : []
         const tanpaPembuat = daftar.filter((org) => {
           if (organisasiPembuat == null) return true
           const idOrg = org.id_organisasi ?? org.id
           return String(idOrg) !== String(organisasiPembuat)
         })
+
         if (active) setItems(tanpaPembuat)
       } catch (requestError) {
         if (active) setError(errorMessage(requestError, 'Daftar organisasi gagal dimuat.'))
